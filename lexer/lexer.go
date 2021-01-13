@@ -127,11 +127,7 @@ func (l *Lexer) NextToken() token.Token {
 	default:
 		if unicode.IsLetter(rune(l.ch)) {
 			tok.Literal = l.readIdent()
-			tokType := token.LookupIdent(tok.Literal)
-
-			if l.peekChar() == ':' && tok.Type != token.IDENT {
-
-			}
+			tok.Type = l.readIdentType(tok.Literal)
 			return tok
 		} else if unicode.IsDigit(rune(l.ch)) {
 			tok.Literal = l.readNumber()
@@ -157,6 +153,14 @@ func (l *Lexer) readChar() {
 }
 
 func (l *Lexer) peekChar() byte {
+	if l.fPos >= len(l.input) {
+		return 0
+	}
+	return l.input[l.fPos]
+}
+
+// peek char skip space
+func (l *Lexer) peekCharSS() byte {
 	var ch byte
 
 	for i := 0; i < len(l.input); i++ {
@@ -206,4 +210,14 @@ func (l *Lexer) readIdent() string {
 		l.readChar()
 	}
 	return l.input[pos:l.pos]
+}
+
+func (l *Lexer) readIdentType(literal string) token.Type {
+	if l.peekChar() == ':' {
+		return token.LookupIdent(literal)
+	} else if l.peekCharSS() == '(' {
+		l.skipSpace()
+		return token.LookupIdent(literal)
+	}
+	return token.IDENT
 }

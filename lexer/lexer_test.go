@@ -40,6 +40,7 @@ func TestNextToken(t *testing.T) {
 		{token.DOUBLE, "1.0E2"},
 		{token.COMMA, ","},
 		{token.XSCHEMA, "xs"},
+		{token.COLON, ":"},
 		{token.IDENT, "true"},
 		{token.LPAREN, "("},
 		{token.RPAREN, ")"},
