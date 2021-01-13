@@ -1,2 +1,2 @@
 # xpath
-Xpath implementation for Go
+XML Path Language (XPath) 3.1 implementation
