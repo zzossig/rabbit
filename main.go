@@ -6,5 +6,5 @@ import (
 )
 
 func main() {
-	fmt.Println(unicode.IsLetter('a'))
+	fmt.Println(unicode.IsLetter('_'))
 }
