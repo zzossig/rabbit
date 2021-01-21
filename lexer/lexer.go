@@ -1,6 +1,7 @@
 package lexer
 
 import (
+	"strings"
 	"unicode"
 
 	"github.com/zzossig/xpath/token"
@@ -196,18 +197,30 @@ func (l *Lexer) skipSpace() {
 func (l *Lexer) readString() string {
 	ch := l.ch
 	pos := l.pos + 1
+	cnt := 0 // count escape string [" or ']
 	for {
 		l.readChar()
-		if l.ch == 0 || (ch == '"' && l.ch == '"') || (ch == '\'' && l.ch == '\'') {
+		if l.ch == 0 || (ch == '"' && l.ch == '"' && l.peekChar() != '"') || (ch == '\'' && l.ch == '\'' && l.peekChar() != '\'') {
 			break
 		}
+		if (ch == '"' && l.ch == '"' && l.peekChar() == '"') || (ch == '\'' && l.ch == '\'' && l.peekChar() == '\'') {
+			cnt++
+		}
 	}
-	return l.input[pos:l.pos]
+
+	if cnt%2 != 0 {
+		// TODO error occur err:XPST0003 - allowed: '''', notAllowed: '''''
+	}
+
+	if ch == '"' {
+		return strings.ReplaceAll(l.input[pos:l.pos], "\"\"", "\"")
+	}
+	return strings.ReplaceAll(l.input[pos:l.pos], "''", "'")
 }
 
 func (l *Lexer) readNumber() string {
 	pos := l.pos
-	for unicode.IsDigit(rune(l.ch)) || l.ch == 'e' || l.ch == 'E' || l.ch == '.' {
+	for unicode.IsDigit(rune(l.ch)) || l.ch == 'e' || l.ch == 'E' || l.ch == '.' || l.ch == '+' || l.ch == '-' {
 		l.readChar()
 	}
 	return l.input[pos:l.pos]

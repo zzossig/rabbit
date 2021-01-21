@@ -3,25 +3,13 @@ package ast
 // XPath ::= Expr
 type XPath Expr
 
-// Expr ::= ExprSingle ("," ExprSingle)*
-type Expr struct {
-	Sequence []ExprSingle
+// Item is either an atomic value, a node, or a function
+type Item interface {
+	item()
 }
 
 // ExprSingle ::= ForExpr | LetExpr | QuantifiedExpr | IfExpr | OrExpr
 type ExprSingle interface {
+	Argument
 	exprSingle()
-}
-
-// Identifier is a string of alphanumeric characters.
-type Identifier struct {
-	Value string
-}
-
-// VarName ::= EQName
-type VarName EQName
-
-// EQName ::= QName | URIQualifiedName
-type EQName struct {
-	QName QName
 }

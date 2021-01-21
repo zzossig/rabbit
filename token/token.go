@@ -85,6 +85,7 @@ const (
 	TREAT     Type = "treat"
 	CAST      Type = "cast"
 	CASTABLE  Type = "castable"
+	SATISFIES Type = "satisfies"
 )
 
 var keywords = map[string]Type{
@@ -113,6 +114,7 @@ var keywords = map[string]Type{
 	"treat":     TREAT,
 	"cast":      CAST,
 	"castable":  CASTABLE,
+	"satisfies": SATISFIES,
 }
 
 // built-in functions

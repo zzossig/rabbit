@@ -2,9 +2,17 @@ package main
 
 import (
 	"fmt"
-	"unicode"
 )
 
+type AA struct{}
+
+func (aa *AA) myFunc() {
+	fmt.Println("haha")
+}
+
+type BB = AA
+
 func main() {
-	fmt.Println(unicode.IsLetter('_'))
+	myVar := BB{}
+	myVar.myFunc()
 }

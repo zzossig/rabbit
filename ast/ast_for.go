@@ -3,10 +3,11 @@ package ast
 // ForExpr ::= SimpleForClause "return" ExprSingle
 type ForExpr struct {
 	SimpleForClause SimpleForClause
-	ExprSingle      ExprSingle
+	ReturnExpr      ExprSingle
 }
 
 func (fe *ForExpr) exprSingle() {}
+func (fe *ForExpr) argument()   {}
 
 // SimpleForClause ::= "for" SimpleForBinding ("," SimpleForBinding)*
 type SimpleForClause struct {
@@ -15,6 +16,6 @@ type SimpleForClause struct {
 
 // SimpleForBinding ::= "$" VarName "in" ExprSingle
 type SimpleForBinding struct {
-	Name       VarName
+	VarName    VarName
 	ExprSingle ExprSingle
 }
