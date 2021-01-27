@@ -94,3 +94,59 @@ func IsBracedURILiteral(str string) bool {
 func IsEQName(str string) bool {
 	return IsQName(str) || IsURIQualifiedName(str)
 }
+
+// IsWildcard checks
+// Wildcard ::= "*" | (NCName ":*") | ("*:" NCName) | (BracedURILiteral "*")
+func IsWildcard(str string) bool {
+	if str == "*" {
+		return true
+	} else if strings.HasSuffix(str, ":*") && IsNCName(str[:len(str)-2]) {
+		return true
+	} else if strings.HasPrefix(str, "*:") && IsNCName(str[2:]) {
+		return true
+	} else if strings.HasSuffix(str, "*") && IsBracedURILiteral(str[:len(str)-1]) {
+		return true
+	}
+	return false
+}
+
+// IsValueComp checks
+// ValueComp ::= "eq" | "ne" | "lt" | "le" | "gt" | "ge"
+func IsValueComp(str string) bool {
+	re := regexp.MustCompile(`^(eq|ne|lt|le|gt|ge)$`)
+	return re.MatchString(str)
+}
+
+// IsGeneralComp checks
+// GeneralComp ::= "=" | "!=" | "<" | "<=" | ">" | ">="
+func IsGeneralComp(str string) bool {
+	re := regexp.MustCompile(`^(=|!=|<|<=|>|>=)$`)
+	return re.MatchString(str)
+}
+
+// IsNodeComp checks
+// NodeComp ::= "is" | "<<" | ">>"
+func IsNodeComp(str string) bool {
+	re := regexp.MustCompile(`^(is||<<||>>)$`)
+	return re.MatchString(str)
+}
+
+// IsForwardAxis checks
+// ForwardAxis ::= ("child" "::") | ("descendant" "::") | ("attribute" "::") | ("self" "::") | ("descendant-or-self" "::") | ("following-sibling" "::") | ("following" "::") | ("namespace" "::")
+func IsForwardAxis(str string) bool {
+	re := regexp.MustCompile(`^(child::||descendant::||attribute::||self::||descendant-or-self::||following-sibling::||following::||namespace::)$`)
+	return re.MatchString(str)
+}
+
+// IsReverseAxis checks
+// ReverseAxis ::= ("parent" "::") | ("ancestor" "::") | ("preceding-sibling" "::") | ("preceding" "::") | ("ancestor-or-self" "::")
+func IsReverseAxis(str string) bool {
+	re := regexp.MustCompile(`^(parent::||ancestor::||preceding-sibling::||preceding::||ancestor-or-self::)$`)
+	return re.MatchString(str)
+}
+
+// IsNumber checks number. eg) .05e2
+func IsNumber(str string) bool {
+	re := regexp.MustCompile(`^([1-9]{1}\d*|[0]?)(\.\d*)?(([e|E][+|-]?)?\d*)?$`)
+	return re.MatchString(str)
+}

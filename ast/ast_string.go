@@ -39,3 +39,25 @@ func (ncn *NCName) SetValue(name string) {
 		// TODO occur error
 	}
 }
+
+// Wildcard ::= "*" | (NCName ":*") | ("*:" NCName) | (BracedURILiteral "*")
+type Wildcard struct {
+	value string
+}
+
+// Value is a getter for the value field
+func (w *Wildcard) Value() string {
+	return w.value
+}
+
+// SetValue is a setter for the value field
+func (w *Wildcard) SetValue(name string) {
+	if util.IsWildcard(name) {
+		w.value = name
+	} else {
+		// TODO occur error
+	}
+}
+
+// SimpleTypeName ::= TypeName
+type SimpleTypeName = TypeName

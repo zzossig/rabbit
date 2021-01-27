@@ -17,7 +17,10 @@ func TestNextToken(t *testing.T) {
 		, 1.0e2
 		, 1.0E2
 		, .2e-2
+		, 1+1
 		, 1e2  +     1.5 - 1  *   .215
+		, 1 -- ++ +- -+ -+- +-+ - -- 1
+		, 1 + ++ +- -+ -+- +-+ - - 1
 		, xs:true()
 		, xs:date('2021-01-13')
 		, /xs
@@ -59,6 +62,10 @@ func TestNextToken(t *testing.T) {
 		{token.COMMA, ","},
 		{token.DOUBLE, ".2e-2"},
 		{token.COMMA, ","},
+		{token.INT, "1"},
+		{token.PLUS, "+"},
+		{token.INT, "1"},
+		{token.COMMA, ","},
 		{token.DOUBLE, "1e2"},
 		{token.PLUS, "+"},
 		{token.DECIMAL, "1.5"},
@@ -66,6 +73,14 @@ func TestNextToken(t *testing.T) {
 		{token.INT, "1"},
 		{token.ASTERISK, "*"},
 		{token.DECIMAL, ".215"},
+		{token.COMMA, ","},
+		{token.INT, "1"},
+		{token.PLUS, "+"},
+		{token.INT, "1"},
+		{token.COMMA, ","},
+		{token.INT, "1"},
+		{token.MINUS, "-"},
+		{token.INT, "1"},
 		{token.COMMA, ","},
 		{token.NS, "xs"},
 		{token.COLON, ":"},

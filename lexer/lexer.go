@@ -5,6 +5,7 @@ import (
 	"unicode"
 
 	"github.com/zzossig/xpath/token"
+	"github.com/zzossig/xpath/util"
 )
 
 // Lexer reads input string one by one
@@ -31,10 +32,11 @@ func (l *Lexer) NextToken() token.Token {
 	switch l.ch {
 	case '"', '\'':
 		tok = token.Token{Type: token.STRING, Literal: l.readString()}
-	case '+':
-		tok = token.Token{Type: token.PLUS, Literal: "+"}
-	case '-':
-		tok = token.Token{Type: token.MINUS, Literal: "-"}
+	case '+', '-':
+		tt, literal := l.readAdditive()
+		tok.Literal = literal
+		tok.Type = tt
+		return tok
 	case '*':
 		tok = token.Token{Type: token.ASTERISK, Literal: "*"}
 	case '/':
@@ -162,6 +164,15 @@ func (l *Lexer) readChar() {
 	l.fPos++
 }
 
+// read char skip space
+func (l *Lexer) readCharSS() {
+	l.readChar()
+
+	for unicode.IsSpace(rune(l.ch)) {
+		l.readChar()
+	}
+}
+
 func (l *Lexer) peekChar() byte {
 	if l.fPos >= len(l.input) {
 		return 0
@@ -220,7 +231,8 @@ func (l *Lexer) readString() string {
 
 func (l *Lexer) readNumber() string {
 	pos := l.pos
-	for unicode.IsDigit(rune(l.ch)) || l.ch == 'e' || l.ch == 'E' || l.ch == '.' || l.ch == '+' || l.ch == '-' {
+	l.readChar()
+	for l.pos+1 <= len(l.input) && util.IsNumber(l.input[pos:l.pos+1]) {
 		l.readChar()
 	}
 	return l.input[pos:l.pos]
@@ -232,6 +244,26 @@ func (l *Lexer) readIdent() (int, string) {
 		l.readChar()
 	}
 	return pos, l.input[pos:l.pos]
+}
+
+func (l *Lexer) readAdditive() (token.Type, string) {
+	minusCnt := 0
+	if l.ch == '-' {
+		minusCnt++
+	}
+	l.readCharSS()
+
+	for l.ch == '+' || l.ch == '-' {
+		if l.ch == '-' {
+			minusCnt++
+		}
+		l.readCharSS()
+	}
+
+	if minusCnt%2 == 1 {
+		return token.MINUS, "-"
+	}
+	return token.PLUS, "+"
 }
 
 func (l *Lexer) readIdentType(literal string, initPos int) token.Type {

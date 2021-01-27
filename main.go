@@ -4,15 +4,16 @@ import (
 	"fmt"
 )
 
-type AA struct{}
-
-func (aa *AA) myFunc() {
-	fmt.Println("haha")
+type ss struct {
+	zz string
+	abc
 }
 
-type BB = AA
+type abc struct {
+	b byte
+}
 
 func main() {
-	myVar := BB{}
-	myVar.myFunc()
+	my := ss{zz: "Abc"}
+	fmt.Println(my.abc.b)
 }
