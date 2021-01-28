@@ -1,6 +1,8 @@
 package ast
 
-import "strings"
+import (
+	"strings"
+)
 
 // ArrayConstructor ::= SquareArrayConstructor | CurlyArrayConstructor
 // TypeID ::= 					1											 | 2

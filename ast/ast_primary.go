@@ -96,7 +96,13 @@ type StringLiteral struct {
 func (sl *StringLiteral) exprSingle()  {}
 func (sl *StringLiteral) primaryExpr() {}
 func (sl *StringLiteral) String() string {
-	return sl.Value
+	var sb strings.Builder
+
+	sb.WriteString("'")
+	sb.WriteString(sl.Value)
+	sb.WriteString("'")
+
+	return sb.String()
 }
 
 // VarRef ::= "$" VarName

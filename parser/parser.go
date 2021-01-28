@@ -1,8 +1,6 @@
 package parser
 
 import (
-	"fmt"
-
 	"github.com/zzossig/xpath/ast"
 	"github.com/zzossig/xpath/lexer"
 	"github.com/zzossig/xpath/token"
@@ -43,7 +41,20 @@ var precedences = map[token.Type]int{
 	token.IF:         FOR,
 	token.OR:         OR,
 	token.AND:        AND,
+	token.IS:         EQ,
 	token.EQ:         EQ,
+	token.NE:         EQ,
+	token.LT:         EQ,
+	token.LE:         EQ,
+	token.GT:         EQ,
+	token.GE:         EQ,
+	token.NEV:        EQ,
+	token.LTV:        EQ,
+	token.LEV:        EQ,
+	token.GTV:        EQ,
+	token.GEV:        EQ,
+	token.DGT:        EQ,
+	token.DLT:        EQ,
 	token.DVBAR:      DVBAR,
 	token.TO:         TO,
 	token.PLUS:       SUM,
@@ -99,9 +110,11 @@ func New(l *lexer.Lexer) *Parser {
 
 	p.prefixParseFns = make(map[token.Type]prefixParseFn)
 	p.prefixParseFns[token.INT] = p.parseIntegerLiteral
+	p.prefixParseFns[token.STRING] = p.parseStringLiteral
 	p.prefixParseFns[token.LPAREN] = p.parseGroupedExpr
 	p.prefixParseFns[token.PLUS] = p.parsePrefixExpr
 	p.prefixParseFns[token.MINUS] = p.parsePrefixExpr
+	p.prefixParseFns[token.ARRAY] = p.parseCurlyArrayExpr
 
 	p.infixParseFns = make(map[token.Type]infixParseFn)
 	p.infixParseFns[token.PLUS] = p.parseAdditiveExpr
@@ -110,6 +123,23 @@ func New(l *lexer.Lexer) *Parser {
 	p.infixParseFns[token.DIV] = p.parseMultiplicativeExpr
 	p.infixParseFns[token.IDIV] = p.parseMultiplicativeExpr
 	p.infixParseFns[token.MOD] = p.parseMultiplicativeExpr
+	p.infixParseFns[token.ARROW] = p.parseArrowExpr
+	p.infixParseFns[token.BANG] = p.parseMapExpr
+	p.infixParseFns[token.IS] = p.parseComparisonExpr
+	p.infixParseFns[token.EQ] = p.parseComparisonExpr
+	p.infixParseFns[token.NE] = p.parseComparisonExpr
+	p.infixParseFns[token.LT] = p.parseComparisonExpr
+	p.infixParseFns[token.LE] = p.parseComparisonExpr
+	p.infixParseFns[token.GT] = p.parseComparisonExpr
+	p.infixParseFns[token.GE] = p.parseComparisonExpr
+	p.infixParseFns[token.EQV] = p.parseComparisonExpr
+	p.infixParseFns[token.NEV] = p.parseComparisonExpr
+	p.infixParseFns[token.LTV] = p.parseComparisonExpr
+	p.infixParseFns[token.LEV] = p.parseComparisonExpr
+	p.infixParseFns[token.GTV] = p.parseComparisonExpr
+	p.infixParseFns[token.GEV] = p.parseComparisonExpr
+	p.infixParseFns[token.DGT] = p.parseComparisonExpr
+	p.infixParseFns[token.DLT] = p.parseComparisonExpr
 
 	// Read two tokens, so curToken and peekToken are both set
 	p.nextToken()
@@ -131,24 +161,29 @@ func (p *Parser) peekTokenIs(t token.Type) bool {
 	return p.peekToken.Type == t
 }
 
-func (p *Parser) expectPeek(t token.Type) bool {
+func (p *Parser) expectPeek(t token.Type, ts ...token.Type) bool {
 	if p.peekTokenIs(t) {
 		p.nextToken()
 		return true
-	} else {
-		p.peekError(t)
-		return false
+	} else if len(ts) > 0 {
+		for _, tt := range ts {
+			if p.peekTokenIs(tt) {
+				p.nextToken()
+				return true
+			}
+		}
 	}
+	p.peekError(t)
+	return false
 }
 
-// Errors returns []error
-func (p *Parser) Errors() []error {
-	return p.errors
-}
-
-func (p *Parser) peekError(t token.Type) {
-	msg := fmt.Errorf("expected next token to be %s, got %s instead", t, p.peekToken.Type)
-	p.errors = append(p.errors, msg)
+func (p *Parser) expectCur(t token.Type) bool {
+	if p.curTokenIs(t) {
+		p.nextToken()
+		return true
+	}
+	p.peekError(t)
+	return false
 }
 
 func (p *Parser) peekPrecedence() int {

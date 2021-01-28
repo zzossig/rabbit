@@ -14,6 +14,5 @@ type abc struct {
 }
 
 func main() {
-	my := ss{zz: "Abc"}
-	fmt.Println(my.abc.b)
+	fmt.Println("eq" == "EQ")
 }

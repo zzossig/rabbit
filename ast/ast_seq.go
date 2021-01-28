@@ -15,14 +15,12 @@ func (e *Expr) exprSingle() {}
 func (e *Expr) String() string {
 	var sb strings.Builder
 
-	sb.WriteString("(")
 	for i, expr := range e.Exprs {
 		sb.WriteString(expr.String())
 		if i < len(e.Exprs)-1 {
 			sb.WriteString(", ")
 		}
 	}
-	sb.WriteString(")")
 
 	return sb.String()
 }

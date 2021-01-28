@@ -73,6 +73,12 @@ const (
 	OF         Type = "of"
 	AS         Type = "as"
 	IS         Type = "is"
+	EQV        Type = "eq"
+	NEV        Type = "ne"
+	LTV        Type = "lt"
+	LEV        Type = "le"
+	GTV        Type = "gt"
+	GEV        Type = "ge"
 	TO         Type = "to"
 	OR         Type = "or"
 	AND        Type = "and"
@@ -124,6 +130,12 @@ var keywords = map[string]Type{
 	"of":        OF,
 	"as":        AS,
 	"is":        IS,
+	"eq":        EQV,
+	"ne":        NEV,
+	"lt":        LTV,
+	"le":        LEV,
+	"gt":        GTV,
+	"ge":        GEV,
 	"to":        TO,
 	"or":        OR,
 	"and":       AND,

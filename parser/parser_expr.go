@@ -38,20 +38,24 @@ func (p *Parser) parseIntegerLiteral() ast.ExprSingle {
 	return &ast.IntegerLiteral{Value: int(value)}
 }
 
+func (p *Parser) parseStringLiteral() ast.ExprSingle {
+	return &ast.StringLiteral{Value: p.curToken.Literal}
+}
+
 func (p *Parser) parseGroupedExpr() ast.ExprSingle {
 	p.nextToken()
 
-	exp := p.parseExpression(LOWEST)
+	expr := p.parseExpression(LOWEST)
 
-	if !p.expectPeek(token.RPAREN) {
+	if !p.expectPeek(token.COMMA, token.RPAREN) {
 		return nil
 	}
 
-	return exp
+	return expr
 }
 
 func (p *Parser) parseAdditiveExpr(left ast.ExprSingle) ast.ExprSingle {
-	expression := &ast.AdditiveExpr{
+	expr := &ast.AdditiveExpr{
 		LeftExpr: left,
 		Token:    p.curToken,
 	}
@@ -61,14 +65,14 @@ func (p *Parser) parseAdditiveExpr(left ast.ExprSingle) ast.ExprSingle {
 	right := p.parseExpression(precedence)
 
 	if right != nil {
-		expression.RightExpr = right
+		expr.RightExpr = right
 	}
 
-	return expression
+	return expr
 }
 
 func (p *Parser) parseMultiplicativeExpr(left ast.ExprSingle) ast.ExprSingle {
-	expression := &ast.MultiplicativeExpr{
+	expr := &ast.MultiplicativeExpr{
 		LeftExpr: left,
 		Token:    p.curToken,
 	}
@@ -78,18 +82,111 @@ func (p *Parser) parseMultiplicativeExpr(left ast.ExprSingle) ast.ExprSingle {
 	right := p.parseExpression(precedence)
 
 	if right != nil {
-		expression.RightExpr = right
+		expr.RightExpr = right
 	}
 
-	return expression
+	return expr
 }
 
 func (p *Parser) parsePrefixExpr() ast.ExprSingle {
-	expression := &ast.UnaryExpr{Token: p.curToken}
+	expr := &ast.UnaryExpr{Token: p.curToken}
 
 	p.nextToken()
 
-	expression.ExprSingle = p.parseExpression(UNARY)
+	expr.ExprSingle = p.parseExpression(UNARY)
 
-	return expression
+	return expr
+}
+
+func (p *Parser) parseCurlyArrayExpr() ast.ExprSingle {
+	expr := &ast.CurlyArrayConstructor{}
+	enclosedExpr := &ast.EnclosedExpr{}
+
+	if !p.expectPeek(token.LBRACE) {
+		return nil
+	}
+
+	for !p.curTokenIs(token.RBRACE) {
+		e := p.parseExpression(LOWEST)
+		if e != nil {
+			enclosedExpr.Exprs = append(enclosedExpr.Exprs, e)
+		}
+		p.nextToken()
+	}
+
+	expr.ExprSingle = enclosedExpr
+	return expr
+}
+
+func (p *Parser) parseSquareArrayExpr() ast.ExprSingle {
+	expr := &ast.SquareArrayConstructor{}
+
+	p.nextToken()
+
+	for !p.curTokenIs(token.RBRACKET) {
+		e := p.parseExpression(LOWEST)
+		if e != nil {
+			expr.Exprs = append(expr.Exprs, e)
+		}
+		p.nextToken()
+	}
+
+	return expr
+}
+
+func (p *Parser) parseArrowExpr(left ast.ExprSingle) ast.ExprSingle {
+	expr := &ast.ArrowExpr{ExprSingle: left}
+
+	for p.curTokenIs(token.ARROW) || p.expectPeek(token.ARROW) {
+		b := ast.ArrowBinding{}
+		precedence := p.curPrecedence()
+		p.nextToken()
+
+		switch p.curToken.Type {
+		case token.VAR:
+			b.VarName.SetValue(p.curToken.Literal)
+			b.TypeID = 2
+		case token.LPAREN:
+			e := p.parseExpression(precedence)
+			b.ParenthesizedExpr.Exprs = append(b.ParenthesizedExpr.Exprs, e)
+			b.TypeID = 3
+		default:
+			b.EQName.SetValue(p.curToken.Literal)
+			b.TypeID = 1
+		}
+
+		b.ArgumentList = p.parseArgumentList()
+		expr.Bindings = append(expr.Bindings, b)
+	}
+
+	return expr
+}
+
+func (p *Parser) parseMapExpr(left ast.ExprSingle) ast.ExprSingle {
+	expr := &ast.SimpleMapExpr{LeftExpr: left, Token: p.curToken}
+
+	precedence := p.curPrecedence()
+	p.nextToken()
+	right := p.parseExpression(precedence)
+
+	if right != nil {
+		expr.RightExpr = right
+	}
+
+	return expr
+}
+
+func (p *Parser) parseComparisonExpr(left ast.ExprSingle) ast.ExprSingle {
+	expr := &ast.ComparisonExpr{LeftExpr: left}
+	expr.SetToken(p.curToken)
+
+	precedence := p.curPrecedence()
+	p.nextToken()
+	right := p.parseExpression(precedence)
+
+	if right != nil {
+		expr.RightExpr = right
+	}
+
+	return expr
 }
