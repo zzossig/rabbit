@@ -43,29 +43,21 @@ func (p *Parser) parseStringLiteral() ast.ExprSingle {
 }
 
 func (p *Parser) parseGroupedExpr() ast.ExprSingle {
-	p.nextToken()
-
-	tokens := p.collectTokenUntil(token.RPAREN)
-	isCommaExist := false
-	for _, t := range tokens {
-		if t.Type == token.COMMA {
-			isCommaExist = true
-			break
-		}
-	}
-
-	if isCommaExist {
+	if p.hasComma() {
 		return p.parseSequenceExpr()
 	}
 
+	p.nextToken()
+
 	expr := p.parseExpression(LOWEST)
-	if p.peekTokenIs(token.COMMA) || p.peekTokenIs(token.RPAREN) {
-		p.nextToken()
+	if !p.expectPeek(token.RPAREN) {
+		return nil
 	}
 	return expr
 }
 
 func (p *Parser) parseSequenceExpr() ast.ExprSingle {
+	p.nextToken()
 	expr := &ast.Expr{}
 
 	for !p.curTokenIs(token.RPAREN) {
@@ -207,13 +199,38 @@ func (p *Parser) parseComparisonExpr(left ast.ExprSingle) ast.ExprSingle {
 	expr := &ast.ComparisonExpr{LeftExpr: left}
 	expr.SetToken(p.curToken)
 
-	precedence := p.curPrecedence()
 	p.nextToken()
-	right := p.parseExpression(precedence)
+	right := p.parseExpression(LOWEST)
 
 	if right != nil {
 		expr.RightExpr = right
 	}
+
+	return expr
+}
+
+func (p *Parser) parseIfExpr() ast.ExprSingle {
+	expr := &ast.IfExpr{}
+
+	if !p.expectPeek(token.LPAREN) {
+		return nil
+	}
+
+	expr.TestExpr = p.parseExpression(LOWEST)
+
+	if !p.expectPeek(token.THEN) {
+		return nil
+	}
+	p.nextToken()
+
+	expr.ThenExpr = p.parseExpression(LOWEST)
+
+	if !p.expectPeek(token.ELSE) {
+		return nil
+	}
+	p.nextToken()
+
+	expr.ElseExpr = p.parseExpression(LOWEST)
 
 	return expr
 }

@@ -4,7 +4,7 @@ import "strings"
 
 // IfExpr ::= "if" "(" Expr ")" "then" ExprSingle "else" ExprSingle
 type IfExpr struct {
-	TestExpr Expr
+	TestExpr ExprSingle
 	ThenExpr ExprSingle
 	ElseExpr ExprSingle
 }

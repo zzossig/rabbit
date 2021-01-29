@@ -23,6 +23,11 @@ func New(input string) *Lexer {
 	return l
 }
 
+// Ch returns the ch field from the Lexer
+func (l *Lexer) Ch() byte {
+	return l.ch
+}
+
 // Pos returns the pos field from the Lexer
 func (l *Lexer) Pos() int {
 	return l.pos

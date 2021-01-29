@@ -111,10 +111,12 @@ func New(l *lexer.Lexer) *Parser {
 	p.prefixParseFns = make(map[token.Type]prefixParseFn)
 	p.prefixParseFns[token.INT] = p.parseIntegerLiteral
 	p.prefixParseFns[token.STRING] = p.parseStringLiteral
-	p.prefixParseFns[token.LPAREN] = p.parseSequenceExpr
+	p.prefixParseFns[token.LPAREN] = p.parseGroupedExpr
 	p.prefixParseFns[token.PLUS] = p.parsePrefixExpr
 	p.prefixParseFns[token.MINUS] = p.parsePrefixExpr
 	p.prefixParseFns[token.ARRAY] = p.parseCurlyArrayExpr
+	p.prefixParseFns[token.LBRACKET] = p.parseSquareArrayExpr
+	p.prefixParseFns[token.IF] = p.parseIfExpr
 
 	p.infixParseFns = make(map[token.Type]infixParseFn)
 	p.infixParseFns[token.PLUS] = p.parseAdditiveExpr
@@ -186,18 +188,33 @@ func (p *Parser) expectCur(t token.Type) bool {
 	return false
 }
 
-func (p *Parser) collectTokenUntil(t token.Type) []token.Token {
-	tokens := []token.Token{}
-	input := "5 + 5) * 2" //p.l.Input()[p.l.Pos():]
-	lex := lexer.New(input)
-	par := New(lex)
+// *must* used in a grouped expressions
+func (p *Parser) hasComma() bool {
+	input := p.l.Input()[p.l.Pos():]
+	lCnt := 0
+	rCnt := 0
+	cCnt := 0
 
-	for !par.curTokenIs(t) && !par.curTokenIs(token.EOF) {
-		tokens = append(tokens, par.curToken)
-		par.nextToken()
+	for _, ch := range input {
+		if ch == '(' {
+			lCnt++
+		}
+		if ch == ')' {
+			rCnt++
+		}
+		if ch == ',' {
+			cCnt++
+		}
+		if rCnt == lCnt+1 {
+			break
+		}
 	}
 
-	return tokens
+	if cCnt > 0 && rCnt == lCnt+1 {
+		return true
+	}
+
+	return false
 }
 
 func (p *Parser) peekPrecedence() int {
