@@ -91,11 +91,11 @@ type (
 // Parser object
 type Parser struct {
 	l      *lexer.Lexer
+	xpath  *ast.XPath
 	errors []error
 
 	curToken  token.Token
 	peekToken token.Token
-	lastToken token.Token
 
 	prefixParseFns map[token.Type]prefixParseFn
 	infixParseFns  map[token.Type]infixParseFn
@@ -111,7 +111,7 @@ func New(l *lexer.Lexer) *Parser {
 	p.prefixParseFns = make(map[token.Type]prefixParseFn)
 	p.prefixParseFns[token.INT] = p.parseIntegerLiteral
 	p.prefixParseFns[token.STRING] = p.parseStringLiteral
-	p.prefixParseFns[token.LPAREN] = p.parseGroupedExpr
+	p.prefixParseFns[token.LPAREN] = p.parseSequenceExpr
 	p.prefixParseFns[token.PLUS] = p.parsePrefixExpr
 	p.prefixParseFns[token.MINUS] = p.parsePrefixExpr
 	p.prefixParseFns[token.ARRAY] = p.parseCurlyArrayExpr
@@ -186,6 +186,20 @@ func (p *Parser) expectCur(t token.Type) bool {
 	return false
 }
 
+func (p *Parser) collectTokenUntil(t token.Type) []token.Token {
+	tokens := []token.Token{}
+	input := "5 + 5) * 2" //p.l.Input()[p.l.Pos():]
+	lex := lexer.New(input)
+	par := New(lex)
+
+	for !par.curTokenIs(t) && !par.curTokenIs(token.EOF) {
+		tokens = append(tokens, par.curToken)
+		par.nextToken()
+	}
+
+	return tokens
+}
+
 func (p *Parser) peekPrecedence() int {
 	if p, ok := precedences[p.peekToken.Type]; ok {
 		return p
@@ -204,6 +218,7 @@ func (p *Parser) curPrecedence() int {
 func (p *Parser) ParseXPath() *ast.XPath {
 	xpath := &ast.XPath{}
 	xpath.Items = []ast.Item{}
+	p.xpath = xpath
 
 	for !p.curTokenIs(token.EOF) {
 		items := p.parseItem()

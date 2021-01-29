@@ -45,10 +45,37 @@ func (p *Parser) parseStringLiteral() ast.ExprSingle {
 func (p *Parser) parseGroupedExpr() ast.ExprSingle {
 	p.nextToken()
 
-	expr := p.parseExpression(LOWEST)
+	tokens := p.collectTokenUntil(token.RPAREN)
+	isCommaExist := false
+	for _, t := range tokens {
+		if t.Type == token.COMMA {
+			isCommaExist = true
+			break
+		}
+	}
 
-	if !p.expectPeek(token.COMMA, token.RPAREN) {
-		return nil
+	if isCommaExist {
+		return p.parseSequenceExpr()
+	}
+
+	expr := p.parseExpression(LOWEST)
+	if p.peekTokenIs(token.COMMA) || p.peekTokenIs(token.RPAREN) {
+		p.nextToken()
+	}
+	return expr
+}
+
+func (p *Parser) parseSequenceExpr() ast.ExprSingle {
+	expr := &ast.Expr{}
+
+	for !p.curTokenIs(token.RPAREN) {
+		e := p.parseExpression(LOWEST)
+		expr.Exprs = append(expr.Exprs, e)
+
+		p.nextToken()
+		if p.curTokenIs(token.COMMA) {
+			p.nextToken()
+		}
 	}
 
 	return expr

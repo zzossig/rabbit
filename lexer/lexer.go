@@ -23,6 +23,16 @@ func New(input string) *Lexer {
 	return l
 }
 
+// Pos returns the pos field from the Lexer
+func (l *Lexer) Pos() int {
+	return l.pos
+}
+
+// Input returns the input field from the lexer
+func (l *Lexer) Input() string {
+	return l.input
+}
+
 // NextToken returns next token by reading the input characters
 func (l *Lexer) NextToken() token.Token {
 	var tok token.Token
