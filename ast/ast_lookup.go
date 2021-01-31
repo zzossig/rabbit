@@ -1,27 +1,19 @@
 package ast
 
-import "strings"
+import (
+	"strings"
 
-// Lookup ::= "?" KeySpecifier
-type Lookup struct {
-	KeySpecifier
-}
-
-func (l *Lookup) pal() {}
-func (l *Lookup) String() string {
-	var sb strings.Builder
-
-	sb.WriteString("?")
-	sb.WriteString(l.KeySpecifier.String())
-
-	return sb.String()
-}
+	"github.com/zzossig/xpath/token"
+)
 
 // UnaryLookup ::= "?" KeySpecifier
+// Unary lookup is used in predicates (e.g. $map[?name='Mike'] or with the simple map operator (e.g. $maps ! ?name='Mike').
 type UnaryLookup struct {
+	Token token.Token // token.UQUESTION
 	KeySpecifier
 }
 
+func (ul *UnaryLookup) exprSingle() {}
 func (ul *UnaryLookup) String() string {
 	var sb strings.Builder
 

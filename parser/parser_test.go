@@ -85,15 +85,15 @@ func TestArithmeticExpr(t *testing.T) {
 		},
 		{
 			"-1",
-			"(-1)",
+			"((-)1)",
 		},
 		{
 			"-(5 + 5)",
-			"(-(5 + 5))",
+			"((-)(5 + 5))",
 		},
 		{
 			"-(5 + 5) * 4",
-			"((-(5 + 5)) * 4)",
+			"(((-)(5 + 5)) * 4)",
 		},
 		{
 			"1,2,3",
@@ -211,7 +211,7 @@ func TestArrowExpr(t *testing.T) {
 	}
 }
 
-func TestMapExpr(t *testing.T) {
+func TestBangExpr(t *testing.T) {
 	tests := []struct {
 		input    string
 		expected string
@@ -293,6 +293,125 @@ func TestIfExpr(t *testing.T) {
 		{
 			"if   (0) then 2 else 4",
 			"if(0) then 2 else 4",
+		},
+	}
+
+	for _, tt := range tests {
+		l := lexer.New(tt.input)
+		p := New(l)
+		xpath := p.ParseXPath()
+
+		actual := xpath.String()
+		if actual != tt.expected {
+			t.Errorf("expected=%q, got=%q", tt.expected, actual)
+		}
+	}
+}
+
+func TestForExpr(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected string
+	}{
+		{
+			"for $i in (10,20),\n$j in (1,2)\nreturn ($i + $j)",
+			"for $i in (10, 20), $j in (1, 2) return ($i + $j)",
+		},
+	}
+
+	for _, tt := range tests {
+		l := lexer.New(tt.input)
+		p := New(l)
+		xpath := p.ParseXPath()
+
+		actual := xpath.String()
+		if actual != tt.expected {
+			t.Errorf("expected=%q, got=%q", tt.expected, actual)
+		}
+	}
+}
+
+func TestLetExpr(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected string
+	}{
+		{
+			"let $x := 1, $y := 2\nreturn $x + $y",
+			"let $x := 1, $y := 2 return ($x + $y)",
+		},
+	}
+
+	for _, tt := range tests {
+		l := lexer.New(tt.input)
+		p := New(l)
+		xpath := p.ParseXPath()
+
+		actual := xpath.String()
+		if actual != tt.expected {
+			t.Errorf("expected=%q, got=%q", tt.expected, actual)
+		}
+	}
+}
+
+func TestLogicalExpr(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected string
+	}{
+		{
+			"1 and 2",
+			"(1 and 2)",
+		},
+		{
+			"1 and 1+1 or 2",
+			"((1 and (1 + 1)) or 2)",
+		},
+	}
+
+	for _, tt := range tests {
+		l := lexer.New(tt.input)
+		p := New(l)
+		xpath := p.ParseXPath()
+
+		actual := xpath.String()
+		if actual != tt.expected {
+			t.Errorf("expected=%q, got=%q", tt.expected, actual)
+		}
+	}
+}
+
+func TestMapExpr(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected string
+	}{
+		{
+			"map { 'first' : 'Jenna', 'last' : 'Scott' }",
+			"map{'first': 'Jenna', 'last': 'Scott'}",
+		},
+	}
+
+	for _, tt := range tests {
+		l := lexer.New(tt.input)
+		p := New(l)
+		xpath := p.ParseXPath()
+
+		actual := xpath.String()
+		if actual != tt.expected {
+			t.Errorf("expected=%q, got=%q", tt.expected, actual)
+		}
+	}
+}
+
+func TestSeqTypeExpr(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected string
+	}{
+		{
+			"map { 'first' : 'Jenna', 'last' : 'Scott' }",
+			"map{'first': 'Jenna', 'last': 'Scott'}",
 		},
 	}
 

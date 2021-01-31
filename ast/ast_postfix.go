@@ -1,6 +1,10 @@
 package ast
 
-import "strings"
+import (
+	"strings"
+
+	"github.com/zzossig/xpath/token"
+)
 
 // PAL := Predicate | ArgumentList | Lookup **custom**
 type PAL interface {
@@ -53,6 +57,22 @@ func (pl *PredicateList) String() string {
 	for _, p := range pl.PL {
 		sb.WriteString(p.String())
 	}
+
+	return sb.String()
+}
+
+// Lookup ::= "?" KeySpecifier
+type Lookup struct {
+	Token token.Token // token.QUESTION
+	KeySpecifier
+}
+
+func (l *Lookup) pal() {}
+func (l *Lookup) String() string {
+	var sb strings.Builder
+
+	sb.WriteString("?")
+	sb.WriteString(l.KeySpecifier.String())
 
 	return sb.String()
 }

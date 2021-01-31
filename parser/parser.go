@@ -110,13 +110,28 @@ func New(l *lexer.Lexer) *Parser {
 
 	p.prefixParseFns = make(map[token.Type]prefixParseFn)
 	p.prefixParseFns[token.INT] = p.parseIntegerLiteral
+	p.prefixParseFns[token.DECIMAL] = p.parseDecimalLiteral
+	p.prefixParseFns[token.DOUBLE] = p.parseDoubleLiteral
 	p.prefixParseFns[token.STRING] = p.parseStringLiteral
+	p.prefixParseFns[token.DOLLAR] = p.parseVariable
 	p.prefixParseFns[token.LPAREN] = p.parseGroupedExpr
 	p.prefixParseFns[token.PLUS] = p.parsePrefixExpr
 	p.prefixParseFns[token.MINUS] = p.parsePrefixExpr
 	p.prefixParseFns[token.ARRAY] = p.parseCurlyArrayExpr
 	p.prefixParseFns[token.LBRACKET] = p.parseSquareArrayExpr
 	p.prefixParseFns[token.IF] = p.parseIfExpr
+	p.prefixParseFns[token.FOR] = p.parseForExpr
+	p.prefixParseFns[token.LET] = p.parseLetExpr
+	p.prefixParseFns[token.QUESTION] = p.parseUnaryLookupExpr
+	p.prefixParseFns[token.MAP] = p.parseMapExpr
+	p.prefixParseFns[token.SOME] = p.parseQuantifiedExpr
+	p.prefixParseFns[token.EVERY] = p.parseQuantifiedExpr
+	// FunctionItemExpr
+	// EnclosedExpr
+	// ContextItemExpr
+	// FunctionCall
+	// NamedFunctionRef
+	// InlineFunctionExpr
 
 	p.infixParseFns = make(map[token.Type]infixParseFn)
 	p.infixParseFns[token.PLUS] = p.parseAdditiveExpr
@@ -126,7 +141,7 @@ func New(l *lexer.Lexer) *Parser {
 	p.infixParseFns[token.IDIV] = p.parseMultiplicativeExpr
 	p.infixParseFns[token.MOD] = p.parseMultiplicativeExpr
 	p.infixParseFns[token.ARROW] = p.parseArrowExpr
-	p.infixParseFns[token.BANG] = p.parseMapExpr
+	p.infixParseFns[token.BANG] = p.parseBangExpr
 	p.infixParseFns[token.IS] = p.parseComparisonExpr
 	p.infixParseFns[token.EQ] = p.parseComparisonExpr
 	p.infixParseFns[token.NE] = p.parseComparisonExpr
@@ -134,14 +149,25 @@ func New(l *lexer.Lexer) *Parser {
 	p.infixParseFns[token.LE] = p.parseComparisonExpr
 	p.infixParseFns[token.GT] = p.parseComparisonExpr
 	p.infixParseFns[token.GE] = p.parseComparisonExpr
+	p.infixParseFns[token.DGT] = p.parseComparisonExpr
+	p.infixParseFns[token.DLT] = p.parseComparisonExpr
 	p.infixParseFns[token.EQV] = p.parseComparisonExpr
 	p.infixParseFns[token.NEV] = p.parseComparisonExpr
 	p.infixParseFns[token.LTV] = p.parseComparisonExpr
 	p.infixParseFns[token.LEV] = p.parseComparisonExpr
 	p.infixParseFns[token.GTV] = p.parseComparisonExpr
 	p.infixParseFns[token.GEV] = p.parseComparisonExpr
-	p.infixParseFns[token.DGT] = p.parseComparisonExpr
-	p.infixParseFns[token.DLT] = p.parseComparisonExpr
+	p.infixParseFns[token.OR] = p.parseOrExpr
+	p.infixParseFns[token.AND] = p.parseAndExpr
+	p.infixParseFns[token.TO] = p.parseRangeExpr
+	p.infixParseFns[token.UNION] = p.parseUnionExpr
+	p.infixParseFns[token.VBAR] = p.parseUnionExpr
+	p.infixParseFns[token.INTERSECT] = p.parseIntersectExceptExpr
+	p.infixParseFns[token.EXCEPT] = p.parseIntersectExceptExpr
+	p.infixParseFns[token.INSTANCE] = p.parseInstanceofExpr
+	p.infixParseFns[token.CAST] = p.parseCastExpr
+	p.infixParseFns[token.CASTABLE] = p.parseCastableExpr
+	p.infixParseFns[token.TREAT] = p.parseTreatExpr
 
 	// Read two tokens, so curToken and peekToken are both set
 	p.nextToken()

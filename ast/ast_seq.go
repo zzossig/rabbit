@@ -30,8 +30,8 @@ func (e *Expr) String() string {
 // RangeExpr ::= AdditiveExpr ( "to" AdditiveExpr )?
 type RangeExpr struct {
 	LeftExpr  ExprSingle
+	Token     token.Token // token.TO
 	RightExpr ExprSingle
-	Token     token.Token
 }
 
 func (re *RangeExpr) exprSingle() {}

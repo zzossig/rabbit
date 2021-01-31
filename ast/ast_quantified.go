@@ -8,9 +8,9 @@ import (
 
 // QuantifiedExpr ::= ("some" | "every") "$" VarName "in" ExprSingle ("," "$" VarName "in" ExprSingle)* "satisfies" ExprSingle
 type QuantifiedExpr struct {
-	Token         token.Token
-	SimpleQClause SimpleQClause
-	SatisExpr     ExprSingle
+	Token token.Token
+	ExprSingle
+	SimpleQClause
 }
 
 func (qe *QuantifiedExpr) exprSingle() {}
@@ -23,7 +23,7 @@ func (qe *QuantifiedExpr) String() string {
 	sb.WriteString(" ")
 	sb.WriteString("satisfies")
 	sb.WriteString(" ")
-	sb.WriteString(qe.SatisExpr.String())
+	sb.WriteString(qe.ExprSingle.String())
 
 	return sb.String()
 }

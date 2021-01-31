@@ -98,11 +98,7 @@ func (l *Lexer) NextToken() token.Token {
 	case '@':
 		tok = token.Token{Type: token.AT, Literal: "@"}
 	case '$':
-		l.readChar()
-		_, literal := l.readIdent()
-		tok.Literal = "$" + literal
-		tok.Type = token.VAR
-		return tok
+		tok = token.Token{Type: token.DOLLAR, Literal: "$"}
 	case '.':
 		if unicode.IsNumber(rune(l.peekChar())) {
 			l.readChar()

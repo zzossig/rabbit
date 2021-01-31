@@ -6,8 +6,8 @@ import (
 	"github.com/zzossig/xpath/token"
 )
 
-// ItemType ::= KindTest | ("item" "(" ")") | FunctionTest | MapTest | ArrayTest | AtomicOrUnionType | ParenthesizedItemType
-// TypeID ::= 	1				 | 2								| 3						 | 4			 | 5				 | 6								 | 7
+// ItemType ::= KindTest | ItemTest | FunctionTest | MapTest | ArrayTest | AtomicOrUnionType | ParenthesizedItemType
+// TypeID ::= 	1				 | 2				| 3						 | 4			 | 5				 | 6								 | 7
 type ItemType struct {
 	NodeTest
 	TypeID byte
@@ -77,7 +77,7 @@ func (at *ArrayTest) String() string {
 // SequenceType ::= ("empty-sequence" "(" ")") | (ItemType OccurrenceIndicator?)
 // TypeID ::= 			1													 | 2
 type SequenceType struct {
-	ItemType
+	NodeTest
 	OccurrenceIndicator
 	TypeID byte
 }
@@ -89,7 +89,7 @@ func (st *SequenceType) String() string {
 	case 1:
 		sb.WriteString("empty-sequence()")
 	case 2:
-		sb.WriteString(st.ItemType.NodeTest.String())
+		sb.WriteString(st.NodeTest.String())
 		sb.WriteString(st.OccurrenceIndicator.String())
 	default:
 		sb.WriteString("")
@@ -109,7 +109,7 @@ func (oi *OccurrenceIndicator) String() string {
 
 // ParenthesizedItemType ::= "(" ItemType ")"
 type ParenthesizedItemType struct {
-	ItemType
+	NodeTest
 }
 
 func (pit *ParenthesizedItemType) nodeTest() {}
@@ -117,7 +117,7 @@ func (pit *ParenthesizedItemType) String() string {
 	var sb strings.Builder
 
 	sb.WriteString("(")
-	sb.WriteString(pit.ItemType.String())
+	sb.WriteString(pit.NodeTest.String())
 	sb.WriteString(")")
 
 	return sb.String()
@@ -125,7 +125,7 @@ func (pit *ParenthesizedItemType) String() string {
 
 // DocumentTest ::= "document-node" "(" (ElementTest | SchemaElementTest)? ")"
 type DocumentTest struct {
-	KindTest
+	NodeTest
 }
 
 func (dt *DocumentTest) nodeTest() {}
@@ -133,8 +133,8 @@ func (dt *DocumentTest) String() string {
 	var sb strings.Builder
 
 	sb.WriteString("document-node(")
-	if dt.KindTest.TypeID != 0 {
-		sb.WriteString(dt.KindTest.String())
+	if dt.NodeTest != nil {
+		sb.WriteString(dt.NodeTest.String())
 	}
 	sb.WriteString(")")
 
@@ -227,7 +227,7 @@ func (sat *SchemaAttributeTest) String() string {
 
 // PITest ::= "processing-instruction" "(" (NCName | StringLiteral)? ")"
 type PITest struct {
-	Name NCName
+	NCName
 	StringLiteral
 }
 
@@ -236,8 +236,8 @@ func (pit *PITest) String() string {
 	var sb strings.Builder
 
 	sb.WriteString("processing-instruction(")
-	if pit.Name.Value() != "" {
-		sb.WriteString(pit.Name.Value())
+	if pit.NCName.Value() != "" {
+		sb.WriteString(pit.NCName.Value())
 	} else if pit.StringLiteral.String() != "" {
 		sb.WriteString(pit.StringLiteral.String())
 	}
@@ -279,7 +279,14 @@ func (akt *AnyKindTest) String() string {
 }
 
 // AtomicOrUnionType ::= EQName
-type AtomicOrUnionType = EQName
+type AtomicOrUnionType struct {
+	EQName
+}
+
+func (aout *AtomicOrUnionType) nodeTest() {}
+func (aout *AtomicOrUnionType) String() string {
+	return aout.EQName.Value()
+}
 
 // ElementDeclaration ::= ElementName
 type ElementDeclaration = ElementName
@@ -325,6 +332,7 @@ type TypeName = EQName
 // AnyFunctionTest ::= "function" "(" "*" ")"
 type AnyFunctionTest struct{}
 
+func (aft *AnyFunctionTest) nodeTest() {}
 func (aft *AnyFunctionTest) String() string {
 	return "function(*)"
 }

@@ -19,7 +19,6 @@ const (
 	BIF        Type = "built-in function"
 	AXIS       Type = "axis"
 	IDENT      Type = "identifier"
-	VAR        Type = "$variable"
 	XTYPE      Type = "xs:type"
 	XTYPEF     Type = "xs:type()"
 	STRING     Type = "string"
@@ -46,6 +45,7 @@ const (
 	BANG       Type = "!"
 	NE         Type = "!="
 	AT         Type = "@"
+	DOLLAR     Type = "$"
 	DOT        Type = "."
 	DDOT       Type = ".."
 	COMMA      Type = ","
@@ -68,6 +68,7 @@ const (
 	ELSE       Type = "else"
 	RETURN     Type = "return"
 	FOR        Type = "for"
+	IN         Type = "in"
 	SOME       Type = "some"
 	EVERY      Type = "every"
 	OF         Type = "of"
@@ -125,6 +126,7 @@ var keywords = map[string]Type{
 	"else":      ELSE,
 	"return":    RETURN,
 	"for":       FOR,
+	"in":        IN,
 	"some":      SOME,
 	"every":     EVERY,
 	"of":        OF,

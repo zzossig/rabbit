@@ -150,3 +150,60 @@ func IsNumber(str string) bool {
 	re := regexp.MustCompile(`^([1-9]{1}\d*|[0]?)(\.\d*)?(([e|E][+|-]?)?\d*)?$`)
 	return re.MatchString(str)
 }
+
+// IsOccurrenceIndicator checks
+// OccurrenceIndicator ::= "?" | "*" | "+"
+func IsOccurrenceIndicator(str string) bool {
+	re := regexp.MustCompile(`^(\?|\*|\+)$`)
+	return re.MatchString(str)
+}
+
+// CheckKindTest checks TypeID field
+func CheckKindTest(str string) byte {
+	switch str {
+	case "document-node":
+		return 1
+	case "element":
+		return 2
+	case "attribute":
+		return 3
+	case "schema-element":
+		return 4
+	case "schema-attribute":
+		return 5
+	case "processing-instruction":
+		return 6
+	case "comment":
+		return 7
+	case "text":
+		return 8
+	case "namespace-node":
+		return 9
+	case "node":
+		return 10
+	default:
+		return 0
+	}
+}
+
+// CheckItemType checks TypeID field
+func CheckItemType(str string) byte {
+	if CheckKindTest(str) != 0 {
+		return 1
+	}
+
+	switch str {
+	case "item":
+		return 2
+	case "function":
+		return 3
+	case "map":
+		return 4
+	case "array":
+		return 5
+	case "(":
+		return 7
+	default:
+		return 6
+	}
+}
