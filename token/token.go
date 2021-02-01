@@ -46,6 +46,7 @@ const (
 	NE         Type = "!="
 	AT         Type = "@"
 	DOLLAR     Type = "$"
+	HASH       Type = "#"
 	DOT        Type = "."
 	DDOT       Type = ".."
 	COMMA      Type = ","

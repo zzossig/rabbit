@@ -13,7 +13,8 @@ type UnaryLookup struct {
 	KeySpecifier
 }
 
-func (ul *UnaryLookup) exprSingle() {}
+func (ul *UnaryLookup) exprSingle()  {}
+func (ul *UnaryLookup) primaryExpr() {}
 func (ul *UnaryLookup) String() string {
 	var sb strings.Builder
 

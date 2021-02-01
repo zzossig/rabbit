@@ -1,6 +1,7 @@
 package parser
 
 import (
+	"strconv"
 	"strings"
 
 	"github.com/zzossig/xpath/ast"
@@ -8,29 +9,93 @@ import (
 	"github.com/zzossig/xpath/util"
 )
 
-// Argument
-// TypeDeclaration
-// Param
-// ParamList
+func (p *Parser) parseParam() ast.Param {
+	pr := ast.Param{}
+
+	p.nextToken()
+
+	pr.EQName = p.parseEQName()
+
+	if p.peekTokenIs(token.AS) {
+		p.nextToken()
+		pr.TypeDeclaration = p.parseTypeDeclaration()
+	}
+
+	return pr
+}
+
+func (p *Parser) parseParamList() ast.ParamList {
+	pl := ast.ParamList{}
+
+	for {
+		pr := p.parseParam()
+		pl.Params = append(pl.Params, pr)
+
+		if !p.peekTokenIs(token.COMMA) {
+			break
+		}
+		p.nextToken()
+		p.nextToken()
+	}
+
+	return pl
+}
+
+func (p *Parser) parsePredicate() ast.Predicate {
+	pc := ast.Predicate{}
+	p.nextToken()
+
+	e := p.parseExpr()
+	ex, ok := e.(*ast.Expr)
+	if !ok {
+		// TODO error
+		return pc
+	}
+	pc.Exprs = ex.Exprs
+
+	if !p.expectPeek(token.RBRACKET) {
+		return pc
+	}
+
+	return pc
+}
+
+func (p *Parser) parsePredicateList() ast.PredicateList {
+	pl := ast.PredicateList{}
+
+	for p.peekTokenIs(token.LBRACKET) {
+		p.nextToken()
+		pc := p.parsePredicate()
+		pl.PL = append(pl.PL, pc)
+	}
+
+	return pl
+}
+
+func (p *Parser) parseArgument() ast.Argument {
+	a := ast.Argument{}
+
+	switch p.curToken.Type {
+	case token.QUESTION:
+		a.ArgumentPlaceholder.Token = p.curToken
+	default:
+		a.ExprSingle = p.parseExprSingle(LOWEST)
+	}
+
+	return a
+}
 
 func (p *Parser) parseArgumentList() ast.ArgumentList {
 	al := ast.ArgumentList{}
 
-	if !p.expectPeek(token.LPAREN) {
+	if !p.curTokenIs(token.LPAREN) {
+		// TODO error
 		return al
 	}
 	p.nextToken()
 
 	for !p.curTokenIs(token.RPAREN) {
-		arg := ast.Argument{}
-
-		switch p.curToken.Type {
-		case token.QUESTION:
-			t := token.Token{Type: token.QUESTION, Literal: "?"}
-			arg.ArgumentPlaceholder.Token = t
-		default:
-			arg.ExprSingle = p.parseExpression(LOWEST)
-		}
+		arg := p.parseArgument()
 
 		al.Args = append(al.Args, arg)
 		p.nextToken()
@@ -57,7 +122,7 @@ func (p *Parser) parseArrowFunctionSpecifier() ast.ArrowFunctionSpecifier {
 		afs.TypeID = 2
 		afs.VarRef = *vr
 	case token.LPAREN:
-		e := p.parseExpression(LOWEST)
+		e := p.parseParenthesizedExpr()
 		pe, ok := e.(*ast.ParenthesizedExpr)
 		if !ok {
 			// TODO error
@@ -72,6 +137,24 @@ func (p *Parser) parseArrowFunctionSpecifier() ast.ArrowFunctionSpecifier {
 	}
 
 	return afs
+}
+
+func (p *Parser) parseNodeTest() ast.NodeTest {
+	t := p.parseItemType()
+	if tt, ok := t.(*ast.ItemType); ok {
+		if tt.TypeID != 0 {
+			return tt
+		}
+	}
+
+	t = p.parseKindTest()
+	if tt, ok := t.(*ast.KindTest); ok {
+		if tt.TypeID != 0 {
+			return tt
+		}
+	}
+
+	return nil
 }
 
 func (p *Parser) parseItemType() ast.NodeTest {
@@ -587,4 +670,97 @@ func (p *Parser) parseSingleType() ast.SingleType {
 	}
 
 	return st
+}
+
+func (p *Parser) parseTypeDeclaration() ast.TypeDeclaration {
+	p.nextToken()
+
+	td := ast.TypeDeclaration{}
+	td.SequenceType = p.parseSequenceType()
+
+	return td
+}
+
+func (p *Parser) parseEnclosedExpr() ast.EnclosedExpr {
+	ee := ast.EnclosedExpr{}
+
+	if !p.expectPeek(token.LBRACE) {
+		// TODO error
+		return ee
+	}
+
+	if !p.expectPeek(token.RBRACE) {
+		e := p.parseExpr()
+		er, ok := e.(*ast.Expr)
+		if !ok {
+			// TODO error
+			return ee
+		}
+		ee.Exprs = er.Exprs
+
+		if !p.expectPeek(token.RBRACE) {
+			// TODO error
+			return ee
+		}
+	}
+
+	return ee
+}
+
+func (p *Parser) parsePal() ast.PAL {
+	if p.curTokenIs(token.LBRACKET) {
+		pal := &ast.Predicate{}
+
+		e := p.parseExpr()
+		er, ok := e.(*ast.Expr)
+		if !ok {
+			return nil
+		}
+		pal.Exprs = er.Exprs
+
+		if !p.expectPeek(token.RBRACKET) {
+			return nil
+		}
+
+		return pal
+	} else if p.curTokenIs(token.LPAREN) {
+		pal := &ast.ArgumentList{}
+		pal.Args = p.parseArgumentList().Args
+		return pal
+	} else if p.curTokenIs(token.QUESTION) {
+		pal := &ast.Lookup{Token: p.curToken}
+		p.nextToken()
+		pal.KeySpecifier = p.parseKeySpecifier()
+		return pal
+	}
+
+	//panic
+	return nil
+}
+
+func (p *Parser) parseKeySpecifier() ast.KeySpecifier {
+	ks := ast.KeySpecifier{}
+
+	switch p.curToken.Type {
+	case token.ASTERISK:
+		ks.TypeID = 4
+	case token.INT:
+		ks.TypeID = 2
+		i, _ := strconv.Atoi(p.curToken.Literal)
+		ks.IntegerLiteral.Value = i
+	case token.LPAREN:
+		ks.TypeID = 3
+		pe := p.parseParenthesizedExpr()
+		pep, ok := pe.(*ast.ParenthesizedExpr)
+		if !ok {
+			// TODO error
+			return ks
+		}
+		ks.ParenthesizedExpr.Expr = pep.Expr
+	default:
+		ks.TypeID = 1
+		ks.NCName.SetValue(p.curToken.Literal)
+	}
+
+	return ks
 }

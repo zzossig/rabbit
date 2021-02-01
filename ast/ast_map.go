@@ -7,7 +7,8 @@ type MapConstructor struct {
 	Entries []MapConstructorEntry
 }
 
-func (mc *MapConstructor) exprSingle() {}
+func (mc *MapConstructor) exprSingle()  {}
+func (mc *MapConstructor) primaryExpr() {}
 func (mc *MapConstructor) String() string {
 	var sb strings.Builder
 

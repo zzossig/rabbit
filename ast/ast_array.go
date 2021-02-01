@@ -12,7 +12,8 @@ type ArrayConstructor struct {
 	TypeID byte
 }
 
-func (ac *ArrayConstructor) exprSingle() {}
+func (ac *ArrayConstructor) exprSingle()  {}
+func (ac *ArrayConstructor) primaryExpr() {}
 func (ac *ArrayConstructor) String() string {
 	switch ac.TypeID {
 	case 1:
@@ -29,7 +30,8 @@ type SquareArrayConstructor struct {
 	Exprs []ExprSingle
 }
 
-func (sac *SquareArrayConstructor) exprSingle() {}
+func (sac *SquareArrayConstructor) exprSingle()  {}
+func (sac *SquareArrayConstructor) primaryExpr() {}
 func (sac *SquareArrayConstructor) String() string {
 	var sb strings.Builder
 
@@ -47,15 +49,16 @@ func (sac *SquareArrayConstructor) String() string {
 
 // CurlyArrayConstructor ::= "array" EnclosedExpr
 type CurlyArrayConstructor struct {
-	ExprSingle
+	EnclosedExpr
 }
 
-func (cac *CurlyArrayConstructor) exprSingle() {}
+func (cac *CurlyArrayConstructor) exprSingle()  {}
+func (cac *CurlyArrayConstructor) primaryExpr() {}
 func (cac *CurlyArrayConstructor) String() string {
 	var sb strings.Builder
 
 	sb.WriteString("array")
-	sb.WriteString(cac.ExprSingle.String())
+	sb.WriteString(cac.EnclosedExpr.String())
 
 	return sb.String()
 }

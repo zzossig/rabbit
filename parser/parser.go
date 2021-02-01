@@ -109,6 +109,7 @@ func New(l *lexer.Lexer) *Parser {
 	}
 
 	p.prefixParseFns = make(map[token.Type]prefixParseFn)
+	p.prefixParseFns[token.IDENT] = p.parseIdentifier
 	p.prefixParseFns[token.INT] = p.parseIntegerLiteral
 	p.prefixParseFns[token.DECIMAL] = p.parseDecimalLiteral
 	p.prefixParseFns[token.DOUBLE] = p.parseDoubleLiteral
@@ -126,12 +127,12 @@ func New(l *lexer.Lexer) *Parser {
 	p.prefixParseFns[token.MAP] = p.parseMapExpr
 	p.prefixParseFns[token.SOME] = p.parseQuantifiedExpr
 	p.prefixParseFns[token.EVERY] = p.parseQuantifiedExpr
-	// FunctionItemExpr
-	// EnclosedExpr
-	// ContextItemExpr
-	// FunctionCall
-	// NamedFunctionRef
-	// InlineFunctionExpr
+	p.prefixParseFns[token.FUNCTION] = p.parseInlineFunctionExpr
+	p.prefixParseFns[token.DOT] = p.parseContextItemExpr
+	p.prefixParseFns[token.SLASH] = p.parsePathExpr
+	p.prefixParseFns[token.DSLASH] = p.parsePathExpr
+	p.prefixParseFns[token.DDOT] = p.parseAxisStep
+	p.prefixParseFns[token.AT] = p.parseAxisStep
 
 	p.infixParseFns = make(map[token.Type]infixParseFn)
 	p.infixParseFns[token.PLUS] = p.parseAdditiveExpr
@@ -168,6 +169,7 @@ func New(l *lexer.Lexer) *Parser {
 	p.infixParseFns[token.CAST] = p.parseCastExpr
 	p.infixParseFns[token.CASTABLE] = p.parseCastableExpr
 	p.infixParseFns[token.TREAT] = p.parseTreatExpr
+	p.infixParseFns[token.HASH] = p.parseNamedFunctionRef
 
 	// Read two tokens, so curToken and peekToken are both set
 	p.nextToken()
@@ -181,14 +183,31 @@ func (p *Parser) nextToken() {
 	p.peekToken = p.l.NextToken()
 }
 
-func (p *Parser) curTokenIs(t token.Type) bool {
+// cur t or t1 or t2 or ..
+func (p *Parser) curTokenIs(t token.Type, ts ...token.Type) bool {
+	if len(ts) > 0 {
+		for _, tt := range ts {
+			if p.curToken.Type == tt {
+				return true
+			}
+		}
+	}
 	return p.curToken.Type == t
 }
 
-func (p *Parser) peekTokenIs(t token.Type) bool {
+// peek t or t1 or t2 or ..
+func (p *Parser) peekTokenIs(t token.Type, ts ...token.Type) bool {
+	if len(ts) > 0 {
+		for _, tt := range ts {
+			if p.peekToken.Type == tt {
+				return true
+			}
+		}
+	}
 	return p.peekToken.Type == t
 }
 
+// expect t or t1 or t2 or ...
 func (p *Parser) expectPeek(t token.Type, ts ...token.Type) bool {
 	if p.peekTokenIs(t) {
 		p.nextToken()

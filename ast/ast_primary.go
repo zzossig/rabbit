@@ -105,6 +105,16 @@ func (sl *StringLiteral) String() string {
 	return sb.String()
 }
 
+// Identifier ::= EQName **custom**
+type Identifier struct {
+	EQName
+}
+
+func (i *Identifier) exprSingle() {}
+func (i *Identifier) String() string {
+	return i.EQName.Value()
+}
+
 // VarRef ::= "$" VarName
 type VarRef struct {
 	VarName

@@ -20,7 +20,7 @@ func (p *Parser) pass() []ast.Item {
 
 func (p *Parser) parseExpressionItem() []ast.Item {
 	item := &ast.ExprItem{Token: p.curToken}
-	item.Expression = p.parseExpression(LOWEST)
+	item.Expression = p.parseExprSingle(LOWEST)
 
 	if p.peekTokenIs(token.COMMA) {
 		p.nextToken()
