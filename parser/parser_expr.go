@@ -205,10 +205,6 @@ func (p *Parser) parseSequenceExpr() ast.ExprSingle {
 		}
 	}
 
-	if p.peekTokenIs(token.LBRACKET, token.LPAREN, token.QUESTION) {
-		return p.parsePostfixExpr(expr)
-	}
-
 	return expr
 }
 
@@ -317,8 +313,7 @@ func (p *Parser) parseMapExpr() ast.ExprSingle {
 	if !p.expectPeek(token.LBRACE) {
 		return nil
 	}
-	if p.peekTokenIs(token.RBRACE) {
-		p.nextToken()
+	if p.expectPeek(token.RBRACE) {
 		return expr
 	}
 
@@ -409,8 +404,13 @@ func (p *Parser) parseIfExpr() ast.ExprSingle {
 	if !p.expectPeek(token.LPAREN) {
 		return nil
 	}
+	p.nextToken()
 
-	expr.TestExpr = p.parseExprSingle(LOWEST)
+	expr.TestExpr = p.parseExpr()
+
+	if !p.expectPeek(token.RPAREN) {
+		return nil
+	}
 
 	if !p.expectPeek(token.THEN) {
 		return nil
@@ -524,7 +524,7 @@ func (p *Parser) parseQuantifiedExpr() ast.ExprSingle {
 		}
 	}
 
-	if !p.curTokenIs(token.SATISFIES) {
+	if !p.expectPeek(token.SATISFIES) {
 		// TODO error
 		return nil
 	}
@@ -653,8 +653,12 @@ func (p *Parser) parseInlineFunctionExpr() ast.ExprSingle {
 	}
 
 	if !p.expectPeek(token.RPAREN) {
-		expr.ParamList = p.parseParamList()
 		p.nextToken()
+		expr.ParamList = p.parseParamList()
+
+		if !p.expectPeek(token.RPAREN) {
+			return nil
+		}
 	}
 
 	if p.expectPeek(token.AS) {

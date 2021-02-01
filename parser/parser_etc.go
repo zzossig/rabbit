@@ -491,7 +491,9 @@ func (p *Parser) parseFunctionTest() ast.NodeTest {
 	} else {
 		tft := &ast.TypedFunctionTest{}
 
-		if !p.curTokenIs(token.RPAREN) {
+		if !p.expectPeek(token.RPAREN) {
+			p.nextToken()
+
 			for {
 				st := p.parseSequenceType()
 				tft.ParamSTypes = append(tft.ParamSTypes, st)
@@ -500,6 +502,10 @@ func (p *Parser) parseFunctionTest() ast.NodeTest {
 					break
 				}
 				p.nextToken()
+			}
+
+			if !p.expectPeek(token.RPAREN) {
+				return nil
 			}
 		}
 
@@ -527,6 +533,8 @@ func (p *Parser) parseMapTest() ast.NodeTest {
 	if p.expectPeek(token.ASTERISK) {
 		mt.NodeTest = &ast.AnyMapTest{}
 	} else {
+		p.nextToken()
+
 		tmt := &ast.TypedMapTest{}
 		tmt.AtomicOrUnionType.EQName = p.parseEQName()
 
@@ -559,6 +567,8 @@ func (p *Parser) parseArrayTest() ast.NodeTest {
 	if p.expectPeek(token.ASTERISK) {
 		at.NodeTest = &ast.AnyArrayTest{}
 	} else {
+		p.nextToken()
+
 		tat := &ast.TypedArrayTest{}
 		tat.SequenceType = p.parseSequenceType()
 
@@ -651,7 +661,7 @@ func (p *Parser) parseSequenceType() ast.SequenceType {
 	} else {
 		st.NodeTest = p.parseItemType()
 
-		if !p.expectPeek(token.RPAREN) {
+		if p.expectPeek(token.QUESTION, token.ASTERISK, token.PLUS) {
 			st.OccurrenceIndicator = ast.OccurrenceIndicator{Token: p.curToken}
 			p.nextToken()
 		}
@@ -684,12 +694,14 @@ func (p *Parser) parseTypeDeclaration() ast.TypeDeclaration {
 func (p *Parser) parseEnclosedExpr() ast.EnclosedExpr {
 	ee := ast.EnclosedExpr{}
 
-	if !p.expectPeek(token.LBRACE) {
+	if !p.curTokenIs(token.LBRACE) {
 		// TODO error
 		return ee
 	}
 
 	if !p.expectPeek(token.RBRACE) {
+		p.nextToken()
+
 		e := p.parseExpr()
 		er, ok := e.(*ast.Expr)
 		if !ok {

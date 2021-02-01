@@ -91,7 +91,6 @@ type (
 // Parser object
 type Parser struct {
 	l      *lexer.Lexer
-	xpath  *ast.XPath
 	errors []error
 
 	curToken  token.Token
@@ -220,7 +219,6 @@ func (p *Parser) expectPeek(t token.Type, ts ...token.Type) bool {
 			}
 		}
 	}
-	p.peekError(t)
 	return false
 }
 
@@ -279,15 +277,13 @@ func (p *Parser) curPrecedence() int {
 // ParseXPath generates ast tree
 func (p *Parser) ParseXPath() *ast.XPath {
 	xpath := &ast.XPath{}
-	xpath.Items = []ast.Item{}
-	p.xpath = xpath
 
-	for !p.curTokenIs(token.EOF) {
-		items := p.parseItem()
-		if items != nil {
-			xpath.Items = append(xpath.Items, items...)
-		}
-		p.nextToken()
+	e := p.parseExpr()
+	ex, ok := e.(*ast.Expr)
+	if !ok {
+		return nil
 	}
+	xpath.Exprs = ex.Exprs
+
 	return xpath
 }

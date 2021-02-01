@@ -120,19 +120,19 @@ func TestArrayExpr(t *testing.T) {
 	}{
 		{
 			"array{}",
-			"array{()}",
+			"array{}",
 		},
 		{
 			"array	{}",
-			"array{()}",
+			"array{}",
 		},
 		{
 			"(array{}, 1+1)",
-			"(array{()}, (1 + 1))",
+			"(array{}, (1 + 1))",
 		},
 		{
 			"(array{}, array {2 idiv 2 * 3})",
-			"(array{()}, array{(((2 idiv 2) * 3))})",
+			"(array{}, array{((2 idiv 2) * 3)})",
 		},
 		{
 			"array{1,2+3,4+5,6*(7+8)}",
@@ -140,7 +140,7 @@ func TestArrayExpr(t *testing.T) {
 		},
 		{
 			"array{2 div 2 * 2 idiv 2 mod 2}",
-			"array{(((((2 div 2) * 2) idiv 2) mod 2))}",
+			"array{((((2 div 2) * 2) idiv 2) mod 2)}",
 		},
 		{
 			"[1,2,3]",
