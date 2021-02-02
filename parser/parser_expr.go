@@ -2,6 +2,7 @@ package parser
 
 import (
 	"strconv"
+	"strings"
 
 	"github.com/zzossig/xpath/ast"
 	"github.com/zzossig/xpath/token"
@@ -60,34 +61,43 @@ func (p *Parser) parseIdentifier() ast.ExprSingle {
 		return fc
 	}
 
-	if util.IsForwardAxis(name.Value()) {
-		as := &ast.AxisStep{}
-
-		as.TypeID = 2
-		as.ForwardStep.TypeID = 1
-		as.ForwardAxis.SetValue(name.Value())
-
+	if p.peekTokenIs(token.DCOLON) {
 		p.nextToken()
-		as.ForwardStep.NodeTest = p.parseNodeTest()
 
-		p.nextToken()
-		as.PredicateList = p.parsePredicateList()
-		return as
-	}
+		var sb strings.Builder
+		sb.WriteString(name.Value())
+		sb.WriteString(p.curToken.Literal)
+		axis := sb.String()
 
-	if util.IsReverseAxis(name.Value()) {
-		as := &ast.AxisStep{}
+		if util.IsForwardAxis(axis) {
+			as := &ast.AxisStep{}
 
-		as.TypeID = 1
-		as.ReverseStep.TypeID = 1
-		as.ReverseAxis.SetValue(name.Value())
+			as.TypeID = 2
+			as.ForwardStep.TypeID = 1
+			as.ForwardAxis.SetValue(axis)
 
-		p.nextToken()
-		as.ReverseStep.NodeTest = p.parseNodeTest()
+			p.nextToken()
+			as.ForwardStep.NodeTest = p.parseNodeTest()
 
-		p.nextToken()
-		as.PredicateList = p.parsePredicateList()
-		return as
+			p.nextToken()
+			as.PredicateList = p.parsePredicateList()
+			return as
+		}
+
+		if util.IsReverseAxis(axis) {
+			as := &ast.AxisStep{}
+
+			as.TypeID = 1
+			as.ReverseStep.TypeID = 1
+			as.ReverseAxis.SetValue(axis)
+
+			p.nextToken()
+			as.ReverseStep.NodeTest = p.parseNodeTest()
+
+			p.nextToken()
+			as.PredicateList = p.parsePredicateList()
+			return as
+		}
 	}
 
 	i := &ast.Identifier{}
@@ -171,6 +181,10 @@ func (p *Parser) parseVariable() ast.ExprSingle {
 		fc.ArgumentList = p.parseArgumentList()
 		fc.EQName = name
 
+		if p.peekTokenIs(token.LBRACKET, token.LPAREN, token.QUESTION) {
+			return p.parsePostfixExpr(fc)
+		}
+
 		return fc
 	}
 
@@ -182,27 +196,44 @@ func (p *Parser) parseGroupedExpr() ast.ExprSingle {
 		return p.parseSequenceExpr()
 	}
 
-	p.nextToken()
+	if p.peekTokenIs(token.RPAREN) {
+		p.nextToken()
+		return &ast.ParenthesizedExpr{}
+	}
 
+	p.nextToken()
 	expr := p.parseExprSingle(LOWEST)
 	if !p.expectPeek(token.RPAREN) {
 		return nil
 	}
+
+	if p.peekTokenIs(token.LBRACKET, token.LPAREN, token.QUESTION) {
+		return p.parsePostfixExpr(expr)
+	}
+
 	return expr
 }
 
 func (p *Parser) parseSequenceExpr() ast.ExprSingle {
-	p.nextToken()
-	expr := &ast.Expr{}
+	expr := &ast.ParenthesizedExpr{}
 
-	for !p.curTokenIs(token.RPAREN) {
+	for {
+		p.nextToken()
 		e := p.parseExprSingle(LOWEST)
 		expr.Exprs = append(expr.Exprs, e)
 
-		p.nextToken()
-		if p.curTokenIs(token.COMMA) {
-			p.nextToken()
+		if !p.peekTokenIs(token.COMMA) {
+			break
 		}
+		p.nextToken()
+	}
+
+	if !p.expectPeek(token.RPAREN) {
+		return nil
+	}
+
+	if p.peekTokenIs(token.LBRACKET, token.LPAREN, token.QUESTION) {
+		return p.parsePostfixExpr(expr)
 	}
 
 	return expr
@@ -242,7 +273,7 @@ func (p *Parser) parseMultiplicativeExpr(left ast.ExprSingle) ast.ExprSingle {
 	return expr
 }
 
-func (p *Parser) parsePrefixExpr() ast.ExprSingle {
+func (p *Parser) parseUnaryExpr() ast.ExprSingle {
 	expr := &ast.UnaryExpr{}
 
 	if p.curTokenIs(token.PLUS) {
@@ -251,9 +282,9 @@ func (p *Parser) parsePrefixExpr() ast.ExprSingle {
 		expr.Token = token.Token{Type: token.UMINUS, Literal: "(-)"}
 	}
 
+	precedence := p.precedence(token.UPLUS)
 	p.nextToken()
-
-	expr.ExprSingle = p.parseExprSingle(UNARY)
+	expr.ExprSingle = p.parseExprSingle(precedence)
 
 	return expr
 }
@@ -284,6 +315,10 @@ func (p *Parser) parseCurlyArrayExpr() ast.ExprSingle {
 	}
 
 	expr.EnclosedExpr = p.parseEnclosedExpr()
+	if p.peekTokenIs(token.LBRACKET, token.LPAREN, token.QUESTION) {
+		return p.parsePostfixExpr(expr)
+	}
+
 	return expr
 }
 
@@ -313,7 +348,8 @@ func (p *Parser) parseMapExpr() ast.ExprSingle {
 	if !p.expectPeek(token.LBRACE) {
 		return nil
 	}
-	if p.expectPeek(token.RBRACE) {
+	if p.peekTokenIs(token.RBRACE) {
+		p.nextToken()
 		return expr
 	}
 
@@ -331,9 +367,10 @@ func (p *Parser) parseMapExpr() ast.ExprSingle {
 
 		expr.Entries = append(expr.Entries, entry)
 
-		if !p.expectPeek(token.COMMA) {
+		if !p.peekTokenIs(token.COMMA) {
 			break
 		}
+		p.nextToken()
 	}
 
 	if !p.expectPeek(token.RBRACE) {
@@ -369,7 +406,7 @@ func (p *Parser) parseArrowExpr(left ast.ExprSingle) ast.ExprSingle {
 	return expr
 }
 
-func (p *Parser) parseBangExpr(left ast.ExprSingle) ast.ExprSingle {
+func (p *Parser) parseSimpleMapExpr(left ast.ExprSingle) ast.ExprSingle {
 	expr := &ast.SimpleMapExpr{LeftExpr: left, Token: p.curToken}
 
 	precedence := p.curPrecedence()
@@ -449,9 +486,10 @@ func (p *Parser) parseForExpr() ast.ExprSingle {
 		binding.ExprSingle = p.parseExprSingle(LOWEST)
 		expr.Bindings = append(expr.Bindings, binding)
 
-		if !p.expectPeek(token.COMMA) {
+		if !p.peekTokenIs(token.COMMA) {
 			break
 		}
+		p.nextToken()
 	}
 
 	if !p.expectPeek(token.RETURN) {
@@ -519,9 +557,10 @@ func (p *Parser) parseQuantifiedExpr() ast.ExprSingle {
 		binding.ExprSingle = p.parseExprSingle(LOWEST)
 		expr.Bindings = append(expr.Bindings, binding)
 
-		if !p.expectPeek(token.COMMA) {
+		if !p.peekTokenIs(token.COMMA) {
 			break
 		}
+		p.nextToken()
 	}
 
 	if !p.expectPeek(token.SATISFIES) {
@@ -571,6 +610,16 @@ func (p *Parser) parseRangeExpr(left ast.ExprSingle) ast.ExprSingle {
 
 func (p *Parser) parseUnionExpr(left ast.ExprSingle) ast.ExprSingle {
 	expr := &ast.UnionExpr{Token: p.curToken}
+
+	precedence := p.curPrecedence()
+	p.nextToken()
+	expr.RightExpr = p.parseExprSingle(precedence)
+
+	return expr
+}
+
+func (p *Parser) parseStringConcatExpr(left ast.ExprSingle) ast.ExprSingle {
+	expr := &ast.StringConcatExpr{Token: p.curToken}
 
 	precedence := p.curPrecedence()
 	p.nextToken()
@@ -652,21 +701,22 @@ func (p *Parser) parseInlineFunctionExpr() ast.ExprSingle {
 		return nil
 	}
 
-	if !p.expectPeek(token.RPAREN) {
+	if !p.peekTokenIs(token.RPAREN) {
 		p.nextToken()
 		expr.ParamList = p.parseParamList()
-
-		if !p.expectPeek(token.RPAREN) {
-			return nil
-		}
 	}
 
-	if p.expectPeek(token.AS) {
+	if !p.expectPeek(token.RPAREN) {
+		return nil
+	}
+
+	if p.peekTokenIs(token.AS) {
+		p.nextToken()
 		p.nextToken()
 		expr.SequenceType = p.parseSequenceType()
-		p.nextToken()
 	}
 
+	p.nextToken()
 	expr.FunctionBody = p.parseEnclosedExpr()
 
 	if p.peekTokenIs(token.LBRACKET, token.LPAREN, token.QUESTION) {
@@ -791,6 +841,10 @@ func (p *Parser) parseParenthesizedExpr() ast.ExprSingle {
 		return nil
 	}
 
+	if p.peekTokenIs(token.LBRACKET, token.LPAREN, token.QUESTION) {
+		return p.parsePostfixExpr(pe)
+	}
+
 	return pe
 }
 
@@ -798,25 +852,20 @@ func (p *Parser) parsePathExpr() ast.ExprSingle {
 	expr := &ast.PathExpr{Token: p.curToken}
 
 	p.nextToken()
-	expr.ExprSingle = p.parseRelativePathExpr()
+	expr.ExprSingle = p.parseExprSingle(LOWEST)
 
 	return expr
 }
 
-func (p *Parser) parseRelativePathExpr() ast.ExprSingle {
-	expr := &ast.RelativePathExpr{}
+func (p *Parser) parseRelativePathExpr(left ast.ExprSingle) ast.ExprSingle {
+	expr := &ast.RelativePathExpr{LeftExpr: left, Token: p.curToken}
 
-	for {
-		t := p.curToken
-		e := p.parseExprSingle(LOWEST)
+	precedence := p.curPrecedence()
+	p.nextToken()
+	right := p.parseExprSingle(precedence)
 
-		expr.Exprs = append(expr.Exprs, e)
-		expr.Tokens = append(expr.Tokens, t)
-
-		if !p.peekTokenIs(token.SLASH, token.DSLASH) {
-			break
-		}
-		p.nextToken()
+	if right != nil {
+		expr.RightExpr = right
 	}
 
 	return expr

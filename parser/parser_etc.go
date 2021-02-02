@@ -2,7 +2,6 @@ package parser
 
 import (
 	"strconv"
-	"strings"
 
 	"github.com/zzossig/xpath/ast"
 	"github.com/zzossig/xpath/token"
@@ -481,7 +480,8 @@ func (p *Parser) parseFunctionTest() ast.NodeTest {
 		return nil
 	}
 
-	if p.expectPeek(token.ASTERISK) {
+	if p.peekTokenIs(token.ASTERISK) {
+		p.nextToken()
 		ft.NodeTest = &ast.AnyFunctionTest{}
 
 		if !p.expectPeek(token.RPAREN) {
@@ -491,16 +491,17 @@ func (p *Parser) parseFunctionTest() ast.NodeTest {
 	} else {
 		tft := &ast.TypedFunctionTest{}
 
-		if !p.expectPeek(token.RPAREN) {
+		if !p.peekTokenIs(token.RPAREN) {
 			p.nextToken()
 
 			for {
 				st := p.parseSequenceType()
 				tft.ParamSTypes = append(tft.ParamSTypes, st)
 
-				if !p.expectPeek(token.COMMA) {
+				if !p.peekTokenIs(token.COMMA) {
 					break
 				}
+				p.nextToken()
 				p.nextToken()
 			}
 
@@ -530,11 +531,11 @@ func (p *Parser) parseMapTest() ast.NodeTest {
 		return nil
 	}
 
-	if p.expectPeek(token.ASTERISK) {
+	if p.peekTokenIs(token.ASTERISK) {
+		p.nextToken()
 		mt.NodeTest = &ast.AnyMapTest{}
 	} else {
 		p.nextToken()
-
 		tmt := &ast.TypedMapTest{}
 		tmt.AtomicOrUnionType.EQName = p.parseEQName()
 
@@ -564,11 +565,11 @@ func (p *Parser) parseArrayTest() ast.NodeTest {
 		return nil
 	}
 
-	if p.expectPeek(token.ASTERISK) {
+	if p.peekTokenIs(token.ASTERISK) {
+		p.nextToken()
 		at.NodeTest = &ast.AnyArrayTest{}
 	} else {
 		p.nextToken()
-
 		tat := &ast.TypedArrayTest{}
 		tat.SequenceType = p.parseSequenceType()
 
@@ -585,7 +586,8 @@ func (p *Parser) parseArrayTest() ast.NodeTest {
 
 func (p *Parser) parseAtomicOrUnionType() ast.NodeTest {
 	aout := &ast.AtomicOrUnionType{}
-	aout.EQName.SetValue(p.curToken.Literal)
+	name := p.parseEQName()
+	aout.EQName.SetValue(name.Value())
 
 	return aout
 }
@@ -629,19 +631,7 @@ func (p *Parser) parseAttribNameOrWildcard() ast.AttribNameOrWildcard {
 
 func (p *Parser) parseEQName() ast.EQName {
 	name := ast.EQName{}
-
-	if p.peekTokenIs(token.COLON) {
-		var sb strings.Builder
-		sb.WriteString(p.curToken.Literal)
-		p.nextToken()
-		sb.WriteString(p.curToken.Literal)
-		p.nextToken()
-		sb.WriteString(p.curToken.Literal)
-
-		name.SetValue(sb.String())
-	} else {
-		name.SetValue(p.curToken.Literal)
-	}
+	name.SetValue(p.readEQName())
 
 	return name
 }
@@ -661,9 +651,9 @@ func (p *Parser) parseSequenceType() ast.SequenceType {
 	} else {
 		st.NodeTest = p.parseItemType()
 
-		if p.expectPeek(token.QUESTION, token.ASTERISK, token.PLUS) {
-			st.OccurrenceIndicator = ast.OccurrenceIndicator{Token: p.curToken}
+		if p.peekTokenIs(token.QUESTION, token.ASTERISK, token.PLUS) {
 			p.nextToken()
+			st.OccurrenceIndicator = ast.OccurrenceIndicator{Token: p.curToken}
 		}
 	}
 
@@ -694,12 +684,7 @@ func (p *Parser) parseTypeDeclaration() ast.TypeDeclaration {
 func (p *Parser) parseEnclosedExpr() ast.EnclosedExpr {
 	ee := ast.EnclosedExpr{}
 
-	if !p.curTokenIs(token.LBRACE) {
-		// TODO error
-		return ee
-	}
-
-	if !p.expectPeek(token.RBRACE) {
+	if !p.peekTokenIs(token.RBRACE) {
 		p.nextToken()
 
 		e := p.parseExpr()
@@ -709,11 +694,11 @@ func (p *Parser) parseEnclosedExpr() ast.EnclosedExpr {
 			return ee
 		}
 		ee.Exprs = er.Exprs
+	}
 
-		if !p.expectPeek(token.RBRACE) {
-			// TODO error
-			return ee
-		}
+	if !p.expectPeek(token.RBRACE) {
+		// TODO error
+		return ee
 	}
 
 	return ee
@@ -721,6 +706,7 @@ func (p *Parser) parseEnclosedExpr() ast.EnclosedExpr {
 
 func (p *Parser) parsePal() ast.PAL {
 	if p.curTokenIs(token.LBRACKET) {
+		p.nextToken()
 		pal := &ast.Predicate{}
 
 		e := p.parseExpr()
@@ -728,12 +714,12 @@ func (p *Parser) parsePal() ast.PAL {
 		if !ok {
 			return nil
 		}
-		pal.Exprs = er.Exprs
 
 		if !p.expectPeek(token.RBRACKET) {
 			return nil
 		}
 
+		pal.Exprs = er.Exprs
 		return pal
 	} else if p.curTokenIs(token.LPAREN) {
 		pal := &ast.ArgumentList{}

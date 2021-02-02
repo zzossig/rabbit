@@ -43,21 +43,22 @@ func (pe *PathExpr) String() string {
 
 // RelativePathExpr ::= StepExpr (("/" | "//") StepExpr)*
 type RelativePathExpr struct {
-	Exprs  []ExprSingle
-	Tokens []token.Token
+	LeftExpr  ExprSingle
+	RightExpr ExprSingle
+	Token     token.Token
 }
 
 func (rpe *RelativePathExpr) exprSingle() {}
 func (rpe *RelativePathExpr) String() string {
 	var sb strings.Builder
 
-	if len(rpe.Exprs) == len(rpe.Tokens)-1 {
-		for i := 0; i < len(rpe.Tokens); i++ {
-			sb.WriteString(rpe.Exprs[i].String())
-			sb.WriteString(rpe.Tokens[i].Literal)
-		}
-		sb.WriteString(rpe.Exprs[len(rpe.Tokens)].String())
-	}
+	sb.WriteString("(")
+	sb.WriteString(rpe.LeftExpr.String())
+	sb.WriteString(" ")
+	sb.WriteString(rpe.Token.Literal)
+	sb.WriteString(" ")
+	sb.WriteString(rpe.RightExpr.String())
+	sb.WriteString(")")
 
 	return sb.String()
 }

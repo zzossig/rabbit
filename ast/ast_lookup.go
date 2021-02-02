@@ -18,7 +18,7 @@ func (ul *UnaryLookup) primaryExpr() {}
 func (ul *UnaryLookup) String() string {
 	var sb strings.Builder
 
-	sb.WriteString("?")
+	sb.WriteString(ul.Token.Literal)
 	sb.WriteString(ul.KeySpecifier.String())
 
 	return sb.String()

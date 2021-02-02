@@ -1,26 +1,11 @@
 package main
 
-import "fmt"
+import (
+	"fmt"
 
-type bb interface {
-	abc()
-}
-
-type cc struct {
-	bb
-}
-
-func (c *cc) abc() {}
-
-type aa struct {
-	str string
-}
-
-func (a *aa) abc() {}
+	"github.com/zzossig/xpath/util"
+)
 
 func main() {
-	v1 := cc{}
-	fmt.Println(v1.bb == nil)
-	v1.bb = &aa{}
-	fmt.Println(v1.bb == nil)
+	fmt.Println(util.IsEQName("xs::aA1"))
 }

@@ -1,6 +1,33 @@
 package ast
 
-import "github.com/zzossig/xpath/util"
+import (
+	"strings"
+
+	"github.com/zzossig/xpath/token"
+	"github.com/zzossig/xpath/util"
+)
+
+// StringConcatExpr ::= RangeExpr ( "||" RangeExpr )*
+type StringConcatExpr struct {
+	LeftExpr  ExprSingle
+	RightExpr ExprSingle
+	Token     token.Token
+}
+
+func (sce *StringConcatExpr) exprSingle() {}
+func (sce *StringConcatExpr) String() string {
+	var sb strings.Builder
+
+	sb.WriteString("(")
+	sb.WriteString(sce.LeftExpr.String())
+	sb.WriteString(" ")
+	sb.WriteString(sce.Token.Literal)
+	sb.WriteString(" ")
+	sb.WriteString(sce.RightExpr.String())
+	sb.WriteString(")")
+
+	return sb.String()
+}
 
 // EQName ::= QName | URIQualifiedName
 type EQName struct {

@@ -1,9 +1,13 @@
 package parser
 
 import (
+	"strings"
+	"unicode"
+
 	"github.com/zzossig/xpath/ast"
 	"github.com/zzossig/xpath/lexer"
 	"github.com/zzossig/xpath/token"
+	"github.com/zzossig/xpath/util"
 )
 
 // Precedence Order
@@ -108,15 +112,14 @@ func New(l *lexer.Lexer) *Parser {
 	}
 
 	p.prefixParseFns = make(map[token.Type]prefixParseFn)
-	p.prefixParseFns[token.IDENT] = p.parseIdentifier
 	p.prefixParseFns[token.INT] = p.parseIntegerLiteral
 	p.prefixParseFns[token.DECIMAL] = p.parseDecimalLiteral
 	p.prefixParseFns[token.DOUBLE] = p.parseDoubleLiteral
 	p.prefixParseFns[token.STRING] = p.parseStringLiteral
 	p.prefixParseFns[token.DOLLAR] = p.parseVariable
 	p.prefixParseFns[token.LPAREN] = p.parseGroupedExpr
-	p.prefixParseFns[token.PLUS] = p.parsePrefixExpr
-	p.prefixParseFns[token.MINUS] = p.parsePrefixExpr
+	p.prefixParseFns[token.PLUS] = p.parseUnaryExpr
+	p.prefixParseFns[token.MINUS] = p.parseUnaryExpr
 	p.prefixParseFns[token.ARRAY] = p.parseCurlyArrayExpr
 	p.prefixParseFns[token.LBRACKET] = p.parseSquareArrayExpr
 	p.prefixParseFns[token.IF] = p.parseIfExpr
@@ -129,9 +132,21 @@ func New(l *lexer.Lexer) *Parser {
 	p.prefixParseFns[token.FUNCTION] = p.parseInlineFunctionExpr
 	p.prefixParseFns[token.DOT] = p.parseContextItemExpr
 	p.prefixParseFns[token.SLASH] = p.parsePathExpr
-	p.prefixParseFns[token.DSLASH] = p.parsePathExpr
 	p.prefixParseFns[token.DDOT] = p.parseAxisStep
 	p.prefixParseFns[token.AT] = p.parseAxisStep
+	p.prefixParseFns[token.IDENT] = p.parseIdentifier
+	p.prefixParseFns[token.ATTRIBUTE] = p.parseIdentifier
+	p.prefixParseFns[token.COMMENT] = p.parseIdentifier
+	p.prefixParseFns[token.DNODE] = p.parseIdentifier
+	p.prefixParseFns[token.ELEMENT] = p.parseIdentifier
+	p.prefixParseFns[token.ES] = p.parseIdentifier
+	p.prefixParseFns[token.ITEM] = p.parseIdentifier
+	p.prefixParseFns[token.NSNODE] = p.parseIdentifier
+	p.prefixParseFns[token.NODE] = p.parseIdentifier
+	p.prefixParseFns[token.PI] = p.parseIdentifier
+	p.prefixParseFns[token.SA] = p.parseIdentifier
+	p.prefixParseFns[token.SE] = p.parseIdentifier
+	p.prefixParseFns[token.TEXT] = p.parseIdentifier
 
 	p.infixParseFns = make(map[token.Type]infixParseFn)
 	p.infixParseFns[token.PLUS] = p.parseAdditiveExpr
@@ -141,7 +156,21 @@ func New(l *lexer.Lexer) *Parser {
 	p.infixParseFns[token.IDIV] = p.parseMultiplicativeExpr
 	p.infixParseFns[token.MOD] = p.parseMultiplicativeExpr
 	p.infixParseFns[token.ARROW] = p.parseArrowExpr
-	p.infixParseFns[token.BANG] = p.parseBangExpr
+	p.infixParseFns[token.BANG] = p.parseSimpleMapExpr
+	p.infixParseFns[token.OR] = p.parseOrExpr
+	p.infixParseFns[token.AND] = p.parseAndExpr
+	p.infixParseFns[token.TO] = p.parseRangeExpr
+	p.infixParseFns[token.UNION] = p.parseUnionExpr
+	p.infixParseFns[token.VBAR] = p.parseUnionExpr
+	p.infixParseFns[token.DVBAR] = p.parseStringConcatExpr
+	p.infixParseFns[token.INTERSECT] = p.parseIntersectExceptExpr
+	p.infixParseFns[token.EXCEPT] = p.parseIntersectExceptExpr
+	p.infixParseFns[token.INSTANCE] = p.parseInstanceofExpr
+	p.infixParseFns[token.CAST] = p.parseCastExpr
+	p.infixParseFns[token.CASTABLE] = p.parseCastableExpr
+	p.infixParseFns[token.TREAT] = p.parseTreatExpr
+	p.infixParseFns[token.HASH] = p.parseNamedFunctionRef
+	p.infixParseFns[token.DSLASH] = p.parseRelativePathExpr
 	p.infixParseFns[token.IS] = p.parseComparisonExpr
 	p.infixParseFns[token.EQ] = p.parseComparisonExpr
 	p.infixParseFns[token.NE] = p.parseComparisonExpr
@@ -157,18 +186,6 @@ func New(l *lexer.Lexer) *Parser {
 	p.infixParseFns[token.LEV] = p.parseComparisonExpr
 	p.infixParseFns[token.GTV] = p.parseComparisonExpr
 	p.infixParseFns[token.GEV] = p.parseComparisonExpr
-	p.infixParseFns[token.OR] = p.parseOrExpr
-	p.infixParseFns[token.AND] = p.parseAndExpr
-	p.infixParseFns[token.TO] = p.parseRangeExpr
-	p.infixParseFns[token.UNION] = p.parseUnionExpr
-	p.infixParseFns[token.VBAR] = p.parseUnionExpr
-	p.infixParseFns[token.INTERSECT] = p.parseIntersectExceptExpr
-	p.infixParseFns[token.EXCEPT] = p.parseIntersectExceptExpr
-	p.infixParseFns[token.INSTANCE] = p.parseInstanceofExpr
-	p.infixParseFns[token.CAST] = p.parseCastExpr
-	p.infixParseFns[token.CASTABLE] = p.parseCastableExpr
-	p.infixParseFns[token.TREAT] = p.parseTreatExpr
-	p.infixParseFns[token.HASH] = p.parseNamedFunctionRef
 
 	// Read two tokens, so curToken and peekToken are both set
 	p.nextToken()
@@ -222,15 +239,6 @@ func (p *Parser) expectPeek(t token.Type, ts ...token.Type) bool {
 	return false
 }
 
-func (p *Parser) expectCur(t token.Type) bool {
-	if p.curTokenIs(t) {
-		p.nextToken()
-		return true
-	}
-	p.peekError(t)
-	return false
-}
-
 // *must* used in a grouped expressions
 func (p *Parser) hasComma() bool {
 	input := p.l.Input()[p.l.Pos():]
@@ -258,6 +266,35 @@ func (p *Parser) hasComma() bool {
 	}
 
 	return false
+}
+
+// *must* used when current token is token.IDENT
+func (p *Parser) readEQName() string {
+	var sb strings.Builder
+	sb.WriteString(p.curToken.Literal) // cur token must token.IDENT
+
+	for {
+		frune := rune(p.l.Input()[p.l.FPos()])
+		if unicode.IsSpace(frune) {
+			break
+		}
+
+		name := sb.String() + p.peekToken.Literal
+		if !util.IsEQName(name) {
+			break
+		}
+		p.nextToken()
+		sb.WriteString(p.curToken.Literal)
+	}
+
+	return sb.String()
+}
+
+func (p *Parser) precedence(t token.Type) int {
+	if p, ok := precedences[t]; ok {
+		return p
+	}
+	return LOWEST
 }
 
 func (p *Parser) peekPrecedence() int {

@@ -32,8 +32,8 @@ func TestArithmeticExpr(t *testing.T) {
 			"(2 idiv 2)",
 		},
 		{
-			"(2 div 2)",
-			"(2 div 2)",
+			"-3 div 2",
+			"(((-)3) div 2)",
 		},
 		{
 			"(2 mod 2)",
@@ -80,6 +80,10 @@ func TestArithmeticExpr(t *testing.T) {
 			"((5 + 5) * 2)",
 		},
 		{
+			"2*(5 + 5)",
+			"(2 * (5 + 5))",
+		},
+		{
 			"2 div 2 * 2 idiv 2 mod 2",
 			"((((2 div 2) * 2) idiv 2) mod 2)",
 		},
@@ -97,7 +101,7 @@ func TestArithmeticExpr(t *testing.T) {
 		},
 		{
 			"1,2,3",
-			"(1, 2, 3)",
+			"1, 2, 3",
 		},
 	}
 
@@ -136,7 +140,23 @@ func TestArrayExpr(t *testing.T) {
 		},
 		{
 			"array{1,2+3,4+5,6*(7+8)}",
-			"array{(1, (2 + 3), (4 + 5), (6 * (7 + 8)))}",
+			"array{1, (2 + 3), (4 + 5), (6 * (7 + 8))}",
+		},
+		{
+			"array {2-2, 2 + 2,((1+2, (3+4, 5+6)),3,4+ 1,( 8 -1))}",
+			"array{(2 - 2), (2 + 2), (((1 + 2), ((3 + 4), (5 + 6))), 3, (4 + 1), (8 - 1))}",
+		},
+		{
+			"array{(5+5)*2}",
+			"array{((5 + 5) * 2)}",
+		},
+		{
+			"array { $x }",
+			"array{$x}",
+		},
+		{
+			"array { local:items() }",
+			"array{local:items()}",
 		},
 		{
 			"array{2 div 2 * 2 idiv 2 mod 2}",
@@ -145,6 +165,10 @@ func TestArrayExpr(t *testing.T) {
 		{
 			"[1,2,3]",
 			"[1, 2, 3]",
+		},
+		{
+			"[ (), (27, 17, 0)]",
+			"[(), (27, 17, 0)]",
 		},
 		{
 			`[ "Obama", "Nixon", "Kennedy" ]`,
@@ -211,26 +235,30 @@ func TestArrowExpr(t *testing.T) {
 	}
 }
 
-func TestBangExpr(t *testing.T) {
+func TestSimpleMapExpr(t *testing.T) {
 	tests := []struct {
 		input    string
 		expected string
 	}{
+		// {
+		// 	"1!1",
+		// 	"(1 ! 1)",
+		// },
+		// {
+		// 	"(1 +1 )!1-1",
+		// 	"(((1 + 1) ! 1) - 1)",
+		// },
+		// {
+		// 	"1 + 1 ! 1 * 1",
+		// 	"(1 + ((1 ! 1) * 1))",
+		// },
+		// {
+		// 	"(1!1,1,2,3)",
+		// 	"((1 ! 1), 1, 2, 3)",
+		// },
 		{
-			"1!1",
-			"(1 ! 1)",
-		},
-		{
-			"(1 +1 )!1-1",
-			"(((1 + 1) ! 1) - 1)",
-		},
-		{
-			"1 + 1 ! 1 * 1",
-			"(1 + ((1 ! 1) * 1))",
-		},
-		{
-			"(1!1,1,2,3)",
-			"((1 ! 1), 1, 2, 3)",
+			`child::div1 / child::para / string() ! concat("id-", .)`,
+			`(((child::div1/child::para)/string()) ! concat('id-', .))`,
 		},
 	}
 
@@ -261,7 +289,7 @@ func TestComparisonExpr(t *testing.T) {
 		},
 		{
 			"(1, 2) != (2, 3), 5, 6",
-			"(((1, 2) != (2, 3)), 5, 6)",
+			"((1, 2) != (2, 3)), 5, 6",
 		},
 		{
 			"((6,5),9,7,(1, 2) != (2, 3))",
@@ -390,6 +418,31 @@ func TestMapExpr(t *testing.T) {
 			"map { 'first' : 'Jenna', 'last' : 'Scott' }",
 			"map{'first': 'Jenna', 'last': 'Scott'}",
 		},
+		{
+			`map {
+				'book': map {
+					'title': 'Data on the Web',
+					'year': 2000,
+					'author': [
+						map {
+							'last': 'Abiteboul',
+							'first': 'Serge'
+						},
+						map {
+							'last': 'Buneman',
+							'first': 'Peter'
+						},
+						map {
+							'last': 'Suciu',
+							'first': 'Dan'
+						}
+					],
+					'publisher': 'Morgan Kaufmann Publishers',
+					'price': 39.95
+				}
+			}`,
+			`map{'book': map{'title': 'Data on the Web', 'year': 2000, 'author': [map{'last': 'Abiteboul', 'first': 'Serge'}, map{'last': 'Buneman', 'first': 'Peter'}, map{'last': 'Suciu', 'first': 'Dan'}], 'publisher': 'Morgan Kaufmann Publishers', 'price': 39.950000}}`,
+		},
 	}
 
 	for _, tt := range tests {
@@ -404,14 +457,81 @@ func TestMapExpr(t *testing.T) {
 	}
 }
 
-func TestSeqTypeExpr(t *testing.T) {
+func TestFunctionCall(t *testing.T) {
 	tests := []struct {
 		input    string
 		expected string
 	}{
 		{
-			"map { 'first' : 'Jenna', 'last' : 'Scott' }",
-			"map{'first': 'Jenna', 'last': 'Scott'}",
+			"[ 1, 2, 5, 7 ](4)",
+			"[1, 2, 5, 7](4)",
+		},
+		{
+			"[ [1, 2, 3], [4, 5, 6]](2)",
+			"[[1, 2, 3], [4, 5, 6]](2)",
+		},
+		{
+			"[(), [1, 2, 3],[4, 5, 6]](2)(2)",
+			"[(), [1, 2, 3], [4, 5, 6]](2)(2)",
+		},
+		{
+			"array { (), (27, 17, 0) }(1)",
+			"array{(), (27, 17, 0)}(1)",
+		},
+		{
+			"array { 'licorice', 'ginger' }(20)",
+			"array{'licorice', 'ginger'}(20)",
+		},
+	}
+
+	for _, tt := range tests {
+		l := lexer.New(tt.input)
+		p := New(l)
+		xpath := p.ParseXPath()
+
+		actual := xpath.String()
+		if actual != tt.expected {
+			t.Errorf("expected=%q, got=%q", tt.expected, actual)
+		}
+	}
+}
+
+func TestLookup(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected string
+	}{
+		{
+			"(1)[?2 = 5]",
+			"1[((?)2 = 5)]",
+		},
+		{
+			"(1,3)[?2 = 5]",
+			"(1, 3)[((?)2 = 5)]",
+		},
+		{
+			"([1,2,3], [1,2,5], [1,2])[?3 = 5]",
+			"([1, 2, 3], [1, 2, 5], [1, 2])[((?)3 = 5)]",
+		},
+		{
+			"[1, 2, 5, 7]?*",
+			"[1, 2, 5, 7]?*",
+		},
+		{
+			"[[1, 2, 3], [4, 5, 6]]?*",
+			"[[1, 2, 3], [4, 5, 6]]?*",
+		},
+		{
+			`map { "first" : "Jenna", "last" : "Scott" }?first`,
+			`map{'first': 'Jenna', 'last': 'Scott'}?first`,
+		},
+		{
+			"(map{'first': 'Tom'}, map{'first': 'Dick'}, map{'first': 'Harry'})?first",
+			"(map{'first': 'Tom'}, map{'first': 'Dick'}, map{'first': 'Harry'})?first",
+		},
+		{
+			"(map{'first': 'Tom'} ! ?first='Tom')",
+			"((map{'first': 'Tom'} ! (?)first) = 'Tom')",
 		},
 	}
 

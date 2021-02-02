@@ -33,6 +33,11 @@ func (l *Lexer) Pos() int {
 	return l.pos
 }
 
+// FPos returns the fPos field from the Lexer
+func (l *Lexer) FPos() int {
+	return l.fPos
+}
+
 // Input returns the input field from the lexer
 func (l *Lexer) Input() string {
 	return l.input
@@ -101,6 +106,8 @@ func (l *Lexer) NextToken() token.Token {
 		tok = token.Token{Type: token.DOLLAR, Literal: "$"}
 	case '#':
 		tok = token.Token{Type: token.HASH, Literal: "#"}
+	case '?':
+		tok = token.Token{Type: token.QUESTION, Literal: "?"}
 	case '.':
 		if unicode.IsNumber(rune(l.peekChar())) {
 			l.readChar()
@@ -150,9 +157,8 @@ func (l *Lexer) NextToken() token.Token {
 		tok = token.Token{Type: token.EOF, Literal: ""}
 	default:
 		if unicode.IsLetter(rune(l.ch)) {
-			initPos, literal := l.readIdent()
-			tok.Literal = literal
-			tok.Type = l.readIdentType(tok.Literal, initPos)
+			tok.Literal = l.readIdent()
+			tok.Type = token.LookupIdent(tok.Literal)
 			return tok
 		} else if unicode.IsDigit(rune(l.ch)) {
 			tok.Literal = l.readNumber()
@@ -251,12 +257,12 @@ func (l *Lexer) readNumber() string {
 	return l.input[pos:l.pos]
 }
 
-func (l *Lexer) readIdent() (int, string) {
+func (l *Lexer) readIdent() string {
 	pos := l.pos
 	for unicode.IsLetter(rune(l.ch)) || l.ch == '-' || l.ch == '_' {
 		l.readChar()
 	}
-	return pos, l.input[pos:l.pos]
+	return l.input[pos:l.pos]
 }
 
 func (l *Lexer) readAdditive() (token.Type, string) {
@@ -277,31 +283,4 @@ func (l *Lexer) readAdditive() (token.Type, string) {
 		return token.MINUS, "-"
 	}
 	return token.PLUS, "+"
-}
-
-func (l *Lexer) readIdentType(literal string, initPos int) token.Type {
-	if l.ch == ':' {
-		if l.peekChar() == ':' {
-			return token.AXIS
-		}
-		return token.NS
-	} else if l.ch == '(' || l.peekCharSS() == '(' {
-		if token.IsBIF(literal) {
-			return token.BIF
-		} else if token.IsXType(literal) {
-			return token.XTYPEF
-		} else if literal == "function" {
-			return token.FUNCTION
-		}
-	} else if initPos != 0 &&
-		(l.input[initPos-1] == '/' ||
-			l.input[initPos-1] == '@' ||
-			l.input[initPos-1] == '$') {
-		return token.IDENT
-	} else if initPos != 0 && l.input[initPos-1] == ':' { // xs:, math:, fn:, ...
-		if token.IsXType(literal) {
-			return token.XTYPE
-		}
-	}
-	return token.LookupIdent(literal)
 }
