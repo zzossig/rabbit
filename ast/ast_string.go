@@ -67,20 +67,20 @@ func (ncn *NCName) SetValue(name string) {
 	}
 }
 
-// Wildcard ::= "*" | (NCName ":*") | ("*:" NCName) | (BracedURILiteral "*")
-type Wildcard struct {
+// BracedURILiteral ::= "Q" "{" [^{}]* "}"
+type BracedURILiteral struct {
 	value string
 }
 
 // Value is a getter for the value field
-func (w *Wildcard) Value() string {
-	return w.value
+func (b *BracedURILiteral) Value() string {
+	return b.value
 }
 
 // SetValue is a setter for the value field
-func (w *Wildcard) SetValue(name string) {
-	if util.IsWildcard(name) {
-		w.value = name
+func (b *BracedURILiteral) SetValue(name string) {
+	if util.IsBracedURILiteral(name) {
+		b.value = name
 	} else {
 		// TODO occur error
 	}

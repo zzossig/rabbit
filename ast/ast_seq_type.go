@@ -313,7 +313,7 @@ type AttributeDeclaration = AttributeName
 // AttribNameOrWildcard ::= AttributeName | "*"
 type AttribNameOrWildcard struct {
 	AttributeName
-	WC string
+	WC string // "*"
 }
 
 func (aow *AttribNameOrWildcard) String() string {

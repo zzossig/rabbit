@@ -71,7 +71,6 @@ func (p *Parser) parseIdentifier() ast.ExprSingle {
 
 		if util.IsForwardAxis(axis) {
 			as := &ast.AxisStep{}
-
 			as.TypeID = 2
 			as.ForwardStep.TypeID = 1
 			as.ForwardAxis.SetValue(axis)
@@ -79,8 +78,11 @@ func (p *Parser) parseIdentifier() ast.ExprSingle {
 			p.nextToken()
 			as.ForwardStep.NodeTest = p.parseNodeTest()
 
-			p.nextToken()
-			as.PredicateList = p.parsePredicateList()
+			if p.peekTokenIs(token.LBRACKET) {
+				p.nextToken()
+				as.PredicateList = p.parsePredicateList()
+			}
+
 			return as
 		}
 
@@ -94,14 +96,21 @@ func (p *Parser) parseIdentifier() ast.ExprSingle {
 			p.nextToken()
 			as.ReverseStep.NodeTest = p.parseNodeTest()
 
-			p.nextToken()
-			as.PredicateList = p.parsePredicateList()
+			if p.peekTokenIs(token.LBRACKET) {
+				p.nextToken()
+				as.PredicateList = p.parsePredicateList()
+			}
+
 			return as
 		}
 	}
 
 	i := &ast.Identifier{}
 	i.EQName = name
+
+	if p.peekTokenIs(token.LBRACKET, token.LPAREN, token.QUESTION) {
+		return p.parsePostfixExpr(i)
+	}
 
 	return i
 }
@@ -538,7 +547,7 @@ func (p *Parser) parseLetExpr() ast.ExprSingle {
 }
 
 func (p *Parser) parseQuantifiedExpr() ast.ExprSingle {
-	expr := &ast.QuantifiedExpr{}
+	expr := &ast.QuantifiedExpr{Token: p.curToken}
 
 	for {
 		if !p.expectPeek(token.DOLLAR) {
@@ -595,7 +604,7 @@ func (p *Parser) parseAndExpr(left ast.ExprSingle) ast.ExprSingle {
 }
 
 func (p *Parser) parseRangeExpr(left ast.ExprSingle) ast.ExprSingle {
-	expr := &ast.RangeExpr{Token: p.curToken}
+	expr := &ast.RangeExpr{LeftExpr: left, Token: p.curToken}
 
 	precedence := p.curPrecedence()
 	p.nextToken()
@@ -762,55 +771,7 @@ func (p *Parser) parseContextItemExpr() ast.ExprSingle {
 }
 
 func (p *Parser) parsePostfixExpr(left ast.ExprSingle) ast.ExprSingle {
-	pe := &ast.PostfixExpr{}
-
-	switch left.(type) {
-	case *ast.IntegerLiteral:
-		e := left.(*ast.IntegerLiteral)
-		pe.PrimaryExpr = e
-	case *ast.DecimalLiteral:
-		e := left.(*ast.DecimalLiteral)
-		pe.PrimaryExpr = e
-	case *ast.DoubleLiteral:
-		e := left.(*ast.DoubleLiteral)
-		pe.PrimaryExpr = e
-	case *ast.StringLiteral:
-		e := left.(*ast.StringLiteral)
-		pe.PrimaryExpr = e
-	case *ast.VarRef:
-		e := left.(*ast.VarRef)
-		pe.PrimaryExpr = e
-	case *ast.ParenthesizedExpr:
-		e := left.(*ast.ParenthesizedExpr)
-		pe.PrimaryExpr = e
-	case *ast.ContextItemExpr:
-		e := left.(*ast.ContextItemExpr)
-		pe.PrimaryExpr = e
-	case *ast.FunctionCall:
-		e := left.(*ast.FunctionCall)
-		pe.PrimaryExpr = e
-	case *ast.NamedFunctionRef:
-		e := left.(*ast.NamedFunctionRef)
-		pe.PrimaryExpr = e
-	case *ast.InlineFunctionExpr:
-		e := left.(*ast.InlineFunctionExpr)
-		pe.PrimaryExpr = e
-	case *ast.MapConstructor:
-		e := left.(*ast.MapConstructor)
-		pe.PrimaryExpr = e
-	case *ast.SquareArrayConstructor:
-		e := left.(*ast.SquareArrayConstructor)
-		pe.PrimaryExpr = e
-	case *ast.CurlyArrayConstructor:
-		e := left.(*ast.CurlyArrayConstructor)
-		pe.PrimaryExpr = e
-	case *ast.UnaryLookup:
-		e := left.(*ast.UnaryLookup)
-		pe.PrimaryExpr = e
-	default:
-		// panic
-		return nil
-	}
+	pe := &ast.PostfixExpr{ExprSingle: left}
 
 	for p.peekTokenIs(token.LBRACKET, token.LPAREN, token.QUESTION) {
 		p.nextToken()
@@ -851,8 +812,9 @@ func (p *Parser) parseParenthesizedExpr() ast.ExprSingle {
 func (p *Parser) parsePathExpr() ast.ExprSingle {
 	expr := &ast.PathExpr{Token: p.curToken}
 
+	precedence := p.curPrecedence()
 	p.nextToken()
-	expr.ExprSingle = p.parseExprSingle(LOWEST)
+	expr.ExprSingle = p.parseExprSingle(precedence)
 
 	return expr
 }
@@ -888,8 +850,24 @@ func (p *Parser) parseAxisStep() ast.ExprSingle {
 		expr.ForwardStep.AbbrevForwardStep.NodeTest = p.parseNodeTest()
 	}
 
-	p.nextToken()
-	expr.PredicateList = p.parsePredicateList()
+	if p.peekTokenIs(token.LBRACKET) {
+		p.nextToken()
+		expr.PredicateList = p.parsePredicateList()
+	}
+
+	return expr
+}
+
+func (p *Parser) parseWildcard() ast.ExprSingle {
+	expr := &ast.Wildcard{}
+
+	if p.peekTokenIs(token.COLON) {
+		p.nextToken()
+		expr.NCName.SetValue(p.readNCName())
+		expr.TypeID = 3
+	} else {
+		expr.TypeID = 1
+	}
 
 	return expr
 }

@@ -98,6 +98,7 @@ type ForwardStep struct {
 	TypeID byte
 }
 
+func (fs *ForwardStep) exprSingle() {}
 func (fs *ForwardStep) String() string {
 	var sb strings.Builder
 
@@ -123,6 +124,7 @@ type ReverseStep struct {
 	TypeID byte
 }
 
+func (rs *ReverseStep) exprSingle() {}
 func (rs *ReverseStep) String() string {
 	var sb strings.Builder
 
@@ -164,6 +166,7 @@ type AbbrevForwardStep struct {
 	NodeTest
 }
 
+func (afs *AbbrevForwardStep) exprSingle() {}
 func (afs *AbbrevForwardStep) String() string {
 	var sb strings.Builder
 
@@ -197,20 +200,61 @@ type AbbrevReverseStep struct {
 	Token token.Token
 }
 
+func (ars *AbbrevReverseStep) exprSingle() {}
 func (ars *AbbrevReverseStep) String() string {
 	return ars.Token.Literal
 }
 
 // NameTest ::= EQName | Wildcard
+// TypeID ::= 	1			 | 2
 type NameTest struct {
 	EQName
 	Wildcard
+	TypeID byte
 }
 
 func (nt *NameTest) nodeTest() {}
 func (nt *NameTest) String() string {
-	if nt.EQName.Value() != "" {
+	switch nt.TypeID {
+	case 1:
 		return nt.EQName.Value()
+	case 2:
+		return nt.Wildcard.String()
+	default:
+		return ""
 	}
-	return nt.Wildcard.Value()
+}
+
+// Wildcard ::= "*" | (NCName ":*") | ("*:" NCName) | (BracedURILiteral "*")
+// TypeID				1		| 2							| 3							| 4
+type Wildcard struct {
+	NCName
+	BracedURILiteral
+	TypeID byte
+}
+
+func (w *Wildcard) exprSingle() {}
+func (w *Wildcard) nodeTest()   {}
+func (w *Wildcard) String() string {
+	var sb strings.Builder
+
+	switch w.TypeID {
+	case 1:
+		sb.WriteString("*")
+	case 2:
+		sb.WriteString(w.NCName.Value())
+		sb.WriteString(":")
+		sb.WriteString("*")
+	case 3:
+		sb.WriteString("*")
+		sb.WriteString(":")
+		sb.WriteString(w.NCName.Value())
+	case 4:
+		sb.WriteString(w.BracedURILiteral.Value())
+		sb.WriteString("*")
+	default:
+		sb.WriteString("")
+	}
+
+	return sb.String()
 }

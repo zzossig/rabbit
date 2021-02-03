@@ -240,25 +240,49 @@ func TestSimpleMapExpr(t *testing.T) {
 		input    string
 		expected string
 	}{
-		// {
-		// 	"1!1",
-		// 	"(1 ! 1)",
-		// },
-		// {
-		// 	"(1 +1 )!1-1",
-		// 	"(((1 + 1) ! 1) - 1)",
-		// },
-		// {
-		// 	"1 + 1 ! 1 * 1",
-		// 	"(1 + ((1 ! 1) * 1))",
-		// },
-		// {
-		// 	"(1!1,1,2,3)",
-		// 	"((1 ! 1), 1, 2, 3)",
-		// },
+		{
+			"1!1",
+			"(1 ! 1)",
+		},
+		{
+			"(1 +1 )!1-1",
+			"(((1 + 1) ! 1) - 1)",
+		},
+		{
+			"1 + 1 ! 1 * 1",
+			"(1 + ((1 ! 1) * 1))",
+		},
+		{
+			"(1!1,1,2,3)",
+			"((1 ! 1), 1, 2, 3)",
+		},
 		{
 			`child::div1 / child::para / string() ! concat("id-", .)`,
-			`(((child::div1/child::para)/string()) ! concat('id-', .))`,
+			`(((child::div1 / child::para) / string()) ! concat('id-', .))`,
+		},
+		{
+			"$emp ! (@if, @middle, @last)",
+			"($emp ! (@if, @middle, @last))",
+		},
+		{
+			"$docs ! ( //employee)",
+			"($docs ! //employee)",
+		},
+		{
+			"avg( //employee / salary ! translate(., '$', '') ! number(.))",
+			"avg((((//employee / salary) ! translate(., '$', '')) ! number(.)))",
+		},
+		{
+			`fn:string-join((1 to $n)!"*")`,
+			`fn:string-join(((1 to $n) ! '*'))`,
+		},
+		{
+			"$values!(.*.) => fn:sum()",
+			"($values ! (. * .)) => fn:sum()",
+		},
+		{
+			"string-join(ancestor::*!name(), '/')",
+			"string-join((ancestor::* ! name()), '/')",
 		},
 	}
 
@@ -299,6 +323,22 @@ func TestComparisonExpr(t *testing.T) {
 			`[ "Obama", "Nixon", "Kennedy" ] = "Kennedy"`,
 			`(['Obama', 'Nixon', 'Kennedy'] = 'Kennedy')`,
 		},
+		{
+			`$book1/author eq "Kennedy"`,
+			`(($book1 / author) eq 'Kennedy')`,
+		},
+		{
+			`[ "Kennedy" ] eq "Kennedy"`,
+			`(['Kennedy'] eq 'Kennedy')`,
+		},
+		{
+			"//product[weight gt 100]",
+			"//product[(weight gt 100)]",
+		},
+		{
+			`fn:QName('http://example.com/ns1', 'this:color') eq fn:QName('http://example.com/ns1', 'that:color')`,
+			`(fn:QName('http://example.com/ns1', 'this:color') eq fn:QName('http://example.com/ns1', 'that:color'))`,
+		},
 	}
 
 	for _, tt := range tests {
@@ -321,6 +361,14 @@ func TestIfExpr(t *testing.T) {
 		{
 			"if   (0) then 2 else 4",
 			"if(0) then 2 else 4",
+		},
+		{
+			"if ($widget1/unit-cost < $widget2/unit-cost) then $widget1 else $widget2",
+			"if((($widget1 / unit-cost) < ($widget2 / unit-cost))) then $widget1 else $widget2",
+		},
+		{
+			"if ($part/@discounted) then $part/wholesale else $part/retail",
+			"if(($part / @discounted)) then ($part / wholesale) else ($part / retail)",
 		},
 	}
 
@@ -345,6 +393,18 @@ func TestForExpr(t *testing.T) {
 			"for $i in (10,20),\n$j in (1,2)\nreturn ($i + $j)",
 			"for $i in (10, 20), $j in (1, 2) return ($i + $j)",
 		},
+		{
+			"for $a in fn:distinct-values(book/author) return ((book/author[. = $a])[1], book[author = $a]/title)",
+			"for $a in fn:distinct-values((book / author)) return ((book / author[(. = $a)])[1], (book[(author = $a)] / title))",
+		},
+		{
+			"for $x in $z, $y in f($x) return g($x, $y)",
+			"for $x in $z, $y in f($x) return g($x, $y)",
+		},
+		{
+			"fn:sum(for $i in order-item return $i/@price * $i/@qty)",
+			"fn:sum(for $i in order-item return (($i / @price) * ($i / @qty)))",
+		},
 	}
 
 	for _, tt := range tests {
@@ -367,6 +427,10 @@ func TestLetExpr(t *testing.T) {
 		{
 			"let $x := 1, $y := 2\nreturn $x + $y",
 			"let $x := 1, $y := 2 return ($x + $y)",
+		},
+		{
+			"let $x := doc('a.xml')/*, $y := $x//* return $y[@value gt $x/@min]",
+			"let $x := (doc('a.xml') / *), $y := ($x // *) return $y[(@value gt ($x / @min))]",
 		},
 	}
 
@@ -532,6 +596,41 @@ func TestLookup(t *testing.T) {
 		{
 			"(map{'first': 'Tom'} ! ?first='Tom')",
 			"((map{'first': 'Tom'} ! (?)first) = 'Tom')",
+		},
+	}
+
+	for _, tt := range tests {
+		l := lexer.New(tt.input)
+		p := New(l)
+		xpath := p.ParseXPath()
+
+		actual := xpath.String()
+		if actual != tt.expected {
+			t.Errorf("expected=%q, got=%q", tt.expected, actual)
+		}
+	}
+}
+
+func TestQuantifiedExpr(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected string
+	}{
+		{
+			"every $part in /parts/part satisfies $part/@discounted",
+			"every $part in (/parts / part) satisfies ($part / @discounted)",
+		},
+		{
+			"some $emp in /emps/employee satisfies ($emp/bonus > 0.25 * $emp/salary)",
+			"some $emp in (/emps / employee) satisfies (($emp / bonus) > (0.250000 * ($emp / salary)))",
+		},
+		{
+			"some $x in (1, 2, 3), $y in (2, 3, 4) satisfies $x + $y = 4",
+			"some $x in (1, 2, 3), $y in (2, 3, 4) satisfies (($x + $y) = 4)",
+		},
+		{
+			"every $x in (1, 2, 'cat') satisfies $x * 2 = 4",
+			"every $x in (1, 2, 'cat') satisfies (($x * 2) = 4)",
 		},
 	}
 

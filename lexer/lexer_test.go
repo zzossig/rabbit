@@ -38,6 +38,7 @@ func TestNextToken(t *testing.T) {
 			return $area($r)
 		, '6' cast           as   	xs:integer
 		, //return[@return="return"]
+		, 1 eq 2
 	)`
 
 	tokens := []struct {
@@ -196,6 +197,10 @@ func TestNextToken(t *testing.T) {
 		{token.EQ, "="},
 		{token.STRING, "return"},
 		{token.RBRACKET, "]"},
+		{token.COMMA, ","},
+		{token.INT, "1"},
+		{token.EQV, "eq"},
+		{token.INT, "2"},
 		{token.RPAREN, ")"},
 	}
 

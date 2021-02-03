@@ -2,6 +2,7 @@ package parser
 
 import (
 	"strconv"
+	"strings"
 
 	"github.com/zzossig/xpath/ast"
 	"github.com/zzossig/xpath/token"
@@ -139,8 +140,8 @@ func (p *Parser) parseArrowFunctionSpecifier() ast.ArrowFunctionSpecifier {
 }
 
 func (p *Parser) parseNodeTest() ast.NodeTest {
-	t := p.parseItemType()
-	if tt, ok := t.(*ast.ItemType); ok {
+	t := p.parseNameTest()
+	if tt, ok := t.(*ast.NameTest); ok {
 		if tt.TypeID != 0 {
 			return tt
 		}
@@ -224,6 +225,60 @@ func (p *Parser) parseKindTest() ast.NodeTest {
 		test.TypeID = 10
 	default:
 		test.TypeID = 0
+	}
+
+	return test
+}
+
+func (p *Parser) parseNameTest() ast.NodeTest {
+	test := &ast.NameTest{}
+
+	switch p.curToken.Type {
+	case token.ASTERISK:
+		if p.peekTokenIs(token.COLON) {
+			p.nextToken()
+			test.Wildcard.NCName.SetValue(p.readNCName())
+			test.Wildcard.TypeID = 3
+			test.TypeID = 2
+		} else {
+			test.Wildcard.TypeID = 1
+			test.TypeID = 2
+		}
+	default:
+		if p.curToken.Literal == "Q" && p.peekTokenIs(token.LBRACE) {
+			bracedURI := p.readBracedURI()
+			if !p.expectPeek(token.ASTERISK) {
+				return nil
+			}
+			test.Wildcard.BracedURILiteral.SetValue(bracedURI)
+			test.Wildcard.TypeID = 4
+			test.TypeID = 2
+		} else {
+			name := p.readNCName()
+			if !p.peekTokenIs(token.COLON) {
+				test.TypeID = 1
+				test.EQName.SetValue(name)
+			} else {
+				p.nextToken()
+				if p.peekTokenIs(token.ASTERISK) {
+					p.nextToken()
+					test.Wildcard.TypeID = 2
+					test.Wildcard.NCName.SetValue(name)
+					test.TypeID = 2
+				} else {
+					p.nextToken()
+					localPart := p.readNCName()
+
+					var sb strings.Builder
+					sb.WriteString(name)
+					sb.WriteString(":")
+					sb.WriteString(localPart)
+
+					test.TypeID = 1
+					test.EQName.SetValue(sb.String())
+				}
+			}
+		}
 	}
 
 	return test

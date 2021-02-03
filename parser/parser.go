@@ -2,7 +2,6 @@ package parser
 
 import (
 	"strings"
-	"unicode"
 
 	"github.com/zzossig/xpath/ast"
 	"github.com/zzossig/xpath/lexer"
@@ -52,6 +51,7 @@ var precedences = map[token.Type]int{
 	token.LE:         EQ,
 	token.GT:         EQ,
 	token.GE:         EQ,
+	token.EQV:        EQ,
 	token.NEV:        EQ,
 	token.LTV:        EQ,
 	token.LEV:        EQ,
@@ -100,6 +100,9 @@ type Parser struct {
 	curToken  token.Token
 	peekToken token.Token
 
+	peekSpace bool
+	remaining string
+
 	prefixParseFns map[token.Type]prefixParseFn
 	infixParseFns  map[token.Type]infixParseFn
 }
@@ -122,6 +125,7 @@ func New(l *lexer.Lexer) *Parser {
 	p.prefixParseFns[token.MINUS] = p.parseUnaryExpr
 	p.prefixParseFns[token.ARRAY] = p.parseCurlyArrayExpr
 	p.prefixParseFns[token.LBRACKET] = p.parseSquareArrayExpr
+	p.prefixParseFns[token.ASTERISK] = p.parseWildcard
 	p.prefixParseFns[token.IF] = p.parseIfExpr
 	p.prefixParseFns[token.FOR] = p.parseForExpr
 	p.prefixParseFns[token.LET] = p.parseLetExpr
@@ -132,6 +136,7 @@ func New(l *lexer.Lexer) *Parser {
 	p.prefixParseFns[token.FUNCTION] = p.parseInlineFunctionExpr
 	p.prefixParseFns[token.DOT] = p.parseContextItemExpr
 	p.prefixParseFns[token.SLASH] = p.parsePathExpr
+	p.prefixParseFns[token.DSLASH] = p.parsePathExpr
 	p.prefixParseFns[token.DDOT] = p.parseAxisStep
 	p.prefixParseFns[token.AT] = p.parseAxisStep
 	p.prefixParseFns[token.IDENT] = p.parseIdentifier
@@ -170,6 +175,7 @@ func New(l *lexer.Lexer) *Parser {
 	p.infixParseFns[token.CASTABLE] = p.parseCastableExpr
 	p.infixParseFns[token.TREAT] = p.parseTreatExpr
 	p.infixParseFns[token.HASH] = p.parseNamedFunctionRef
+	p.infixParseFns[token.SLASH] = p.parseRelativePathExpr
 	p.infixParseFns[token.DSLASH] = p.parseRelativePathExpr
 	p.infixParseFns[token.IS] = p.parseComparisonExpr
 	p.infixParseFns[token.EQ] = p.parseComparisonExpr
@@ -196,6 +202,8 @@ func New(l *lexer.Lexer) *Parser {
 
 func (p *Parser) nextToken() {
 	p.curToken = p.peekToken
+	p.peekSpace = p.l.PeekSpace()
+	p.remaining = p.l.Remaining()
 	p.peekToken = p.l.NextToken()
 }
 
@@ -241,12 +249,11 @@ func (p *Parser) expectPeek(t token.Type, ts ...token.Type) bool {
 
 // *must* used in a grouped expressions
 func (p *Parser) hasComma() bool {
-	input := p.l.Input()[p.l.Pos():]
 	lCnt := 0
 	rCnt := 0
 	cCnt := 0
 
-	for _, ch := range input {
+	for _, ch := range p.remaining {
 		if ch == '(' {
 			lCnt++
 		}
@@ -269,14 +276,51 @@ func (p *Parser) hasComma() bool {
 }
 
 // *must* used when current token is token.IDENT
+func (p *Parser) readNCName() string {
+	var sb strings.Builder
+	sb.WriteString(p.curToken.Literal) // cur token must token.IDENT
+
+	for {
+		if p.peekTokenIs(token.EOF) {
+			break
+		}
+		if p.peekSpace {
+			break
+		}
+
+		name := sb.String() + p.peekToken.Literal
+		if !util.IsNCName(name) {
+			break
+		}
+		p.nextToken()
+		sb.WriteString(p.curToken.Literal)
+	}
+
+	return sb.String()
+}
+
+// *must* used when current token is token.IDENT
 func (p *Parser) readEQName() string {
 	var sb strings.Builder
 	sb.WriteString(p.curToken.Literal) // cur token must token.IDENT
 
 	for {
-		frune := rune(p.l.Input()[p.l.FPos()])
-		if unicode.IsSpace(frune) {
+		if p.peekTokenIs(token.EOF) {
 			break
+		}
+		if p.peekSpace {
+			break
+		}
+		if p.peekTokenIs(token.COLON) {
+			p.nextToken()
+			sb.WriteString(p.curToken.Literal)
+
+			if !util.IsNCName(p.peekToken.Literal) {
+				// TODO error
+				return sb.String()
+			}
+
+			continue
 		}
 
 		name := sb.String() + p.peekToken.Literal
@@ -286,6 +330,31 @@ func (p *Parser) readEQName() string {
 		p.nextToken()
 		sb.WriteString(p.curToken.Literal)
 	}
+
+	return sb.String()
+}
+
+// read Q{uri}
+func (p *Parser) readBracedURI() string {
+	var sb strings.Builder
+	sb.WriteString(p.curToken.Literal)
+
+	if !p.expectPeek(token.LBRACE) {
+		// TODO error
+		return sb.String()
+	}
+	sb.WriteString(p.curToken.Literal)
+
+	for !p.peekTokenIs(token.RBRACE) && !p.peekTokenIs(token.EOF) {
+		p.nextToken()
+		sb.WriteString(p.curToken.Literal)
+	}
+
+	if !p.expectPeek(token.RBRACE) {
+		// TODO error
+		return sb.String()
+	}
+	sb.WriteString(p.curToken.Literal)
 
 	return sb.String()
 }

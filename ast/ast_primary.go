@@ -111,7 +111,8 @@ type Identifier struct {
 	EQName
 }
 
-func (i *Identifier) exprSingle() {}
+func (i *Identifier) exprSingle()  {}
+func (i *Identifier) primaryExpr() {}
 func (i *Identifier) String() string {
 	return i.EQName.Value()
 }

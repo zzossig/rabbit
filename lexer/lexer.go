@@ -23,24 +23,14 @@ func New(input string) *Lexer {
 	return l
 }
 
-// Ch returns the ch field from the Lexer
-func (l *Lexer) Ch() byte {
-	return l.ch
+// PeekSpace checks if next char is space or not
+func (l *Lexer) PeekSpace() bool {
+	return unicode.IsSpace(rune(l.ch))
 }
 
-// Pos returns the pos field from the Lexer
-func (l *Lexer) Pos() int {
-	return l.pos
-}
-
-// FPos returns the fPos field from the Lexer
-func (l *Lexer) FPos() int {
-	return l.fPos
-}
-
-// Input returns the input field from the lexer
-func (l *Lexer) Input() string {
-	return l.input
+// Remaining returns not yet parsed input
+func (l *Lexer) Remaining() string {
+	return l.input[l.pos:]
 }
 
 // NextToken returns next token by reading the input characters
@@ -197,25 +187,6 @@ func (l *Lexer) peekChar() byte {
 		return 0
 	}
 	return l.input[l.fPos]
-}
-
-// peek char skip space
-func (l *Lexer) peekCharSS() byte {
-	var ch byte
-
-	for i := 0; i < len(l.input); i++ {
-		if l.fPos+i >= len(l.input) {
-			ch = 0
-			break
-		}
-		if unicode.IsSpace(rune(l.input[l.fPos+i])) {
-			continue
-		}
-		ch = l.input[l.fPos+i]
-		break
-	}
-
-	return ch
 }
 
 func (l *Lexer) skipSpace() {

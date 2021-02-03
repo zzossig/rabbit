@@ -14,7 +14,7 @@ type PAL interface {
 
 // PostfixExpr ::= PrimaryExpr (Predicate | ArgumentList | Lookup)*
 type PostfixExpr struct {
-	PrimaryExpr
+	ExprSingle
 	Pals []PAL
 }
 
@@ -22,7 +22,7 @@ func (pe *PostfixExpr) exprSingle() {}
 func (pe *PostfixExpr) String() string {
 	var sb strings.Builder
 
-	sb.WriteString(pe.PrimaryExpr.String())
+	sb.WriteString(pe.ExprSingle.String())
 	for _, p := range pe.Pals {
 		sb.WriteString(p.String())
 	}
