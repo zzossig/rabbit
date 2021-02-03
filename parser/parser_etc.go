@@ -704,6 +704,7 @@ func (p *Parser) parseSequenceType() ast.SequenceType {
 		}
 		st.TypeID = 1
 	} else {
+		st.TypeID = 2
 		st.NodeTest = p.parseItemType()
 
 		if p.peekTokenIs(token.QUESTION, token.ASTERISK, token.PLUS) {

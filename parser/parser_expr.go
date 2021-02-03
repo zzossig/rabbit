@@ -249,10 +249,7 @@ func (p *Parser) parseSequenceExpr() ast.ExprSingle {
 }
 
 func (p *Parser) parseAdditiveExpr(left ast.ExprSingle) ast.ExprSingle {
-	expr := &ast.AdditiveExpr{
-		LeftExpr: left,
-		Token:    p.curToken,
-	}
+	expr := &ast.AdditiveExpr{LeftExpr: left, Token: p.curToken}
 
 	precedence := p.curPrecedence()
 	p.nextToken()
@@ -266,10 +263,7 @@ func (p *Parser) parseAdditiveExpr(left ast.ExprSingle) ast.ExprSingle {
 }
 
 func (p *Parser) parseMultiplicativeExpr(left ast.ExprSingle) ast.ExprSingle {
-	expr := &ast.MultiplicativeExpr{
-		LeftExpr: left,
-		Token:    p.curToken,
-	}
+	expr := &ast.MultiplicativeExpr{LeftExpr: left, Token: p.curToken}
 
 	precedence := p.curPrecedence()
 	p.nextToken()
@@ -584,7 +578,7 @@ func (p *Parser) parseQuantifiedExpr() ast.ExprSingle {
 }
 
 func (p *Parser) parseOrExpr(left ast.ExprSingle) ast.ExprSingle {
-	expr := &ast.OrExpr{Token: p.curToken, LeftExpr: left}
+	expr := &ast.OrExpr{LeftExpr: left, Token: p.curToken}
 
 	precedence := p.curPrecedence()
 	p.nextToken()
@@ -594,7 +588,7 @@ func (p *Parser) parseOrExpr(left ast.ExprSingle) ast.ExprSingle {
 }
 
 func (p *Parser) parseAndExpr(left ast.ExprSingle) ast.ExprSingle {
-	expr := &ast.AndExpr{Token: p.curToken, LeftExpr: left}
+	expr := &ast.AndExpr{LeftExpr: left, Token: p.curToken}
 
 	precedence := p.curPrecedence()
 	p.nextToken()
@@ -618,7 +612,7 @@ func (p *Parser) parseRangeExpr(left ast.ExprSingle) ast.ExprSingle {
 }
 
 func (p *Parser) parseUnionExpr(left ast.ExprSingle) ast.ExprSingle {
-	expr := &ast.UnionExpr{Token: p.curToken}
+	expr := &ast.UnionExpr{LeftExpr: left, Token: p.curToken}
 
 	precedence := p.curPrecedence()
 	p.nextToken()
@@ -628,7 +622,7 @@ func (p *Parser) parseUnionExpr(left ast.ExprSingle) ast.ExprSingle {
 }
 
 func (p *Parser) parseStringConcatExpr(left ast.ExprSingle) ast.ExprSingle {
-	expr := &ast.StringConcatExpr{Token: p.curToken}
+	expr := &ast.StringConcatExpr{LeftExpr: left, Token: p.curToken}
 
 	precedence := p.curPrecedence()
 	p.nextToken()
@@ -638,7 +632,7 @@ func (p *Parser) parseStringConcatExpr(left ast.ExprSingle) ast.ExprSingle {
 }
 
 func (p *Parser) parseIntersectExceptExpr(left ast.ExprSingle) ast.ExprSingle {
-	expr := &ast.IntersectExceptExpr{Token: p.curToken}
+	expr := &ast.IntersectExceptExpr{LeftExpr: left, Token: p.curToken}
 
 	precedence := p.curPrecedence()
 	p.nextToken()
@@ -648,8 +642,7 @@ func (p *Parser) parseIntersectExceptExpr(left ast.ExprSingle) ast.ExprSingle {
 }
 
 func (p *Parser) parseInstanceofExpr(left ast.ExprSingle) ast.ExprSingle {
-	expr := &ast.InstanceofExpr{}
-	expr.ExprSingle = left
+	expr := &ast.InstanceofExpr{ExprSingle: left}
 
 	if !p.expectPeek(token.OF) {
 		return nil
@@ -662,8 +655,7 @@ func (p *Parser) parseInstanceofExpr(left ast.ExprSingle) ast.ExprSingle {
 }
 
 func (p *Parser) parseCastExpr(left ast.ExprSingle) ast.ExprSingle {
-	expr := &ast.CastExpr{}
-	expr.ExprSingle = left
+	expr := &ast.CastExpr{ExprSingle: left}
 
 	if !p.expectPeek(token.AS) {
 		return nil
@@ -676,8 +668,7 @@ func (p *Parser) parseCastExpr(left ast.ExprSingle) ast.ExprSingle {
 }
 
 func (p *Parser) parseCastableExpr(left ast.ExprSingle) ast.ExprSingle {
-	expr := &ast.CastableExpr{}
-	expr.ExprSingle = left
+	expr := &ast.CastableExpr{ExprSingle: left}
 
 	if !p.expectPeek(token.AS) {
 		return nil
@@ -690,8 +681,7 @@ func (p *Parser) parseCastableExpr(left ast.ExprSingle) ast.ExprSingle {
 }
 
 func (p *Parser) parseTreatExpr(left ast.ExprSingle) ast.ExprSingle {
-	expr := &ast.TreatExpr{}
-	expr.ExprSingle = left
+	expr := &ast.TreatExpr{ExprSingle: left}
 
 	if !p.expectPeek(token.AS) {
 		return nil

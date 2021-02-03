@@ -546,6 +546,18 @@ func TestFunctionCall(t *testing.T) {
 			"array { 'licorice', 'ginger' }(20)",
 			"array{'licorice', 'ginger'}(20)",
 		},
+		{
+			"$f(2, 3)",
+			"f(2, 3)",
+		},
+		{
+			"$f[2]('Hi there')",
+			"$f[2]('Hi there')",
+		},
+		{
+			"$f()[2]",
+			"f()[2]",
+		},
 	}
 
 	for _, tt := range tests {
@@ -631,6 +643,186 @@ func TestQuantifiedExpr(t *testing.T) {
 		{
 			"every $x in (1, 2, 'cat') satisfies $x * 2 = 4",
 			"every $x in (1, 2, 'cat') satisfies (($x * 2) = 4)",
+		},
+	}
+
+	for _, tt := range tests {
+		l := lexer.New(tt.input)
+		p := New(l)
+		xpath := p.ParseXPath()
+
+		actual := xpath.String()
+		if actual != tt.expected {
+			t.Errorf("expected=%q, got=%q", tt.expected, actual)
+		}
+	}
+}
+
+func TestStringConcatExpr(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected string
+	}{
+		{
+			`"con" || "cat" || "enate"`,
+			`(('con' || 'cat') || 'enate')`,
+		},
+	}
+
+	for _, tt := range tests {
+		l := lexer.New(tt.input)
+		p := New(l)
+		xpath := p.ParseXPath()
+
+		actual := xpath.String()
+		if actual != tt.expected {
+			t.Errorf("expected=%q, got=%q", tt.expected, actual)
+		}
+	}
+}
+
+func TestSequenceType(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected string
+	}{
+		{
+			`5 instance of xs:integer`,
+			`5 instance of xs:integer`,
+		},
+		{
+			"(5, 6) instance of xs:integer+",
+			"(5, 6) instance of xs:integer+",
+		},
+		{
+			". instance of element()",
+			". instance of element()",
+		},
+		{
+			"if ($x castable as hatsize) then $x cast as hatsize else if ($x castable as IQ) then $x cast as IQ else $x cast as xs:string",
+			"if($x castable as hatsize) then $x cast as hatsize else if($x castable as IQ) then $x cast as IQ else $x cast as xs:string",
+		},
+		{
+			"$myaddress treat as element(*, USAddress)",
+			"$myaddress treat as element(*, USAddress)",
+		},
+	}
+
+	for _, tt := range tests {
+		l := lexer.New(tt.input)
+		p := New(l)
+		xpath := p.ParseXPath()
+
+		actual := xpath.String()
+		if actual != tt.expected {
+			t.Errorf("expected=%q, got=%q", tt.expected, actual)
+		}
+	}
+}
+
+func TestPostfixExpr(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected string
+	}{
+		{
+			"$products[price gt 100]",
+			"$products[(price gt 100)]",
+		},
+		{
+			"(1 to 100)[. mod 5 eq 0]",
+			"(1 to 100)[((. mod 5) eq 0)]",
+		},
+		{
+			"(21 to 29)[5]",
+			"(21 to 29)[5]",
+		},
+		{
+			"$orders[fn:position() = (5 to 9)]",
+			"$orders[(fn:position() = (5 to 9))]",
+		},
+		{
+			"$book/(chapter | appendix)[fn:last()]",
+			"($book / (chapter | appendix)[fn:last()])",
+		},
+	}
+
+	for _, tt := range tests {
+		l := lexer.New(tt.input)
+		p := New(l)
+		xpath := p.ParseXPath()
+
+		actual := xpath.String()
+		if actual != tt.expected {
+			t.Errorf("expected=%q, got=%q", tt.expected, actual)
+		}
+	}
+}
+
+func TestNodeTest(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected string
+	}{
+		{
+			"node()",
+			"node()",
+		},
+		{
+			"text()",
+			"text()",
+		},
+		{
+			"comment()",
+			"comment()",
+		},
+		{
+			"namespace-node()",
+			"namespace-node()",
+		},
+		{
+			"element()",
+			"element()",
+		},
+		{
+			"schema-element(person)",
+			"schema-element(person)",
+		},
+		{
+			"element(person)",
+			"element(person)",
+		},
+		{
+			"element(person, surgeon)",
+			"element(person, surgeon)",
+		},
+		{
+			"element(*, surgeon)",
+			"element(*, surgeon)",
+		},
+		{
+			"attribute()",
+			"attribute()",
+		},
+		{
+			"attribute(price)",
+			"attribute(price)",
+		},
+		{
+			"attribute(*, xs:decimal)",
+			"attribute(*, xs:decimal)",
+		},
+		{
+			"document-node()",
+			"document-node()",
+		},
+		{
+			"document-node(element(book))",
+			"document-node(element(book))",
+		},
+		{
+			"child::para",
+			"child::para",
 		},
 	}
 
