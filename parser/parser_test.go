@@ -681,6 +681,53 @@ func TestStringConcatExpr(t *testing.T) {
 	}
 }
 
+func TestSequence(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected string
+	}{
+		{
+			`(10, (1, 2), (), (3, 4))`,
+			`(10, (1, 2), (), (3, 4))`,
+		},
+		{
+			`10, (1, 2), (), (3, 4)`,
+			`10, (1, 2), (), (3, 4)`,
+		},
+		{
+			"(salary, bonus)",
+			"(salary, bonus)",
+		},
+		{
+			"($price, $price)",
+			"($price, $price)",
+		},
+		{
+			"(10, 1 to 4)",
+			"(10, (1 to 4))",
+		},
+		{
+			"15 to 10",
+			"(15 to 10)",
+		},
+		{
+			"fn:reverse(10 to 15)",
+			"fn:reverse((10 to 15))",
+		},
+	}
+
+	for _, tt := range tests {
+		l := lexer.New(tt.input)
+		p := New(l)
+		xpath := p.ParseXPath()
+
+		actual := xpath.String()
+		if actual != tt.expected {
+			t.Errorf("expected=%q, got=%q", tt.expected, actual)
+		}
+	}
+}
+
 func TestSequenceType(t *testing.T) {
 	tests := []struct {
 		input    string
@@ -821,8 +868,274 @@ func TestNodeTest(t *testing.T) {
 			"document-node(element(book))",
 		},
 		{
+			"child::chapter[2]",
+			"child::chapter[2]",
+		},
+		{
+			"descendant::toy[attribute::color = 'red']",
+			"descendant::toy[(attribute::color = 'red')]",
+		},
+		{
+			"child::employee[secretary][assistant]",
+			"child::employee[secretary][assistant]",
+		},
+	}
+
+	for _, tt := range tests {
+		l := lexer.New(tt.input)
+		p := New(l)
+		xpath := p.ParseXPath()
+
+		actual := xpath.String()
+		if actual != tt.expected {
+			t.Errorf("expected=%q, got=%q", tt.expected, actual)
+		}
+	}
+}
+
+func TestUnabbreviatedSyntax(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected string
+	}{
+		{
 			"child::para",
 			"child::para",
+		},
+		{
+			"child::*",
+			"child::*",
+		},
+		{
+			"child::text()",
+			"child::text()",
+		},
+		{
+			"child::node()",
+			"child::node()",
+		},
+		{
+			"attribute::name",
+			"attribute::name",
+		},
+		{
+			"attribute::*",
+			"attribute::*",
+		},
+		{
+			"parent::node()",
+			"parent::node()",
+		},
+		{
+			"descendant::para",
+			"descendant::para",
+		},
+		{
+			"ancestor::div",
+			"ancestor::div",
+		},
+		{
+			"ancestor-or-self::div",
+			"ancestor-or-self::div",
+		},
+		{
+			"descendant-or-self::para",
+			"descendant-or-self::para",
+		},
+		{
+			"self::para",
+			"self::para",
+		},
+		{
+			"child::chapter/descendant::para",
+			"(child::chapter / descendant::para)",
+		},
+		{
+			"child::*/child::para",
+			"(child::* / child::para)",
+		},
+		{
+			"/",
+			"/",
+		},
+		{
+			"/descendant::para",
+			"/descendant::para",
+		},
+		{
+			"/descendant::list/child::member",
+			"(/descendant::list / child::member)",
+		},
+		{
+			"child::para[fn:position() = 1]",
+			"child::para[(fn:position() = 1)]",
+		},
+		{
+			"child::para[fn:position() = fn:last()]",
+			"child::para[(fn:position() = fn:last())]",
+		},
+		{
+			"child::para[fn:position() = fn:last()-1]",
+			"child::para[(fn:position() = (fn:last() - 1))]",
+		},
+		{
+			"child::para[fn:position() > 1]",
+			"child::para[(fn:position() > 1)]",
+		},
+		{
+			"following-sibling::chapter[fn:position() = 1]",
+			"following-sibling::chapter[(fn:position() = 1)]",
+		},
+		{
+			"preceding-sibling::chapter[fn:position() = 1]",
+			"preceding-sibling::chapter[(fn:position() = 1)]",
+		},
+		{
+			"/descendant::figure[fn:position() = 42]",
+			"/descendant::figure[(fn:position() = 42)]",
+		},
+		{
+			"/child::book/child::chapter[fn:position() = 5]/child::section[fn:position() = 2]",
+			"((/child::book / child::chapter[(fn:position() = 5)]) / child::section[(fn:position() = 2)])",
+		},
+		{
+			"child::para[attribute::type eq 'warning']",
+			"child::para[(attribute::type eq 'warning')]",
+		},
+		{
+			"child::para[attribute::type eq 'warning'][fn:position() = 5]",
+			"child::para[(attribute::type eq 'warning')][(fn:position() = 5)]",
+		},
+		{
+			"child::para[fn:position() = 5][attribute::type eq 'warning']",
+			"child::para[(fn:position() = 5)][(attribute::type eq 'warning')]",
+		},
+		{
+			"child::chapter[child::title = 'Introduction']",
+			"child::chapter[(child::title = 'Introduction')]",
+		},
+		{
+			"child::chapter[child::title]",
+			"child::chapter[child::title]",
+		},
+		{
+			"child::*[self::chapter or self::appendix]",
+			"child::*[(self::chapter or self::appendix)]",
+		},
+		{
+			"child::*[self::chapter or self::appendix][fn:position() = fn:last()]",
+			"child::*[(self::chapter or self::appendix)][(fn:position() = fn:last())]",
+		},
+	}
+
+	for _, tt := range tests {
+		l := lexer.New(tt.input)
+		p := New(l)
+		xpath := p.ParseXPath()
+
+		actual := xpath.String()
+		if actual != tt.expected {
+			t.Errorf("expected=%q, got=%q", tt.expected, actual)
+		}
+	}
+}
+
+func TestAbbreviatedSyntax(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected string
+	}{
+		{
+			"para",
+			"para",
+		},
+		{
+			"*",
+			"*",
+		},
+		{
+			"text()",
+			"text()",
+		},
+		{
+			"@name",
+			"@name",
+		},
+		{
+			"@*",
+			"@*",
+		},
+		{
+			"para[1]",
+			"para[1]",
+		},
+		{
+			"para[fn:last()]",
+			"para[fn:last()]",
+		},
+		{
+			"*/para",
+			"(* / para)",
+		},
+		{
+			"/book/chapter[5]/section[2]",
+			"((/book / chapter[5]) / section[2])",
+		},
+		{
+			"chapter//para",
+			"(chapter // para)",
+		},
+		{
+			"//para",
+			"//para",
+		},
+		{
+			"//@version",
+			"//@version",
+		},
+		{
+			"//list/member",
+			"(//list / member)",
+		},
+		{
+			".//para",
+			"(. // para)",
+		},
+		{
+			"..",
+			"..",
+		},
+		{
+			"../@lang",
+			"(.. / @lang)",
+		},
+		{
+			"para[@type='warning']",
+			"para[(@type = 'warning')]",
+		},
+		{
+			"para[@type='warning'][5]",
+			"para[(@type = 'warning')][5]",
+		},
+		{
+			"para[5][@type='warning']",
+			"para[5][(@type = 'warning')]",
+		},
+		{
+			"chapter[title='Introduction']",
+			"chapter[(title = 'Introduction')]",
+		},
+		{
+			"chapter[title]",
+			"chapter[title]",
+		},
+		{
+			"employee[@secretary and @assistant]",
+			"employee[(@secretary and @assistant)]",
+		},
+		{
+			"book/(chapter|appendix)/section",
+			"((book / (chapter | appendix)) / section)",
 		},
 	}
 

@@ -8,14 +8,14 @@ import (
 // IsChar checks
 // Char ::= #x9 | #xA | #xD | [#x20-#xD7FF] | [#xE000-#xFFFD] | [#x10000-#x10FFFF]
 func IsChar(ch rune) bool {
-	re := regexp.MustCompile(`^[\x09|\x0A|\x0D|\x20-\x{D7FF}|\x{E000}-\x{FFFD}|\x{10000}-\x{10FFFF}]$`)
+	re := regexp.MustCompile(`^[\x09\x0A\x0D\x20-\x{D7FF}\x{E000}-\x{FFFD}\x{10000}-\x{10FFFF}]$`)
 	return re.MatchString(string(ch))
 }
 
 // IsNameStartChar checks
 // NameStartChar ::= ":" | [A-Z] | "_" | [a-z] | [#xC0-#xD6] | [#xD8-#xF6] | [#xF8-#x2FF] | [#x370-#x37D] | [#x37F-#x1FFF] | [#x200C-#x200D] | [#x2070-#x218F] | [#x2C00-#x2FEF] | [#x3001-#xD7FF] | [#xF900-#xFDCF] | [#xFDF0-#xFFFD] | [#x10000-#xEFFFF]
 func IsNameStartChar(ch rune) bool {
-	re := regexp.MustCompile(`^[:|A-Za-z|_|\xC0-\xD6|\xD8-\xF6|\xF8-\x{2FF}|\x{370}-\x{37D}|\x{37F}-\x{1FFF}|\x{200C}-\x{200D}|\x{2070}-\x{218F}|\x{2C00}-\x{2FEF}|\x{3001}-\x{D7FF}|\x{F900}-\x{FDCF}|\x{FDF0}-\x{FFFD}|\x{10000}-\x{EFFFF}]$`)
+	re := regexp.MustCompile(`^[:A-Za-z_\xC0-\xD6\xD8-\xF6\xF8-\x{2FF}\x{370}-\x{37D}\x{37F}-\x{1FFF}\x{200C}-\x{200D}\x{2070}-\x{218F}\x{2C00}-\x{2FEF}\x{3001}-\x{D7FF}\x{F900}-\x{FDCF}\x{FDF0}-\x{FFFD}\x{10000}-\x{EFFFF}]$`)
 	return re.MatchString(string(ch))
 }
 
@@ -25,7 +25,7 @@ func IsNameChar(ch rune) bool {
 	if IsNameStartChar(ch) {
 		return true
 	}
-	re := regexp.MustCompile(`^[-|\.|0-9|\xB7|\x{0300}-\x{036F}|\x{203F}-\x{2040}]$`)
+	re := regexp.MustCompile(`^[-\.0-9\xB7\x{0300}-\x{036F}\x{203F}-\x{2040}]$`)
 	return re.MatchString(string(ch))
 }
 
@@ -56,7 +56,7 @@ func IsNCName(str string) bool {
 // PrefixedName ::= Prefix ':' LocalPart
 func IsPrefixedName(str string) bool {
 	ss := strings.Split(str, ":")
-	if len(ss) > 2 {
+	if len(ss) != 2 {
 		return false
 	}
 	for _, s := range ss {

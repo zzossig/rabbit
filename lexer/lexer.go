@@ -30,6 +30,9 @@ func (l *Lexer) PeekSpace() bool {
 
 // Remaining returns not yet parsed input
 func (l *Lexer) Remaining() string {
+	if l.fPos >= len(l.input) {
+		return l.input
+	}
 	return l.input[l.pos:]
 }
 

@@ -36,7 +36,9 @@ func (pe *PathExpr) String() string {
 	var sb strings.Builder
 
 	sb.WriteString(pe.Token.Literal)
-	sb.WriteString(pe.ExprSingle.String())
+	if pe.ExprSingle != nil {
+		sb.WriteString(pe.ExprSingle.String())
+	}
 
 	return sb.String()
 }

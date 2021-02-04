@@ -63,10 +63,14 @@ func (p *Parser) parsePredicate() ast.Predicate {
 func (p *Parser) parsePredicateList() ast.PredicateList {
 	pl := ast.PredicateList{}
 
-	for p.peekTokenIs(token.LBRACKET) {
-		p.nextToken()
+	for {
 		pc := p.parsePredicate()
 		pl.PL = append(pl.PL, pc)
+
+		if !p.peekTokenIs(token.LBRACKET) {
+			break
+		}
+		p.nextToken()
 	}
 
 	return pl
@@ -140,15 +144,17 @@ func (p *Parser) parseArrowFunctionSpecifier() ast.ArrowFunctionSpecifier {
 }
 
 func (p *Parser) parseNodeTest() ast.NodeTest {
-	t := p.parseNameTest()
-	if tt, ok := t.(*ast.NameTest); ok {
-		if tt.TypeID != 0 {
-			return tt
+	if util.CheckKindTest(p.curToken.Literal) != 0 {
+		ktest := p.parseKindTest()
+		if tt, ok := ktest.(*ast.KindTest); ok {
+			if tt.TypeID != 0 {
+				return tt
+			}
 		}
 	}
 
-	t = p.parseKindTest()
-	if tt, ok := t.(*ast.KindTest); ok {
+	ntest := p.parseNameTest()
+	if tt, ok := ntest.(*ast.NameTest); ok {
 		if tt.TypeID != 0 {
 			return tt
 		}
