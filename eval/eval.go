@@ -3,6 +3,7 @@ package eval
 import (
 	"fmt"
 	"math"
+	"strconv"
 
 	"github.com/zzossig/xpath/ast"
 	"github.com/zzossig/xpath/object"
@@ -23,14 +24,26 @@ func Eval(expr ast.ExprSingle, env *object.Env) object.Item {
 		return evalXPath(expr, env)
 	case *ast.IntegerLiteral:
 		return &object.Integer{Value: expr.Value}
+	case *ast.DecimalLiteral:
+		return &object.Decimal{Value: expr.Value}
+	case *ast.DoubleLiteral:
+		return &object.Double{Value: expr.Value}
 	case *ast.StringLiteral:
 		return &object.String{Value: expr.Value}
+	case *ast.Identifier:
+		return evalIdentifier(expr, env)
+	case *ast.FunctionCall:
+		return evalBuiltinFunc(expr, env)
 	case *ast.AdditiveExpr:
 		return evalInfixExpr(expr, env)
 	case *ast.MultiplicativeExpr:
 		return evalInfixExpr(expr, env)
 	case *ast.UnaryExpr:
 		return evalPrefixExpr(expr, env)
+	case *ast.SquareArrayConstructor:
+		return evalArrayExpr(expr, env)
+	case *ast.CurlyArrayConstructor:
+		return evalArrayExpr(expr, env)
 	}
 
 	return nil
@@ -44,8 +57,6 @@ func evalXPath(expr *ast.XPath, env *object.Env) object.Item {
 
 		switch item := item.(type) {
 		case *object.Sequence:
-			xpath.Items = append(xpath.Items, item.Items...)
-		case *object.Array:
 			xpath.Items = append(xpath.Items, item.Items...)
 		default:
 			xpath.Items = append(xpath.Items, item)
@@ -64,6 +75,30 @@ func isError(item object.Item) bool {
 		return item.Type() == object.ErrorType
 	}
 	return false
+}
+
+func evalIdentifier(ident *ast.Identifier, env *object.Env) object.Item {
+	if val, ok := env.Get(ident.EQName.Value()); ok {
+		return val
+	}
+
+	return newError("identifier not found: " + ident.EQName.Value())
+}
+
+func evalBuiltinFunc(expr ast.ExprSingle, env *object.Env) object.Item {
+	switch expr := expr.(type) {
+	case *ast.FunctionCall:
+		if builtin, ok := builtins[expr.EQName.Value()]; ok {
+			for _, arg := range expr.Args {
+				item := Eval(arg.ExprSingle, env)
+				builtin.Args = append(builtin.Args, item)
+			}
+			return builtin
+		}
+		return newError("built-in function not found: " + expr.EQName.Value())
+	}
+
+	return nil
 }
 
 func evalInfixExpr(expr ast.ExprSingle, env *object.Env) object.Item {
@@ -99,18 +134,24 @@ func evalInfixExpr(expr ast.ExprSingle, env *object.Env) object.Item {
 		return evalInfixIntDecimal(op, left, right)
 	case left.Type() == object.IntegerType && right.Type() == object.DoubleType:
 		return evalInfixIntDouble(op, left, right)
+	case left.Type() == object.IntegerType && right.Type() == object.StringType:
+		return evalInfixIntString(op, left, right)
 	case left.Type() == object.DecimalType && right.Type() == object.IntegerType:
 		return evalInfixDecimalInt(op, left, right)
 	case left.Type() == object.DecimalType && right.Type() == object.DecimalType:
 		return evalInfixDecimalDecimal(op, left, right)
 	case left.Type() == object.DecimalType && right.Type() == object.DoubleType:
 		return evalInfixDecimalDouble(op, left, right)
+	case left.Type() == object.DecimalType && right.Type() == object.StringType:
+		return evalInfixDecimalString(op, left, right)
 	case left.Type() == object.DoubleType && right.Type() == object.IntegerType:
 		return evalInfixDoubleInt(op, left, right)
 	case left.Type() == object.DoubleType && right.Type() == object.DecimalType:
 		return evalInfixDoubleDecimal(op, left, right)
 	case left.Type() == object.DoubleType && right.Type() == object.DoubleType:
 		return evalInfixDoubleDouble(op, left, right)
+	case left.Type() == object.DoubleType && right.Type() == object.StringType:
+		return evalInfixDoubleString(op, left, right)
 	default:
 		return newError("The operator '%s' is not defined for operands of type %s and %s\n", op.Literal, left.Type(), right.Type())
 	}
@@ -210,6 +251,19 @@ func evalInfixIntDouble(op token.Token, left object.Item, right object.Item) obj
 	}
 }
 
+func evalInfixIntString(op token.Token, left object.Item, right object.Item) object.Item {
+	leftVal := left.(*object.Integer).Value
+	rightVal := right.(*object.String).Value
+
+	switch op.Type {
+	case token.DVBAR:
+		leftVal := strconv.FormatInt(int64(leftVal), 10)
+		return &object.String{Value: leftVal + rightVal}
+	default:
+		return newError("The operator '%s' is not defined for operands of type %s and %s\n", op.Literal, left.Type(), right.Type())
+	}
+}
+
 func evalInfixDecimalInt(op token.Token, left object.Item, right object.Item) object.Item {
 	leftVal := left.(*object.Decimal).Value
 	rightVal := right.(*object.Integer).Value
@@ -271,6 +325,19 @@ func evalInfixDecimalDouble(op token.Token, left object.Item, right object.Item)
 		return &object.Integer{Value: int(leftVal / rightVal)}
 	case token.MOD:
 		return &object.Decimal{Value: math.Mod(leftVal, rightVal)}
+	default:
+		return newError("The operator '%s' is not defined for operands of type %s and %s\n", op.Literal, left.Type(), right.Type())
+	}
+}
+
+func evalInfixDecimalString(op token.Token, left object.Item, right object.Item) object.Item {
+	leftVal := left.(*object.Decimal).Value
+	rightVal := right.(*object.String).Value
+
+	switch op.Type {
+	case token.DVBAR:
+		leftVal := strconv.FormatFloat(leftVal, 'f', -1, 64)
+		return &object.String{Value: leftVal + rightVal}
 	default:
 		return newError("The operator '%s' is not defined for operands of type %s and %s\n", op.Literal, left.Type(), right.Type())
 	}
@@ -342,6 +409,19 @@ func evalInfixDoubleDouble(op token.Token, left object.Item, right object.Item) 
 	}
 }
 
+func evalInfixDoubleString(op token.Token, left object.Item, right object.Item) object.Item {
+	leftVal := left.(*object.Double).Value
+	rightVal := right.(*object.String).Value
+
+	switch op.Type {
+	case token.DVBAR:
+		leftVal := strconv.FormatFloat(leftVal, 'f', -1, 64)
+		return &object.String{Value: leftVal + rightVal}
+	default:
+		return newError("The operator '%s' is not defined for operands of type %s and %s\n", op.Literal, left.Type(), right.Type())
+	}
+}
+
 func evalPrefixInt(op token.Token, right object.Item) object.Item {
 	rightVal := right.(*object.Integer).Value
 
@@ -379,4 +459,23 @@ func evalPrefixDouble(op token.Token, right object.Item) object.Item {
 	default:
 		return newError("The operator '%s' is not defined for operand of type %s\n", op.Literal, right.Type())
 	}
+}
+
+func evalArrayExpr(expr ast.ExprSingle, env *object.Env) object.Item {
+	array := &object.Array{}
+	var exprs []ast.ExprSingle
+
+	switch expr := expr.(type) {
+	case *ast.SquareArrayConstructor:
+		exprs = expr.Exprs
+	case *ast.CurlyArrayConstructor:
+		exprs = expr.EnclosedExpr.Exprs
+	}
+
+	for _, e := range exprs {
+		item := Eval(e, env)
+		array.Items = append(array.Items, item)
+	}
+
+	return array
 }

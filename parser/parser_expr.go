@@ -277,13 +277,7 @@ func (p *Parser) parseMultiplicativeExpr(left ast.ExprSingle) ast.ExprSingle {
 }
 
 func (p *Parser) parseUnaryExpr() ast.ExprSingle {
-	expr := &ast.UnaryExpr{}
-
-	if p.curTokenIs(token.PLUS) {
-		expr.Token = token.Token{Type: token.UPLUS, Literal: "(+)"}
-	} else {
-		expr.Token = token.Token{Type: token.UMINUS, Literal: "(-)"}
-	}
+	expr := &ast.UnaryExpr{Token: p.curToken}
 
 	precedence := p.precedence(token.UPLUS)
 	p.nextToken()
@@ -424,8 +418,7 @@ func (p *Parser) parseSimpleMapExpr(left ast.ExprSingle) ast.ExprSingle {
 }
 
 func (p *Parser) parseComparisonExpr(left ast.ExprSingle) ast.ExprSingle {
-	expr := &ast.ComparisonExpr{LeftExpr: left}
-	expr.SetToken(p.curToken)
+	expr := &ast.ComparisonExpr{LeftExpr: left, Token: p.curToken}
 
 	precedence := p.curPrecedence()
 	p.nextToken()

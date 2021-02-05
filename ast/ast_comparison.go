@@ -8,13 +8,10 @@ import (
 )
 
 // ComparisonExpr ::= StringConcatExpr ( (ValueComp | GeneralComp | NodeComp) StringConcatExpr )?
-// typeID ::= 														1					| 2						| 3
-// The token field is a private field because typeID should be determined by the token value. So, typeID field set when token field is set.
 type ComparisonExpr struct {
 	LeftExpr  ExprSingle
-	token     token.Token
 	RightExpr ExprSingle
-	typeID    byte
+	Token     token.Token
 }
 
 func (ce *ComparisonExpr) exprSingle() {}
@@ -24,35 +21,12 @@ func (ce *ComparisonExpr) String() string {
 	sb.WriteString("(")
 	sb.WriteString(ce.LeftExpr.String())
 	sb.WriteString(" ")
-	sb.WriteString(ce.token.Literal)
+	sb.WriteString(ce.Token.Literal)
 	sb.WriteString(" ")
 	sb.WriteString(ce.RightExpr.String())
 	sb.WriteString(")")
 
 	return sb.String()
-}
-
-// TypeID is a getter for the typeID field
-func (ce *ComparisonExpr) TypeID() byte {
-	return ce.typeID
-}
-
-// Token is a getter for the token field
-func (ce *ComparisonExpr) Token() token.Token {
-	return ce.token
-}
-
-// SetToken is a setter for the token field
-func (ce *ComparisonExpr) SetToken(t token.Token) {
-	ce.token = t
-
-	if util.IsValueComp(ce.token.Literal) {
-		ce.typeID = 1
-	} else if util.IsGeneralComp(ce.token.Literal) {
-		ce.typeID = 2
-	} else if util.IsNodeComp(ce.token.Literal) {
-		ce.typeID = 3
-	}
 }
 
 // GeneralComp ::= "=" | "!=" | "<" | "<=" | ">" | ">="

@@ -33,7 +33,7 @@ func TestArithmeticExpr(t *testing.T) {
 		},
 		{
 			"-3 div 2",
-			"(((-)3) div 2)",
+			"((-3) div 2)",
 		},
 		{
 			"(2 mod 2)",
@@ -89,15 +89,15 @@ func TestArithmeticExpr(t *testing.T) {
 		},
 		{
 			"-1",
-			"((-)1)",
+			"(-1)",
 		},
 		{
 			"-(5 + 5)",
-			"((-)(5 + 5))",
+			"(-(5 + 5))",
 		},
 		{
 			"-(5 + 5) * 4",
-			"(((-)(5 + 5)) * 4)",
+			"((-(5 + 5)) * 4)",
 		},
 		{
 			"1,2,3",
@@ -432,6 +432,31 @@ func TestLetExpr(t *testing.T) {
 			"let $x := doc('a.xml')/*, $y := $x//* return $y[@value gt $x/@min]",
 			"let $x := (doc('a.xml') / *), $y := ($x // *) return $y[(@value gt ($x / @min))]",
 		},
+		{
+			`
+				let $tax_rate :=
+          function($rate as xs:integer, $amount as xs:decimal) as xs:decimal
+          {
+            ($rate div 100) * $amount
+          },
+
+          $income_tax :=
+          function($amount as xs:decimal) as xs:decimal
+          {
+           $tax_rate(15, ?)($amount)
+          },
+
+         $luxury_tax :=
+          function($amount as xs:integer) as xs:decimal
+          {
+            $tax_rate(50, ?)($amount)
+          }
+
+        return 
+            ($income_tax(300), $luxury_tax(50))
+			`,
+			"let $tax_rate := function($rate as xs:integer, $amount as xs:decimal) as xs:decimal {(($rate div 100) * $amount)}, $income_tax := function($amount as xs:decimal) as xs:decimal {tax_rate(15, ?)($amount)}, $luxury_tax := function($amount as xs:integer) as xs:decimal {tax_rate(50, ?)($amount)} return (income_tax(300), luxury_tax(50))",
+		},
 	}
 
 	for _, tt := range tests {
@@ -527,6 +552,14 @@ func TestFunctionCall(t *testing.T) {
 		expected string
 	}{
 		{
+			"array { (), (27, 17, 0) }(1)",
+			"array{(), (27, 17, 0)}(1)",
+		},
+		{
+			"array { 'licorice', 'ginger' }(20)",
+			"array{'licorice', 'ginger'}(20)",
+		},
+		{
 			"[ 1, 2, 5, 7 ](4)",
 			"[1, 2, 5, 7](4)",
 		},
@@ -537,14 +570,6 @@ func TestFunctionCall(t *testing.T) {
 		{
 			"[(), [1, 2, 3],[4, 5, 6]](2)(2)",
 			"[(), [1, 2, 3], [4, 5, 6]](2)(2)",
-		},
-		{
-			"array { (), (27, 17, 0) }(1)",
-			"array{(), (27, 17, 0)}(1)",
-		},
-		{
-			"array { 'licorice', 'ginger' }(20)",
-			"array{'licorice', 'ginger'}(20)",
 		},
 		{
 			"$f(2, 3)",
@@ -1045,14 +1070,14 @@ func TestAbbreviatedSyntax(t *testing.T) {
 		input    string
 		expected string
 	}{
-		{
-			"para",
-			"para",
-		},
-		{
-			"*",
-			"*",
-		},
+		// {
+		// 	"para",
+		// 	"para",
+		// },
+		// {
+		// 	"*",
+		// 	"*",
+		// },
 		{
 			"text()",
 			"text()",

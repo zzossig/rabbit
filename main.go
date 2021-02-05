@@ -2,9 +2,14 @@ package main
 
 import (
 	"fmt"
-	"math"
+	"strconv"
 )
 
 func main() {
-	fmt.Printf("%.1f", math.Mod(2, 2.22))
+	f := 64.2345
+	s := strconv.FormatFloat(f, 'g', 1, 64)
+	fmt.Println(s)
+	s = strconv.FormatFloat(f, 'f', -1, 64)
+	fmt.Println(s)
+	fmt.Println(strconv.FormatInt(int64(66), 10))
 }

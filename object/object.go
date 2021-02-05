@@ -31,7 +31,7 @@ const (
 	StringType  Type = "string"
 
 	FuncType    Type = "func"
-	BuiltinType Type = "bif"
+	BuiltinType Type = "builtin"
 
 	MapType   Type = "map"
 	ArrayType Type = "array"
@@ -189,6 +189,16 @@ type String struct {
 
 func (s *String) Type() Type      { return StringType }
 func (s *String) Inspect() string { return s.Value }
+
+// Builtin ..
+type Builtin struct {
+	Name string
+	Func BIF
+	Args []Item
+}
+
+func (b *Builtin) Type() Type      { return BuiltinType }
+func (b *Builtin) Inspect() string { return "builtin function" }
 
 // HashKey ..
 func (s *String) HashKey() HashKey {
