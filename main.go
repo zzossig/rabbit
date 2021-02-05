@@ -2,14 +2,10 @@ package main
 
 import (
 	"fmt"
-	"strconv"
+
+	"github.com/zzossig/xpath/util"
 )
 
 func main() {
-	f := 64.2345
-	s := strconv.FormatFloat(f, 'g', 1, 64)
-	fmt.Println(s)
-	s = strconv.FormatFloat(f, 'f', -1, 64)
-	fmt.Println(s)
-	fmt.Println(strconv.FormatInt(int64(66), 10))
+	fmt.Println(util.IsNumber("1e1\n"))
 }

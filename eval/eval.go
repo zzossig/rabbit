@@ -38,6 +38,8 @@ func Eval(expr ast.ExprSingle, env *object.Env) object.Item {
 		return evalInfixExpr(expr, env)
 	case *ast.MultiplicativeExpr:
 		return evalInfixExpr(expr, env)
+	case *ast.StringConcatExpr:
+		return evalInfixExpr(expr, env)
 	case *ast.UnaryExpr:
 		return evalPrefixExpr(expr, env)
 	case *ast.SquareArrayConstructor:
@@ -115,6 +117,10 @@ func evalInfixExpr(expr ast.ExprSingle, env *object.Env) object.Item {
 		left = Eval(expr.LeftExpr, env)
 		right = Eval(expr.RightExpr, env)
 		op = expr.Token
+	case *ast.StringConcatExpr:
+		left = Eval(expr.LeftExpr, env)
+		right = Eval(expr.RightExpr, env)
+		op = expr.Token
 	default:
 		return newError("%T is not an infix expression\n", expr)
 	}
@@ -152,6 +158,14 @@ func evalInfixExpr(expr ast.ExprSingle, env *object.Env) object.Item {
 		return evalInfixDoubleDouble(op, left, right)
 	case left.Type() == object.DoubleType && right.Type() == object.StringType:
 		return evalInfixDoubleString(op, left, right)
+	case left.Type() == object.StringType && right.Type() == object.IntegerType:
+		return evalInfixStringInt(op, left, right)
+	case left.Type() == object.StringType && right.Type() == object.DecimalType:
+		return evalInfixStringDecimal(op, left, right)
+	case left.Type() == object.StringType && right.Type() == object.DoubleType:
+		return evalInfixStringDouble(op, left, right)
+	case left.Type() == object.StringType && right.Type() == object.StringType:
+		return evalInfixStringString(op, left, right)
 	default:
 		return newError("The operator '%s' is not defined for operands of type %s and %s\n", op.Literal, left.Type(), right.Type())
 	}
@@ -202,6 +216,10 @@ func evalInfixIntInt(op token.Token, left object.Item, right object.Item) object
 		return &object.Integer{Value: int(float64(leftVal) / float64(rightVal))}
 	case token.MOD:
 		return &object.Integer{Value: leftVal % rightVal}
+	case token.DVBAR:
+		leftVal := strconv.FormatInt(int64(leftVal), 10)
+		rightVal := strconv.FormatInt(int64(rightVal), 10)
+		return &object.String{Value: leftVal + rightVal}
 	default:
 		return newError("The operator '%s' is not defined for operands of type %s and %s\n", op.Literal, left.Type(), right.Type())
 	}
@@ -224,6 +242,10 @@ func evalInfixIntDecimal(op token.Token, left object.Item, right object.Item) ob
 		return &object.Integer{Value: int(float64(leftVal) / rightVal)}
 	case token.MOD:
 		return &object.Decimal{Value: math.Mod(float64(leftVal), rightVal)}
+	case token.DVBAR:
+		leftVal := strconv.FormatInt(int64(leftVal), 10)
+		rightVal := strconv.FormatFloat(rightVal, 'f', -1, 64)
+		return &object.String{Value: leftVal + rightVal}
 	default:
 		return newError("The operator '%s' is not defined for operands of type %s and %s\n", op.Literal, left.Type(), right.Type())
 	}
@@ -246,6 +268,10 @@ func evalInfixIntDouble(op token.Token, left object.Item, right object.Item) obj
 		return &object.Integer{Value: int(float64(leftVal) / rightVal)}
 	case token.MOD:
 		return &object.Double{Value: math.Mod(float64(leftVal), rightVal)}
+	case token.DVBAR:
+		leftVal := strconv.FormatInt(int64(leftVal), 10)
+		rightVal := strconv.FormatFloat(rightVal, 'f', -1, 64)
+		return &object.String{Value: leftVal + rightVal}
 	default:
 		return newError("The operator '%s' is not defined for operands of type %s and %s\n", op.Literal, left.Type(), right.Type())
 	}
@@ -281,6 +307,10 @@ func evalInfixDecimalInt(op token.Token, left object.Item, right object.Item) ob
 		return &object.Integer{Value: int(leftVal / float64(rightVal))}
 	case token.MOD:
 		return &object.Decimal{Value: math.Mod(leftVal, float64(rightVal))}
+	case token.DVBAR:
+		leftVal := strconv.FormatFloat(leftVal, 'f', -1, 64)
+		rightVal := strconv.FormatInt(int64(rightVal), 10)
+		return &object.String{Value: leftVal + rightVal}
 	default:
 		return newError("The operator '%s' is not defined for operands of type %s and %s\n", op.Literal, left.Type(), right.Type())
 	}
@@ -303,6 +333,10 @@ func evalInfixDecimalDecimal(op token.Token, left object.Item, right object.Item
 		return &object.Integer{Value: int(leftVal / rightVal)}
 	case token.MOD:
 		return &object.Decimal{Value: math.Mod(leftVal, rightVal)}
+	case token.DVBAR:
+		leftVal := strconv.FormatFloat(leftVal, 'f', -1, 64)
+		rightVal := strconv.FormatFloat(rightVal, 'f', -1, 64)
+		return &object.String{Value: leftVal + rightVal}
 	default:
 		return newError("The operator '%s' is not defined for operands of type %s and %s\n", op.Literal, left.Type(), right.Type())
 	}
@@ -325,6 +359,10 @@ func evalInfixDecimalDouble(op token.Token, left object.Item, right object.Item)
 		return &object.Integer{Value: int(leftVal / rightVal)}
 	case token.MOD:
 		return &object.Decimal{Value: math.Mod(leftVal, rightVal)}
+	case token.DVBAR:
+		leftVal := strconv.FormatFloat(leftVal, 'f', -1, 64)
+		rightVal := strconv.FormatFloat(rightVal, 'f', -1, 64)
+		return &object.String{Value: leftVal + rightVal}
 	default:
 		return newError("The operator '%s' is not defined for operands of type %s and %s\n", op.Literal, left.Type(), right.Type())
 	}
@@ -360,6 +398,10 @@ func evalInfixDoubleInt(op token.Token, left object.Item, right object.Item) obj
 		return &object.Integer{Value: int(leftVal / float64(rightVal))}
 	case token.MOD:
 		return &object.Double{Value: math.Mod(leftVal, float64(rightVal))}
+	case token.DVBAR:
+		leftVal := strconv.FormatFloat(leftVal, 'f', -1, 64)
+		rightVal := strconv.FormatInt(int64(rightVal), 10)
+		return &object.String{Value: leftVal + rightVal}
 	default:
 		return newError("The operator '%s' is not defined for operands of type %s and %s\n", op.Literal, left.Type(), right.Type())
 	}
@@ -382,6 +424,10 @@ func evalInfixDoubleDecimal(op token.Token, left object.Item, right object.Item)
 		return &object.Integer{Value: int(leftVal / rightVal)}
 	case token.MOD:
 		return &object.Decimal{Value: math.Mod(leftVal, rightVal)}
+	case token.DVBAR:
+		leftVal := strconv.FormatFloat(leftVal, 'f', -1, 64)
+		rightVal := strconv.FormatFloat(rightVal, 'f', -1, 64)
+		return &object.String{Value: leftVal + rightVal}
 	default:
 		return newError("The operator '%s' is not defined for operands of type %s and %s\n", op.Literal, left.Type(), right.Type())
 	}
@@ -404,6 +450,10 @@ func evalInfixDoubleDouble(op token.Token, left object.Item, right object.Item) 
 		return &object.Integer{Value: int(leftVal / rightVal)}
 	case token.MOD:
 		return &object.Double{Value: math.Mod(leftVal, rightVal)}
+	case token.DVBAR:
+		leftVal := strconv.FormatFloat(leftVal, 'f', -1, 64)
+		rightVal := strconv.FormatFloat(rightVal, 'f', -1, 64)
+		return &object.String{Value: leftVal + rightVal}
 	default:
 		return newError("The operator '%s' is not defined for operands of type %s and %s\n", op.Literal, left.Type(), right.Type())
 	}
@@ -416,6 +466,57 @@ func evalInfixDoubleString(op token.Token, left object.Item, right object.Item) 
 	switch op.Type {
 	case token.DVBAR:
 		leftVal := strconv.FormatFloat(leftVal, 'f', -1, 64)
+		return &object.String{Value: leftVal + rightVal}
+	default:
+		return newError("The operator '%s' is not defined for operands of type %s and %s\n", op.Literal, left.Type(), right.Type())
+	}
+}
+
+func evalInfixStringInt(op token.Token, left object.Item, right object.Item) object.Item {
+	leftVal := left.(*object.String).Value
+	rightVal := right.(*object.Integer).Value
+
+	switch op.Type {
+	case token.DVBAR:
+		rightVal := strconv.FormatInt(int64(rightVal), 10)
+		return &object.String{Value: leftVal + rightVal}
+	default:
+		return newError("The operator '%s' is not defined for operands of type %s and %s\n", op.Literal, left.Type(), right.Type())
+	}
+}
+
+func evalInfixStringDecimal(op token.Token, left object.Item, right object.Item) object.Item {
+	leftVal := left.(*object.String).Value
+	rightVal := right.(*object.Decimal).Value
+
+	switch op.Type {
+	case token.DVBAR:
+		rightVal := strconv.FormatFloat(rightVal, 'f', -1, 64)
+		return &object.String{Value: leftVal + rightVal}
+	default:
+		return newError("The operator '%s' is not defined for operands of type %s and %s\n", op.Literal, left.Type(), right.Type())
+	}
+}
+
+func evalInfixStringDouble(op token.Token, left object.Item, right object.Item) object.Item {
+	leftVal := left.(*object.String).Value
+	rightVal := right.(*object.Double).Value
+
+	switch op.Type {
+	case token.DVBAR:
+		rightVal := strconv.FormatFloat(rightVal, 'f', -1, 64)
+		return &object.String{Value: leftVal + rightVal}
+	default:
+		return newError("The operator '%s' is not defined for operands of type %s and %s\n", op.Literal, left.Type(), right.Type())
+	}
+}
+
+func evalInfixStringString(op token.Token, left object.Item, right object.Item) object.Item {
+	leftVal := left.(*object.String).Value
+	rightVal := right.(*object.String).Value
+
+	switch op.Type {
+	case token.DVBAR:
 		return &object.String{Value: leftVal + rightVal}
 	default:
 		return newError("The operator '%s' is not defined for operands of type %s and %s\n", op.Literal, left.Type(), right.Type())

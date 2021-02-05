@@ -156,7 +156,14 @@ func IsReverseAxis(str string) bool {
 
 // IsNumber checks number. eg) .05e2
 func IsNumber(str string) bool {
-	re := regexp.MustCompile(`^([1-9]{1}\d*|[0]?)(\.\d*)?(([e|E][+|-]?)?\d*)?$`)
+	// re := regexp.MustCompile(`^([1-9]{1}\d*|[0]?)(\.\d*)?(([e|E][+|-]?)?\d*)?$`)
+	re := regexp.MustCompile(`^(\d*[\.])?\d+([eE][+-]?\d+)?$`)
+	return re.MatchString(str)
+}
+
+// IsDigit checks Digits ::= [0-9]+
+func IsDigit(str string) bool {
+	re := regexp.MustCompile(`^\d+$`)
 	return re.MatchString(str)
 }
 

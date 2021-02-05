@@ -215,9 +215,11 @@ func (fc *FunctionCall) String() string {
 }
 
 // Argument ::= ExprSingle | ArgumentPlaceholder
+// TypeID ::= 	1					 | 2
 type Argument struct {
 	ExprSingle
 	ArgumentPlaceholder
+	TypeID byte
 }
 
 func (a *Argument) String() string {

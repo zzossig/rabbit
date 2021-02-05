@@ -82,8 +82,10 @@ func (p *Parser) parseArgument() ast.Argument {
 	switch p.curToken.Type {
 	case token.QUESTION:
 		a.ArgumentPlaceholder.Token = p.curToken
+		a.TypeID = 2
 	default:
 		a.ExprSingle = p.parseExprSingle(LOWEST)
+		a.TypeID = 1
 	}
 
 	return a

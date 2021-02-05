@@ -225,8 +225,16 @@ func (l *Lexer) readString() string {
 func (l *Lexer) readNumber() string {
 	pos := l.pos
 	l.readChar()
-	for l.pos+1 <= len(l.input) && util.IsNumber(l.input[pos:l.pos+1]) {
-		l.readChar()
+	for l.ch == '.' || l.ch == 'e' || l.ch == 'E' || l.ch == '+' || l.ch == '-' || util.IsDigit(string(l.ch)) {
+		if l.ch == '+' || l.ch == '-' {
+			break
+		}
+		if (l.ch == 'e' || l.ch == 'E') && (l.peekChar() == '+' || l.peekChar() == '-') {
+			l.readChar()
+			l.readChar()
+		} else {
+			l.readChar()
+		}
 	}
 	return l.input[pos:l.pos]
 }

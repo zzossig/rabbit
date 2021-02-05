@@ -61,6 +61,15 @@ func (p *Parser) parseIdentifier() ast.ExprSingle {
 		return fc
 	}
 
+	if p.peekTokenIs(token.HASH) {
+		p.nextToken()
+
+		i := &ast.Identifier{}
+		i.EQName = name
+
+		return p.parseNamedFunctionRef(i)
+	}
+
 	if p.peekTokenIs(token.DCOLON) {
 		p.nextToken()
 

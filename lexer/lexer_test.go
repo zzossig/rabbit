@@ -40,6 +40,7 @@ func TestNextToken(t *testing.T) {
 		, '6' cast           as   	xs:integer
 		, //return[@return="return"]
 		, 1 eq 2
+		, 1|| "B"
 	)`
 
 	tokens := []struct {
@@ -208,6 +209,10 @@ func TestNextToken(t *testing.T) {
 		{token.INT, "1"},
 		{token.EQV, "eq"},
 		{token.INT, "2"},
+		{token.COMMA, ","},
+		{token.INT, "1"},
+		{token.DVBAR, "||"},
+		{token.STRING, "B"},
 		{token.RPAREN, ")"},
 	}
 

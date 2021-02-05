@@ -52,7 +52,7 @@ func testStringObject(t *testing.T, item object.Item, expected interface{}) {
 	}
 }
 
-func TestEvalArithmeticExpr(t *testing.T) {
+func TestEvalArithmetic(t *testing.T) {
 	tests := []struct {
 		input    string
 		expected interface{}
@@ -86,7 +86,7 @@ func TestEvalArithmeticExpr(t *testing.T) {
 	}
 }
 
-func TestEvalArrayExpr(t *testing.T) {
+func TestEvalArray(t *testing.T) {
 	tests := []struct {
 		input    string
 		expected []interface{}
@@ -128,7 +128,7 @@ func TestEvalArrayExpr(t *testing.T) {
 	}
 }
 
-func TestBuiltinFunctions(t *testing.T) {
+func TestBuiltinFunc(t *testing.T) {
 	tests := []struct {
 		input    string
 		expected interface{}
@@ -144,6 +144,33 @@ func TestBuiltinFunctions(t *testing.T) {
 			switch item := item.(type) {
 			case *object.Builtin:
 				testNumberObject(t, item.Func(item.Args...), tt.expected)
+			default:
+				t.Errorf("Unkown item type. got=%s", item.Type())
+			}
+		}
+	}
+}
+
+func TestStringConcat(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected interface{}
+	}{
+		{`"a"||"B"`, "aB"},
+		{`1|| "B"`, "1B"},
+		{`1 ||1.5`, "11.5"},
+		{`1.2 || 1.5`, "1.21.5"},
+		{`1.2 || "A" || 1.5`, "1.2A1.5"},
+	}
+
+	for _, tt := range tests {
+		seq := testEval(tt.input)
+		sequence := seq.(*object.Sequence)
+
+		for _, item := range sequence.Items {
+			switch item := item.(type) {
+			case *object.String:
+				testStringObject(t, item, tt.expected)
 			default:
 				t.Errorf("Unkown item type. got=%s", item.Type())
 			}

@@ -583,6 +583,26 @@ func TestFunctionCall(t *testing.T) {
 			"$f()[2]",
 			"f()[2]",
 		},
+		{
+			"function() as xs:integer+ { 2, 3, 5, 7, 11, 13 }()",
+			"function() as xs:integer+ {2, 3, 5, 7, 11, 13}()",
+		},
+		{
+			"function () {'hello world'}()",
+			"function() {'hello world'}()",
+		},
+		{
+			"(1,2,function () {'hello world'})[3]()",
+			"(1, 2, function() {'hello world'})[3]()",
+		},
+		{
+			`fn:for-each-pair(("a", "b", "c"), ("x", "y", "z"), concat#2)`,
+			"fn:for-each-pair(('a', 'b', 'c'), ('x', 'y', 'z'), concat#2)",
+		},
+		{
+			"for-each-pair( 1 to 5, ( 'London', 'New York', 'Vienna', 'Paris', 'Tokyo' ), concat( ?, ' ',  ? ) )",
+			"for-each-pair((1 to 5), ('London', 'New York', 'Vienna', 'Paris', 'Tokyo'), concat(?, ' ', ?))",
+		},
 	}
 
 	for _, tt := range tests {
@@ -691,6 +711,10 @@ func TestStringConcatExpr(t *testing.T) {
 		{
 			`"con" || "cat" || "enate"`,
 			`(('con' || 'cat') || 'enate')`,
+		},
+		{
+			`1|| "B"`,
+			`(1 || 'B')`,
 		},
 	}
 
