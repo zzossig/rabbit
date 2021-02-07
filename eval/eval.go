@@ -30,15 +30,29 @@ func Eval(expr ast.ExprSingle, env *object.Env) object.Item {
 		return &object.Double{Value: expr.Value}
 	case *ast.StringLiteral:
 		return &object.String{Value: expr.Value}
+	case *ast.Expr:
+		return evalExpr(expr, env)
+	case *ast.ParenthesizedExpr:
+		return evalExpr(expr, env)
+	case *ast.EnclosedExpr:
+		return evalExpr(expr, env)
+	case *ast.Predicate:
+		return evalExpr(expr, env)
 	case *ast.Identifier:
 		return evalIdentifier(expr, env)
+	case *ast.InlineFunctionExpr:
+		return evalFunctionLiteral(expr, env)
+	case *ast.NamedFunctionRef:
+		return evalFunctionLiteral(expr, env)
 	case *ast.FunctionCall:
-		return evalBuiltinFunc(expr, env)
+		return evalFunctionCall(expr, env)
 	case *ast.AdditiveExpr:
 		return evalInfixExpr(expr, env)
 	case *ast.MultiplicativeExpr:
 		return evalInfixExpr(expr, env)
 	case *ast.StringConcatExpr:
+		return evalInfixExpr(expr, env)
+	case *ast.RangeExpr:
 		return evalInfixExpr(expr, env)
 	case *ast.UnaryExpr:
 		return evalPrefixExpr(expr, env)
@@ -79,6 +93,40 @@ func isError(item object.Item) bool {
 	return false
 }
 
+func evalExpr(expr ast.ExprSingle, env *object.Env) object.Item {
+	switch expr := expr.(type) {
+	case *ast.Expr:
+		seq := &object.Sequence{}
+		for _, e := range expr.Exprs {
+			item := Eval(e, env)
+			seq.Items = append(seq.Items, item)
+		}
+		return seq
+	case *ast.ParenthesizedExpr:
+		seq := &object.Sequence{}
+		for _, e := range expr.Exprs {
+			item := Eval(e, env)
+			seq.Items = append(seq.Items, item)
+		}
+		return seq
+	case *ast.EnclosedExpr:
+		seq := &object.Sequence{}
+		for _, e := range expr.Exprs {
+			item := Eval(e, env)
+			seq.Items = append(seq.Items, item)
+		}
+		return seq
+	case *ast.Predicate:
+		seq := &object.Sequence{}
+		for _, e := range expr.Exprs {
+			item := Eval(e, env)
+			seq.Items = append(seq.Items, item)
+		}
+		return seq
+	}
+	return nil
+}
+
 func evalIdentifier(ident *ast.Identifier, env *object.Env) object.Item {
 	if val, ok := env.Get(ident.EQName.Value()); ok {
 		return val
@@ -87,20 +135,56 @@ func evalIdentifier(ident *ast.Identifier, env *object.Env) object.Item {
 	return newError("identifier not found: " + ident.EQName.Value())
 }
 
-func evalBuiltinFunc(expr ast.ExprSingle, env *object.Env) object.Item {
+func evalFunctionLiteral(expr ast.ExprSingle, env *object.Env) object.Item {
 	switch expr := expr.(type) {
-	case *ast.FunctionCall:
-		if builtin, ok := builtins[expr.EQName.Value()]; ok {
-			for _, arg := range expr.Args {
-				item := Eval(arg.ExprSingle, env)
-				builtin.Args = append(builtin.Args, item)
-			}
-			return builtin
-		}
-		return newError("built-in function not found: " + expr.EQName.Value())
+	case *ast.NamedFunctionRef:
+		return &object.FuncNamed{Name: expr.EQName.Value(), Num: expr.IntegerLiteral.Value}
+	case *ast.InlineFunctionExpr:
+		body := Eval(&expr.FunctionBody, env)
+		return &object.FuncInline{Body: body, Params: &expr.ParamList, SType: &expr.SequenceType}
+	}
+	return nil
+}
+
+func evalFunctionCall(expr ast.ExprSingle, env *object.Env) object.Item {
+	f := expr.(*ast.FunctionCall)
+
+	builtin, ok := builtins[f.EQName.Value()]
+	if !ok {
+		return newError("function not found: " + f.EQName.Value())
 	}
 
-	return nil
+	enclosedEnv := object.NewEnclosedEnv(env)
+	fc := &object.FuncCall{}
+	fc.Env = enclosedEnv
+	fc.Name = f.EQName.Value()
+	fc.Func = &builtin
+
+	var args []object.Item
+	pcnt := 0
+loop:
+	for _, arg := range f.Args {
+		switch arg.TypeID {
+		case 0:
+			break loop
+		case 1:
+			evaled := Eval(arg.ExprSingle, enclosedEnv)
+			args = append(args, evaled)
+		case 2:
+			args = append(args, &object.Placeholder{})
+			pcnt++
+		default:
+			break loop
+		}
+	}
+
+	enclosedEnv.Args = append(enclosedEnv.Args, args...)
+
+	if pcnt > 0 {
+		return fc
+	}
+
+	return builtin(args...)
 }
 
 func evalInfixExpr(expr ast.ExprSingle, env *object.Env) object.Item {
@@ -118,6 +202,10 @@ func evalInfixExpr(expr ast.ExprSingle, env *object.Env) object.Item {
 		right = Eval(expr.RightExpr, env)
 		op = expr.Token
 	case *ast.StringConcatExpr:
+		left = Eval(expr.LeftExpr, env)
+		right = Eval(expr.RightExpr, env)
+		op = expr.Token
+	case *ast.RangeExpr:
 		left = Eval(expr.LeftExpr, env)
 		right = Eval(expr.RightExpr, env)
 		op = expr.Token
@@ -220,6 +308,12 @@ func evalInfixIntInt(op token.Token, left object.Item, right object.Item) object
 		leftVal := strconv.FormatInt(int64(leftVal), 10)
 		rightVal := strconv.FormatInt(int64(rightVal), 10)
 		return &object.String{Value: leftVal + rightVal}
+	case token.TO:
+		seq := &object.Sequence{}
+		for i := leftVal; i <= rightVal; i++ {
+			seq.Items = append(seq.Items, &object.Integer{Value: i})
+		}
+		return seq
 	default:
 		return newError("The operator '%s' is not defined for operands of type %s and %s\n", op.Literal, left.Type(), right.Type())
 	}

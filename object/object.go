@@ -5,6 +5,8 @@ import (
 	"hash/fnv"
 	"math"
 	"strings"
+
+	"github.com/zzossig/xpath/ast"
 )
 
 // Item ..
@@ -13,16 +15,17 @@ type Item interface {
 	Inspect() string
 }
 
-// BIF represents Built-In Function
-type BIF func(args ...Item) Item
+// Func represents function type
+type Func func(args ...Item) Item
 
 // Type represents Item Type
 type Type string
 
 // Item Types
 const (
-	NilType   Type = "nil"
-	ErrorType Type = "error"
+	NilType     Type = "nil"
+	ErrorType   Type = "error"
+	PholderType Type = "?"
 
 	IntegerType Type = "int"
 	DecimalType Type = "decimal"
@@ -30,58 +33,12 @@ const (
 	BooleanType Type = "bool"
 	StringType  Type = "string"
 
-	FuncType    Type = "func"
-	BuiltinType Type = "builtin"
+	FuncCallType   Type = "functionC"
+	FuncNamedType  Type = "functionN"
+	FuncInlineType Type = "functionI"
 
 	MapType   Type = "map"
 	ArrayType Type = "array"
-
-	XsAnyAtomicType      Type = "xs:anyAtomicType"
-	XsUntypedAtomic      Type = "xs:untypedAtomic"
-	XsDateTime           Type = "xs:dateTime"
-	XsDateTimeStamp      Type = "xs:dateTimeStamp"
-	XsDate               Type = "xs:date"
-	XsTime               Type = "xs:time"
-	XsDuration           Type = "xs:duration"
-	XsYearMonthDuration  Type = "xs:yearMonthDuration"
-	XsDayTimeDuration    Type = "xs:dayTimeDuration"
-	XsFloat              Type = "xs:float"
-	XsDouble             Type = "xs:double"
-	XsDecimal            Type = "xs:decimal"
-	XsInteger            Type = "xs:integer"
-	XsNonPositiveInteger Type = "xs:nonPositiveInteger"
-	XsNegativeInteger    Type = "xs:negativeInteger"
-	XsLong               Type = "xs:long"
-	XsInt                Type = "xs:int"
-	XsShort              Type = "xs:short"
-	XsByte               Type = "xs:byte"
-	XsNonNegativeInteger Type = "xs:nonNegativeInteger"
-	XsUnsignedLong       Type = "xs:unsignedLong"
-	XsUnsignedInt        Type = "xs:unsignedInt"
-	XsUnsignedShort      Type = "xs:unsignedShort"
-	XsUnsignedByte       Type = "xs:unsignedByte"
-	XsPositiveInteger    Type = "xs:positiveInteger"
-	XsGYearMonth         Type = "xs:gYearMonth"
-	XsGYear              Type = "xs:gYear"
-	XsGMonthDay          Type = "xs:gMonthDay"
-	XsGDay               Type = "xs:gDay"
-	XsGMonth             Type = "xs:gMonth"
-	XsString             Type = "xs:string"
-	XsNormalizedString   Type = "xs:normalizedString"
-	XsToken              Type = "xs:token"
-	XsLanguage           Type = "xs:language"
-	XsNMTOKEN            Type = "xs:NMTOKEN"
-	XsName               Type = "xs:Name"
-	XsNCName             Type = "xs:NCName"
-	XsID                 Type = "xs:ID"
-	XsIDREF              Type = "xs:IDREF"
-	XsENTITY             Type = "xs:ENTITY"
-	XsBoolean            Type = "xs:boolean"
-	XsBase64Binary       Type = "xs:base64Binary"
-	XsHexBinary          Type = "xs:hexBinary"
-	XsAnyURI             Type = "xs:anyURI"
-	XsQName              Type = "xs:QName"
-	XsNOTATION           Type = "xs:NOTATION"
 )
 
 // Hasher ..
@@ -182,6 +139,29 @@ type Error struct {
 func (e *Error) Type() Type      { return ErrorType }
 func (e *Error) Inspect() string { return "ERROR: " + e.Message }
 
+// Placeholder ..
+type Placeholder struct {
+	Value interface{}
+}
+
+func (p *Placeholder) Type() Type { return PholderType }
+func (p *Placeholder) Inspect() string {
+	switch v := p.Value.(type) {
+	case *Integer:
+		return v.Inspect()
+	case *Decimal:
+		return v.Inspect()
+	case *Double:
+		return v.Inspect()
+	case *String:
+		return v.Inspect()
+	case *Error:
+		return v.Inspect()
+	default:
+		return fmt.Sprintf("%s", p.Value)
+	}
+}
+
 // String ..
 type String struct {
 	Value string
@@ -190,15 +170,38 @@ type String struct {
 func (s *String) Type() Type      { return StringType }
 func (s *String) Inspect() string { return s.Value }
 
-// Builtin ..
-type Builtin struct {
+// FuncNamed ..
+type FuncNamed struct {
 	Name string
-	Func BIF
-	Args []Item
+	Num  int
+	*Func
+	*Env
 }
 
-func (b *Builtin) Type() Type      { return BuiltinType }
-func (b *Builtin) Inspect() string { return "builtin function" }
+func (fn *FuncNamed) Type() Type      { return FuncNamedType }
+func (fn *FuncNamed) Inspect() string { return fmt.Sprintf("functionN: %s", fn.Name) }
+
+// FuncInline ..
+type FuncInline struct {
+	Body   Item
+	Params *ast.ParamList
+	SType  *ast.SequenceType
+	*Func
+	*Env
+}
+
+func (fi *FuncInline) Type() Type      { return FuncInlineType }
+func (fi *FuncInline) Inspect() string { return "functionI" }
+
+// FuncCall ..
+type FuncCall struct {
+	Name string
+	*Func
+	*Env
+}
+
+func (fc *FuncCall) Type() Type      { return FuncCallType }
+func (fc *FuncCall) Inspect() string { return "functionC" }
 
 // HashKey ..
 func (s *String) HashKey() HashKey {

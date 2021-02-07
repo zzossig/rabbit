@@ -9,49 +9,6 @@ import (
 	"github.com/zzossig/xpath/parser"
 )
 
-func testEval(input string) object.Item {
-	l := lexer.New(input)
-	p := parser.New(l)
-	xpath := p.ParseXPath()
-	env := object.NewEnv()
-
-	return Eval(xpath, env)
-}
-
-func testNumberObject(t *testing.T, item object.Item, expected interface{}) {
-	switch item := item.(type) {
-	case *object.Integer:
-		if item.Value != expected {
-			t.Errorf("object.Integer has wrong value. got=%d, want=%d", item.Value, expected)
-		}
-	case *object.Decimal:
-		e := fmt.Sprintf("%f", expected)
-		v := fmt.Sprintf("%f", item.Value)
-		if v != e {
-			t.Errorf("object.Decimal has wrong value. got=%f, want=%f", item.Value, expected)
-		}
-	case *object.Double:
-		e := fmt.Sprintf("%f", expected)
-		v := fmt.Sprintf("%f", item.Value)
-		if v != e {
-			t.Errorf("object.Double has wrong value. got=%f, want=%f", item.Value, expected)
-		}
-	default:
-		t.Errorf("Unkown item type. got=%s", item.Type())
-	}
-}
-
-func testStringObject(t *testing.T, item object.Item, expected interface{}) {
-	switch item := item.(type) {
-	case *object.String:
-		if item.Value != expected {
-			t.Errorf("object.String has wrong value. got=%s, want=%s", item.Value, expected)
-		}
-	default:
-		t.Errorf("item type must object.String. got=%s", item.Type())
-	}
-}
-
 func TestEvalArithmetic(t *testing.T) {
 	tests := []struct {
 		input    string
@@ -128,26 +85,23 @@ func TestEvalArray(t *testing.T) {
 	}
 }
 
-func TestBuiltinFunc(t *testing.T) {
+func TestFunctionCall(t *testing.T) {
 	tests := []struct {
 		input    string
-		expected interface{}
+		expected []interface{}
 	}{
-		{`abs(-2.5)`, 2.5},
+		{`abs(-2.5)`, []interface{}{2.5}},
+		{`abs(-2)`, []interface{}{2}},
+		{
+			`for-each-pair( 1 to 5, ( 'A', 'B', 'C', 'D', 'E' ), concat( ?,  ?, '--' ) )`,
+			[]interface{}{"1A--", "2B--", "3C--", "4D--", "5E--"},
+		},
 	}
 
 	for _, tt := range tests {
 		seq := testEval(tt.input)
 		sequence := seq.(*object.Sequence)
-
-		for _, item := range sequence.Items {
-			switch item := item.(type) {
-			case *object.Builtin:
-				testNumberObject(t, item.Func(item.Args...), tt.expected)
-			default:
-				t.Errorf("Unkown item type. got=%s", item.Type())
-			}
-		}
+		testSequenceObject(t, sequence, tt.expected)
 	}
 }
 
@@ -175,5 +129,73 @@ func TestStringConcat(t *testing.T) {
 				t.Errorf("Unkown item type. got=%s", item.Type())
 			}
 		}
+	}
+}
+
+func testEval(input string) object.Item {
+	l := lexer.New(input)
+	p := parser.New(l)
+	xpath := p.ParseXPath()
+	env := object.NewEnv()
+
+	return Eval(xpath, env)
+}
+
+func testNumberObject(t *testing.T, item object.Item, expected interface{}) {
+	switch item := item.(type) {
+	case *object.Integer:
+		if item.Value != expected {
+			t.Errorf("object.Integer has wrong value. got=%d, want=%d", item.Value, expected)
+		}
+	case *object.Decimal:
+		e := fmt.Sprintf("%f", expected)
+		v := fmt.Sprintf("%f", item.Value)
+		if v != e {
+			t.Errorf("object.Decimal has wrong value. got=%f, want=%f", item.Value, expected)
+		}
+	case *object.Double:
+		e := fmt.Sprintf("%f", expected)
+		v := fmt.Sprintf("%f", item.Value)
+		if v != e {
+			t.Errorf("object.Double has wrong value. got=%f, want=%f", item.Value, expected)
+		}
+	default:
+		t.Errorf("Unkown item type. got=%s", item.Type())
+	}
+}
+
+func testStringObject(t *testing.T, item object.Item, expected interface{}) {
+	switch item := item.(type) {
+	case *object.String:
+		if item.Value != expected {
+			t.Errorf("object.String has wrong value. got=%s, want=%s", item.Value, expected)
+		}
+	default:
+		t.Errorf("item type must object.String. got=%s", item.Type())
+	}
+}
+
+func testSequenceObject(t *testing.T, item object.Item, expected []interface{}) {
+	switch item := item.(type) {
+	case *object.Sequence:
+		if len(item.Items) != len(expected) {
+			t.Errorf("length of the item must be the same. got=%d, want=%d", len(item.Items), len(expected))
+		}
+		for i := 0; i < len(item.Items); i++ {
+			switch item.Items[i].(type) {
+			case *object.Integer:
+				testNumberObject(t, item.Items[i], expected[i])
+			case *object.Decimal:
+				testNumberObject(t, item.Items[i], expected[i])
+			case *object.Double:
+				testNumberObject(t, item.Items[i], expected[i])
+			case *object.String:
+				testStringObject(t, item.Items[i], expected[i])
+			default:
+				t.Errorf("Unkown item type. got=%s", item.Items[i].Type())
+			}
+		}
+	default:
+		t.Errorf("item type must object.String. got=%s", item.Type())
 	}
 }

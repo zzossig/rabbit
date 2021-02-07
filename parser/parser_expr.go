@@ -67,6 +67,8 @@ func (p *Parser) parseIdentifier() ast.ExprSingle {
 		i := &ast.Identifier{}
 		i.EQName = name
 
+		// TODO should check name is reserved-function0name
+
 		return p.parseNamedFunctionRef(i)
 	}
 
@@ -133,10 +135,6 @@ func (p *Parser) parseIntegerLiteral() ast.ExprSingle {
 		return nil
 	}
 
-	if p.peekTokenIs(token.LBRACKET, token.LPAREN, token.QUESTION) {
-		return p.parsePostfixExpr(il)
-	}
-
 	return il
 }
 
@@ -147,10 +145,6 @@ func (p *Parser) parseDecimalLiteral() ast.ExprSingle {
 	if err != nil {
 		// TODO error
 		return nil
-	}
-
-	if p.peekTokenIs(token.LBRACKET, token.LPAREN, token.QUESTION) {
-		return p.parsePostfixExpr(dl)
 	}
 
 	return dl
@@ -165,18 +159,11 @@ func (p *Parser) parseDoubleLiteral() ast.ExprSingle {
 		return nil
 	}
 
-	if p.peekTokenIs(token.LBRACKET, token.LPAREN, token.QUESTION) {
-		return p.parsePostfixExpr(dl)
-	}
-
 	return dl
 }
 
 func (p *Parser) parseStringLiteral() ast.ExprSingle {
 	sl := &ast.StringLiteral{Value: p.curToken.Literal}
-	if p.peekTokenIs(token.LBRACKET, token.LPAREN, token.QUESTION) {
-		return p.parsePostfixExpr(sl)
-	}
 	return sl
 }
 
@@ -807,6 +794,10 @@ func (p *Parser) parsePathExpr() ast.ExprSingle {
 	precedence := p.curPrecedence()
 	p.nextToken()
 	expr.ExprSingle = p.parseExprSingle(precedence)
+
+	if p.peekTokenIs(token.LBRACKET, token.LPAREN, token.QUESTION) {
+		return p.parsePostfixExpr(expr)
+	}
 
 	return expr
 }
