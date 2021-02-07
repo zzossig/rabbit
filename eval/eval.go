@@ -1,11 +1,11 @@
 package eval
 
 import (
-	"fmt"
 	"math"
 	"strconv"
 
 	"github.com/zzossig/xpath/ast"
+	"github.com/zzossig/xpath/bif"
 	"github.com/zzossig/xpath/object"
 	"github.com/zzossig/xpath/token"
 )
@@ -46,6 +46,8 @@ func Eval(expr ast.ExprSingle, env *object.Env) object.Item {
 		return evalFunctionLiteral(expr, env)
 	case *ast.FunctionCall:
 		return evalFunctionCall(expr, env)
+	case *ast.ArrowExpr:
+		return evalArrowExpr(expr, env)
 	case *ast.AdditiveExpr:
 		return evalInfixExpr(expr, env)
 	case *ast.MultiplicativeExpr:
@@ -80,17 +82,6 @@ func evalXPath(expr *ast.XPath, env *object.Env) object.Item {
 	}
 
 	return xpath
-}
-
-func newError(format string, a ...interface{}) *object.Error {
-	return &object.Error{Message: fmt.Sprintf(format, a...)}
-}
-
-func isError(item object.Item) bool {
-	if item != nil {
-		return item.Type() == object.ErrorType
-	}
-	return false
 }
 
 func evalExpr(expr ast.ExprSingle, env *object.Env) object.Item {
@@ -132,7 +123,7 @@ func evalIdentifier(ident *ast.Identifier, env *object.Env) object.Item {
 		return val
 	}
 
-	return newError("identifier not found: " + ident.EQName.Value())
+	return bif.NewError("identifier not found: " + ident.EQName.Value())
 }
 
 func evalFunctionLiteral(expr ast.ExprSingle, env *object.Env) object.Item {
@@ -149,9 +140,9 @@ func evalFunctionLiteral(expr ast.ExprSingle, env *object.Env) object.Item {
 func evalFunctionCall(expr ast.ExprSingle, env *object.Env) object.Item {
 	f := expr.(*ast.FunctionCall)
 
-	builtin, ok := builtins[f.EQName.Value()]
+	builtin, ok := bif.Builtins[f.EQName.Value()]
 	if !ok {
-		return newError("function not found: " + f.EQName.Value())
+		return bif.NewError("function not found: " + f.EQName.Value())
 	}
 
 	enclosedEnv := object.NewEnclosedEnv(env)
@@ -187,6 +178,29 @@ loop:
 	return builtin(args...)
 }
 
+func evalArrowExpr(expr ast.ExprSingle, env *object.Env) object.Item {
+	ae := expr.(*ast.ArrowExpr)
+	bindings := ae.Bindings
+
+	e := Eval(ae, env)
+	for i, b := range bindings {
+		switch b.TypeID {
+		case 1:
+			builtin, ok := bif.Builtins[b.EQName.Value()]
+			if !ok {
+				bif.NewError("function not defined: %s", b.EQName.Value())
+			}
+// TODO ArgumentList parsing and make args
+			if i == 0 {
+				
+			}
+		case 2:
+		case 3:
+		}
+	}
+
+}
+
 func evalInfixExpr(expr ast.ExprSingle, env *object.Env) object.Item {
 	var left object.Item
 	var right object.Item
@@ -210,14 +224,14 @@ func evalInfixExpr(expr ast.ExprSingle, env *object.Env) object.Item {
 		right = Eval(expr.RightExpr, env)
 		op = expr.Token
 	default:
-		return newError("%T is not an infix expression\n", expr)
+		return bif.NewError("%T is not an infix expression\n", expr)
 	}
 
-	if isError(left) {
+	if bif.IsError(left) {
 		return left
 	}
 
-	if isError(right) {
+	if bif.IsError(right) {
 		return right
 	}
 
@@ -255,7 +269,7 @@ func evalInfixExpr(expr ast.ExprSingle, env *object.Env) object.Item {
 	case left.Type() == object.StringType && right.Type() == object.StringType:
 		return evalInfixStringString(op, left, right)
 	default:
-		return newError("The operator '%s' is not defined for operands of type %s and %s\n", op.Literal, left.Type(), right.Type())
+		return bif.NewError("The operator '%s' is not defined for operands of type %s and %s\n", op.Literal, left.Type(), right.Type())
 	}
 }
 
@@ -268,10 +282,10 @@ func evalPrefixExpr(expr ast.ExprSingle, env *object.Env) object.Item {
 		right = Eval(expr.ExprSingle, env)
 		op = expr.Token
 	default:
-		return newError("%T is not an prefix expression\n", expr)
+		return bif.NewError("%T is not an prefix expression\n", expr)
 	}
 
-	if isError(right) {
+	if bif.IsError(right) {
 		return right
 	}
 
@@ -283,7 +297,7 @@ func evalPrefixExpr(expr ast.ExprSingle, env *object.Env) object.Item {
 	case right.Type() == object.DoubleType:
 		return evalPrefixDouble(op, right)
 	default:
-		return newError("The operator '%s' is not defined for operand of type %s\n", op.Literal, right.Type())
+		return bif.NewError("The operator '%s' is not defined for operand of type %s\n", op.Literal, right.Type())
 	}
 }
 
@@ -315,7 +329,7 @@ func evalInfixIntInt(op token.Token, left object.Item, right object.Item) object
 		}
 		return seq
 	default:
-		return newError("The operator '%s' is not defined for operands of type %s and %s\n", op.Literal, left.Type(), right.Type())
+		return bif.NewError("The operator '%s' is not defined for operands of type %s and %s\n", op.Literal, left.Type(), right.Type())
 	}
 }
 
@@ -341,7 +355,7 @@ func evalInfixIntDecimal(op token.Token, left object.Item, right object.Item) ob
 		rightVal := strconv.FormatFloat(rightVal, 'f', -1, 64)
 		return &object.String{Value: leftVal + rightVal}
 	default:
-		return newError("The operator '%s' is not defined for operands of type %s and %s\n", op.Literal, left.Type(), right.Type())
+		return bif.NewError("The operator '%s' is not defined for operands of type %s and %s\n", op.Literal, left.Type(), right.Type())
 	}
 }
 
@@ -367,7 +381,7 @@ func evalInfixIntDouble(op token.Token, left object.Item, right object.Item) obj
 		rightVal := strconv.FormatFloat(rightVal, 'f', -1, 64)
 		return &object.String{Value: leftVal + rightVal}
 	default:
-		return newError("The operator '%s' is not defined for operands of type %s and %s\n", op.Literal, left.Type(), right.Type())
+		return bif.NewError("The operator '%s' is not defined for operands of type %s and %s\n", op.Literal, left.Type(), right.Type())
 	}
 }
 
@@ -380,7 +394,7 @@ func evalInfixIntString(op token.Token, left object.Item, right object.Item) obj
 		leftVal := strconv.FormatInt(int64(leftVal), 10)
 		return &object.String{Value: leftVal + rightVal}
 	default:
-		return newError("The operator '%s' is not defined for operands of type %s and %s\n", op.Literal, left.Type(), right.Type())
+		return bif.NewError("The operator '%s' is not defined for operands of type %s and %s\n", op.Literal, left.Type(), right.Type())
 	}
 }
 
@@ -406,7 +420,7 @@ func evalInfixDecimalInt(op token.Token, left object.Item, right object.Item) ob
 		rightVal := strconv.FormatInt(int64(rightVal), 10)
 		return &object.String{Value: leftVal + rightVal}
 	default:
-		return newError("The operator '%s' is not defined for operands of type %s and %s\n", op.Literal, left.Type(), right.Type())
+		return bif.NewError("The operator '%s' is not defined for operands of type %s and %s\n", op.Literal, left.Type(), right.Type())
 	}
 }
 
@@ -432,7 +446,7 @@ func evalInfixDecimalDecimal(op token.Token, left object.Item, right object.Item
 		rightVal := strconv.FormatFloat(rightVal, 'f', -1, 64)
 		return &object.String{Value: leftVal + rightVal}
 	default:
-		return newError("The operator '%s' is not defined for operands of type %s and %s\n", op.Literal, left.Type(), right.Type())
+		return bif.NewError("The operator '%s' is not defined for operands of type %s and %s\n", op.Literal, left.Type(), right.Type())
 	}
 }
 
@@ -458,7 +472,7 @@ func evalInfixDecimalDouble(op token.Token, left object.Item, right object.Item)
 		rightVal := strconv.FormatFloat(rightVal, 'f', -1, 64)
 		return &object.String{Value: leftVal + rightVal}
 	default:
-		return newError("The operator '%s' is not defined for operands of type %s and %s\n", op.Literal, left.Type(), right.Type())
+		return bif.NewError("The operator '%s' is not defined for operands of type %s and %s\n", op.Literal, left.Type(), right.Type())
 	}
 }
 
@@ -471,7 +485,7 @@ func evalInfixDecimalString(op token.Token, left object.Item, right object.Item)
 		leftVal := strconv.FormatFloat(leftVal, 'f', -1, 64)
 		return &object.String{Value: leftVal + rightVal}
 	default:
-		return newError("The operator '%s' is not defined for operands of type %s and %s\n", op.Literal, left.Type(), right.Type())
+		return bif.NewError("The operator '%s' is not defined for operands of type %s and %s\n", op.Literal, left.Type(), right.Type())
 	}
 }
 
@@ -497,7 +511,7 @@ func evalInfixDoubleInt(op token.Token, left object.Item, right object.Item) obj
 		rightVal := strconv.FormatInt(int64(rightVal), 10)
 		return &object.String{Value: leftVal + rightVal}
 	default:
-		return newError("The operator '%s' is not defined for operands of type %s and %s\n", op.Literal, left.Type(), right.Type())
+		return bif.NewError("The operator '%s' is not defined for operands of type %s and %s\n", op.Literal, left.Type(), right.Type())
 	}
 }
 
@@ -523,7 +537,7 @@ func evalInfixDoubleDecimal(op token.Token, left object.Item, right object.Item)
 		rightVal := strconv.FormatFloat(rightVal, 'f', -1, 64)
 		return &object.String{Value: leftVal + rightVal}
 	default:
-		return newError("The operator '%s' is not defined for operands of type %s and %s\n", op.Literal, left.Type(), right.Type())
+		return bif.NewError("The operator '%s' is not defined for operands of type %s and %s\n", op.Literal, left.Type(), right.Type())
 	}
 }
 
@@ -549,7 +563,7 @@ func evalInfixDoubleDouble(op token.Token, left object.Item, right object.Item) 
 		rightVal := strconv.FormatFloat(rightVal, 'f', -1, 64)
 		return &object.String{Value: leftVal + rightVal}
 	default:
-		return newError("The operator '%s' is not defined for operands of type %s and %s\n", op.Literal, left.Type(), right.Type())
+		return bif.NewError("The operator '%s' is not defined for operands of type %s and %s\n", op.Literal, left.Type(), right.Type())
 	}
 }
 
@@ -562,7 +576,7 @@ func evalInfixDoubleString(op token.Token, left object.Item, right object.Item) 
 		leftVal := strconv.FormatFloat(leftVal, 'f', -1, 64)
 		return &object.String{Value: leftVal + rightVal}
 	default:
-		return newError("The operator '%s' is not defined for operands of type %s and %s\n", op.Literal, left.Type(), right.Type())
+		return bif.NewError("The operator '%s' is not defined for operands of type %s and %s\n", op.Literal, left.Type(), right.Type())
 	}
 }
 
@@ -575,7 +589,7 @@ func evalInfixStringInt(op token.Token, left object.Item, right object.Item) obj
 		rightVal := strconv.FormatInt(int64(rightVal), 10)
 		return &object.String{Value: leftVal + rightVal}
 	default:
-		return newError("The operator '%s' is not defined for operands of type %s and %s\n", op.Literal, left.Type(), right.Type())
+		return bif.NewError("The operator '%s' is not defined for operands of type %s and %s\n", op.Literal, left.Type(), right.Type())
 	}
 }
 
@@ -588,7 +602,7 @@ func evalInfixStringDecimal(op token.Token, left object.Item, right object.Item)
 		rightVal := strconv.FormatFloat(rightVal, 'f', -1, 64)
 		return &object.String{Value: leftVal + rightVal}
 	default:
-		return newError("The operator '%s' is not defined for operands of type %s and %s\n", op.Literal, left.Type(), right.Type())
+		return bif.NewError("The operator '%s' is not defined for operands of type %s and %s\n", op.Literal, left.Type(), right.Type())
 	}
 }
 
@@ -601,7 +615,7 @@ func evalInfixStringDouble(op token.Token, left object.Item, right object.Item) 
 		rightVal := strconv.FormatFloat(rightVal, 'f', -1, 64)
 		return &object.String{Value: leftVal + rightVal}
 	default:
-		return newError("The operator '%s' is not defined for operands of type %s and %s\n", op.Literal, left.Type(), right.Type())
+		return bif.NewError("The operator '%s' is not defined for operands of type %s and %s\n", op.Literal, left.Type(), right.Type())
 	}
 }
 
@@ -613,7 +627,7 @@ func evalInfixStringString(op token.Token, left object.Item, right object.Item) 
 	case token.DVBAR:
 		return &object.String{Value: leftVal + rightVal}
 	default:
-		return newError("The operator '%s' is not defined for operands of type %s and %s\n", op.Literal, left.Type(), right.Type())
+		return bif.NewError("The operator '%s' is not defined for operands of type %s and %s\n", op.Literal, left.Type(), right.Type())
 	}
 }
 
@@ -626,7 +640,7 @@ func evalPrefixInt(op token.Token, right object.Item) object.Item {
 	case token.MINUS:
 		return &object.Integer{Value: -1 * rightVal}
 	default:
-		return newError("The operator '%s' is not defined for operand of type %s\n", op.Literal, right.Type())
+		return bif.NewError("The operator '%s' is not defined for operand of type %s\n", op.Literal, right.Type())
 	}
 }
 
@@ -639,7 +653,7 @@ func evalPrefixDecimal(op token.Token, right object.Item) object.Item {
 	case token.MINUS:
 		return &object.Decimal{Value: -1 * rightVal}
 	default:
-		return newError("The operator '%s' is not defined for operand of type %s\n", op.Literal, right.Type())
+		return bif.NewError("The operator '%s' is not defined for operand of type %s\n", op.Literal, right.Type())
 	}
 }
 
@@ -652,7 +666,7 @@ func evalPrefixDouble(op token.Token, right object.Item) object.Item {
 	case token.MINUS:
 		return &object.Double{Value: -1 * rightVal}
 	default:
-		return newError("The operator '%s' is not defined for operand of type %s\n", op.Literal, right.Type())
+		return bif.NewError("The operator '%s' is not defined for operand of type %s\n", op.Literal, right.Type())
 	}
 }
 
