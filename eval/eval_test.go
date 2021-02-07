@@ -96,6 +96,14 @@ func TestFunctionCall(t *testing.T) {
 			`for-each-pair( 1 to 5, ( 'A', 'B', 'C', 'D', 'E' ), concat( ?,  ?, '--' ) )`,
 			[]interface{}{"1A--", "2B--", "3C--", "4D--", "5E--"},
 		},
+		{
+			`for-each-pair( 1, ( 'A', 'B', 'C', 'D', 'E' ), concat( ?,  ?, '--' ) )`,
+			[]interface{}{"1A--"},
+		},
+		{
+			`for-each-pair( (1 to 2), ( 'A', 'B', 'C' ), concat( ?,  ?, '--' ) )`,
+			[]interface{}{"1A--", "2B--"},
+		},
 	}
 
 	for _, tt := range tests {
