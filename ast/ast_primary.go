@@ -290,7 +290,7 @@ func (ifr *InlineFunctionExpr) String() string {
 	sb.WriteString("function(")
 	sb.WriteString(ifr.ParamList.String())
 	sb.WriteString(")")
-	if ifr.SequenceType.String() != "" {
+	if ifr.SequenceType.TypeID != 0 {
 		sb.WriteString(" ")
 		sb.WriteString("as")
 		sb.WriteString(" ")
@@ -332,8 +332,10 @@ func (p *Param) String() string {
 	if p.EQName.Value() != "" {
 		sb.WriteString("$")
 		sb.WriteString(p.EQName.Value())
-		sb.WriteString(" ")
-		sb.WriteString(p.TypeDeclaration.String())
+		if p.TypeID != 0 {
+			sb.WriteString(" ")
+			sb.WriteString(p.TypeDeclaration.String())
+		}
 	}
 
 	return sb.String()

@@ -13,3 +13,29 @@ func concat(args ...object.Item) object.Item {
 	}
 	return &object.String{Value: sb.String()}
 }
+
+func upperCase(args ...object.Item) object.Item {
+	if len(args) != 1 {
+		return NewError("wrong number of arguments. got=%d, want=1", len(args))
+	}
+
+	arg := args[0]
+	if arg.Type() != object.StringType {
+		return &object.Nil{}
+	}
+	strItem := arg.(*object.String)
+	return &object.String{Value: strings.ToUpper(strItem.Value)}
+}
+
+func lowerCase(args ...object.Item) object.Item {
+	if len(args) != 1 {
+		return NewError("wrong number of arguments. got=%d, want=1", len(args))
+	}
+
+	arg := args[0]
+	if arg.Type() != object.StringType {
+		return &object.Nil{}
+	}
+	strItem := arg.(*object.String)
+	return &object.String{Value: strings.ToLower(strItem.Value)}
+}

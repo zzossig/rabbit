@@ -174,7 +174,6 @@ func (s *String) Inspect() string { return s.Value }
 type FuncNamed struct {
 	Name string
 	Num  int
-	*Func
 	*Env
 }
 
@@ -183,11 +182,9 @@ func (fn *FuncNamed) Inspect() string { return fmt.Sprintf("functionN: %s", fn.N
 
 // FuncInline ..
 type FuncInline struct {
-	Body   Item
-	Params *ast.ParamList
-	SType  *ast.SequenceType
-	*Func
-	*Env
+	Body  *ast.EnclosedExpr
+	PL    *ast.ParamList
+	SType *ast.SequenceType
 }
 
 func (fi *FuncInline) Type() Type      { return FuncInlineType }

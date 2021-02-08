@@ -140,6 +140,35 @@ func TestStringConcat(t *testing.T) {
 	}
 }
 
+func TestArrowExpr(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected interface{}
+	}{
+		{"'a' => upper-case() => lower-case()", "a"},
+	}
+
+	for _, tt := range tests {
+		seq := testEval(tt.input)
+		sequence := seq.(*object.Sequence)
+
+		for _, item := range sequence.Items {
+			switch item := item.(type) {
+			case *object.Integer:
+				testNumberObject(t, item, tt.expected)
+			case *object.Decimal:
+				testNumberObject(t, item, tt.expected)
+			case *object.Double:
+				testNumberObject(t, item, tt.expected)
+			case *object.String:
+				testStringObject(t, item, tt.expected)
+			default:
+				t.Errorf("Unkown item type. got=%s", item.Type())
+			}
+		}
+	}
+}
+
 func testEval(input string) object.Item {
 	l := lexer.New(input)
 	p := parser.New(l)

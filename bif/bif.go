@@ -11,6 +11,8 @@ var Builtins = map[string]object.Func{
 	"abs":           abs,
 	"concat":        concat,
 	"for-each-pair": forEachPair,
+	"upper-case":    upperCase,
+	"lower-case":    lowerCase,
 }
 
 // NewError ..

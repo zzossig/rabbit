@@ -552,6 +552,10 @@ func TestFunctionCall(t *testing.T) {
 		expected string
 	}{
 		{
+			"function($a, $b){$b || $a}('World', 'Hello')",
+			"function($a, $b) {($b || $a)}('World', 'Hello')",
+		},
+		{
 			"array { (), (27, 17, 0) }(1)",
 			"array{(), (27, 17, 0)}(1)",
 		},
