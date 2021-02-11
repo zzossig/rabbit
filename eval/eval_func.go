@@ -21,7 +21,13 @@ func evalFunctionCall(expr ast.ExprSingle, env *object.Env) object.Item {
 
 	builtin, ok := bif.Builtins[f.EQName.Value()]
 	if !ok {
-		return bif.NewError("function not found: " + f.EQName.Value())
+		envFunc, ok := env.Get(f.EQName.Value())
+		if !ok {
+			return bif.NewError("function not found: " + f.EQName.Value())
+		}
+
+		args, _ := evalArgumentList(f.Args, env)
+		return evalDynamicFunctionCall(envFunc, args, env)
 	}
 
 	enclosedEnv := object.NewEnclosedEnv(env)

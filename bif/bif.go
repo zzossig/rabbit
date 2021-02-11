@@ -6,7 +6,7 @@ import (
 	"github.com/zzossig/xpath/object"
 )
 
-// Builtins ..
+// Builtins defined in https://www.w3.org/TR/xpath-functions-31/
 var Builtins = map[string]object.Func{
 	"abs":           abs,
 	"concat":        concat,

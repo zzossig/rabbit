@@ -250,6 +250,38 @@ func TestForExpr(t *testing.T) {
 	}
 }
 
+func TestLetExpr(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected string
+	}{
+		{
+			`let $r := 5, $pi := 3.14 return  'area = ' || $pi * ($r * $r)`,
+			`area = 78.5`,
+		},
+		{
+			`let $pi := 3.14, 
+				$area := function ($arg)
+				{
+					'area = ' ||	$pi * $arg * $arg
+				},
+				$r := 5
+				return $area($r)`,
+			`area = 78.5`,
+		},
+	}
+
+	for _, tt := range tests {
+		seq := testEval(tt.input)
+		sequence := seq.(*object.Sequence)
+		item := sequence.Items[0].(*object.String)
+
+		if item.Value != tt.expected {
+			t.Errorf("got=%s, expected=%s", item.Value, tt.expected)
+		}
+	}
+}
+
 func testEval(input string) object.Item {
 	l := lexer.New(input)
 	p := parser.New(l)

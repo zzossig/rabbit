@@ -176,3 +176,14 @@ func evalForExpr(expr ast.ExprSingle, env *object.Env) object.Item {
 
 	return &object.Sequence{Items: items}
 }
+
+func evalLetExpr(expr ast.ExprSingle, env *object.Env) object.Item {
+	le := expr.(*ast.LetExpr)
+
+	for _, b := range le.Bindings {
+		bval := Eval(b.ExprSingle, env)
+		env.Set(b.VarName.Value(), bval)
+	}
+
+	return Eval(le.ExprSingle, env)
+}
