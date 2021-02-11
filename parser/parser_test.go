@@ -394,6 +394,10 @@ func TestForExpr(t *testing.T) {
 			"for $i in (10, 20), $j in (1, 2) return ($i + $j)",
 		},
 		{
+			"for $i in (10, 20), $j in (1, 2), $k in (4, 5) return ($i + $j + $k)",
+			"for $i in (10, 20), $j in (1, 2), $k in (4, 5) return (($i + $j) + $k)",
+		},
+		{
 			"for $a in fn:distinct-values(book/author) return ((book/author[. = $a])[1], book[author = $a]/title)",
 			"for $a in fn:distinct-values((book / author)) return ((book / author[(. = $a)])[1], (book[(author = $a)] / title))",
 		},

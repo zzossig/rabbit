@@ -59,6 +59,10 @@ func Eval(expr ast.ExprSingle, env *object.Env) object.Item {
 		return evalInfixExpr(expr, env)
 	case *ast.ComparisonExpr:
 		return evalInfixExpr(expr, env)
+	case *ast.OrExpr:
+		return evalLogicalExpr(expr, env)
+	case *ast.AndExpr:
+		return evalLogicalExpr(expr, env)
 	case *ast.SimpleMapExpr:
 		return evalSimpleMapExpr(expr, env)
 	case *ast.UnaryExpr:
@@ -67,6 +71,10 @@ func Eval(expr ast.ExprSingle, env *object.Env) object.Item {
 		return evalArrayExpr(expr, env)
 	case *ast.CurlyArrayConstructor:
 		return evalArrayExpr(expr, env)
+	case *ast.IfExpr:
+		return evalIfExpr(expr, env)
+	case *ast.ForExpr:
+		return evalForExpr(expr, env)
 	}
 
 	return nil

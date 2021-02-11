@@ -17,6 +17,9 @@ func boolean(args ...object.Item) object.Item {
 		if arg.Items[0].Type() == object.NodeType {
 			return &object.Boolean{Value: true}
 		}
+		if len(arg.Items) == 1 {
+			return boolean(arg.Items[0])
+		}
 	case *object.Boolean:
 		return arg
 	case *object.String:

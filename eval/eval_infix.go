@@ -859,3 +859,40 @@ func evalInfixStringString(op token.Token, left object.Item, right object.Item) 
 		return bif.NewError("The operator '%s' is not defined for operands of type %s and %s\n", op.Literal, left.Type(), right.Type())
 	}
 }
+
+func evalLogicalExpr(expr ast.ExprSingle, env *object.Env) object.Item {
+	var left object.Item
+	var right object.Item
+	var op token.Token
+
+	builtin := bif.Builtins["boolean"]
+
+	switch expr := expr.(type) {
+	case *ast.AndExpr:
+		left = Eval(expr.LeftExpr, env)
+		right = Eval(expr.RightExpr, env)
+		op = expr.Token
+	case *ast.OrExpr:
+		left = Eval(expr.LeftExpr, env)
+		right = Eval(expr.RightExpr, env)
+		op = expr.Token
+	}
+
+	l, ok := builtin(left).(*object.Boolean)
+	if !ok {
+		return builtin(left)
+	}
+	r, ok := builtin(right).(*object.Boolean)
+	if !ok {
+		return builtin(right)
+	}
+
+	switch op.Type {
+	case token.AND:
+		return &object.Boolean{Value: l.Value && r.Value}
+	case token.OR:
+		return &object.Boolean{Value: l.Value || r.Value}
+	default:
+		return &object.Nil{}
+	}
+}

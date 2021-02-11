@@ -27,13 +27,14 @@ const (
 	ErrorType   Type = "error"
 	PholderType Type = "?"
 
-	IntegerType Type = "int"
-	DecimalType Type = "decimal"
-	DoubleType  Type = "double"
-	BooleanType Type = "bool"
-	StringType  Type = "string"
-	MapType     Type = "map"
-	ArrayType   Type = "array"
+	IntegerType  Type = "int"
+	DecimalType  Type = "decimal"
+	DoubleType   Type = "double"
+	BooleanType  Type = "bool"
+	StringType   Type = "string"
+	MapType      Type = "map"
+	ArrayType    Type = "array"
+	SequenceType Type = "sequence"
 
 	FuncCallType   Type = "functionC"
 	FuncNamedType  Type = "functionN"
@@ -58,7 +59,7 @@ type Sequence struct {
 	Items []Item
 }
 
-func (s *Sequence) Type() Type { return ArrayType }
+func (s *Sequence) Type() Type { return SequenceType }
 func (s *Sequence) Inspect() string {
 	var sb strings.Builder
 

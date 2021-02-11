@@ -189,8 +189,8 @@ func TestPredicate(t *testing.T) {
 		input    string
 		expected interface{}
 	}{
-		// {`(1,2,3,4)[1]`, 1},
-		// {`(1,2,3,4)[1+1]`, 2},
+		{`(1,2,3,4)[1]`, 1},
+		{`(1,2,3,4)[1+1]`, 2},
 		{`(2,1,3,4)[.=2]`, 2},
 	}
 
@@ -206,6 +206,47 @@ func TestPredicate(t *testing.T) {
 				}
 			}
 		}
+	}
+}
+
+func TestIfExpr(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected interface{}
+	}{
+		{`if ("a") then 2 else 3`, 2},
+	}
+
+	for _, tt := range tests {
+		seq := testEval(tt.input)
+		sequence := seq.(*object.Sequence)
+
+		for _, item := range sequence.Items {
+			switch item := item.(type) {
+			case *object.Integer:
+				if item.Value != tt.expected {
+					t.Errorf("item has wrong value. got=%d, want=%d", item.Value, tt.expected)
+				}
+			}
+		}
+	}
+}
+
+func TestForExpr(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected []interface{}
+	}{
+		{
+			`for $i in (10, 20), $j in (1, 2), $k in (4, 5), $l in (9, 11) return ($i + $j + $k*$l)`,
+			[]interface{}{47, 55, 56, 66, 48, 56, 57, 67, 57, 65, 66, 76, 58, 66, 67, 77},
+		},
+	}
+
+	for _, tt := range tests {
+		seq := testEval(tt.input)
+		sequence := seq.(*object.Sequence)
+		testSequenceObject(t, sequence, tt.expected)
 	}
 }
 

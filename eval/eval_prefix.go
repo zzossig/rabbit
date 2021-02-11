@@ -114,3 +114,65 @@ func evalArrayExpr(expr ast.ExprSingle, env *object.Env) object.Item {
 
 	return array
 }
+
+func evalIfExpr(expr ast.ExprSingle, env *object.Env) object.Item {
+	ie := expr.(*ast.IfExpr)
+	builtin := bif.Builtins["boolean"]
+
+	testE := Eval(ie.TestExpr, env)
+	bl, ok := builtin(testE).(*object.Boolean)
+	if !ok {
+		return builtin(testE)
+	}
+
+	if bl.Value {
+		return Eval(ie.ThenExpr, env)
+	}
+	return Eval(ie.ElseExpr, env)
+}
+
+func evalForExpr(expr ast.ExprSingle, env *object.Env) object.Item {
+	fe := expr.(*ast.ForExpr)
+	var items []object.Item
+
+	if len(fe.Bindings) > 1 {
+		b := fe.Bindings[0]
+		bval := Eval(b.ExprSingle, env)
+
+		nfe := &ast.ForExpr{ExprSingle: fe.ExprSingle}
+		nfe.Bindings = fe.Bindings[1:]
+
+		switch bval := bval.(type) {
+		case *object.Sequence:
+			for _, item := range bval.Items {
+				env.Set(b.VarName.Value(), item)
+				e := evalForExpr(nfe, env).(*object.Sequence)
+				items = append(items, e.Items...)
+			}
+		default:
+			env.Set(b.VarName.Value(), bval)
+			e := evalForExpr(nfe, env).(*object.Sequence)
+			items = append(items, e.Items...)
+		}
+
+		return &object.Sequence{Items: items}
+	}
+
+	b := fe.Bindings[0]
+	bval := Eval(b.ExprSingle, env)
+
+	switch bval := bval.(type) {
+	case *object.Sequence:
+		for _, item := range bval.Items {
+			env.Set(b.VarName.Value(), item)
+			e := Eval(fe.ExprSingle, env)
+			items = append(items, e)
+		}
+	default:
+		env.Set(b.VarName.Value(), bval)
+		e := Eval(fe.ExprSingle, env)
+		items = append(items, e)
+	}
+
+	return &object.Sequence{Items: items}
+}
