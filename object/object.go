@@ -32,13 +32,14 @@ const (
 	DoubleType  Type = "double"
 	BooleanType Type = "bool"
 	StringType  Type = "string"
+	MapType     Type = "map"
+	ArrayType   Type = "array"
 
 	FuncCallType   Type = "functionC"
 	FuncNamedType  Type = "functionN"
 	FuncInlineType Type = "functionI"
 
-	MapType   Type = "map"
-	ArrayType Type = "array"
+	NodeType Type = "node"
 )
 
 // Hasher ..

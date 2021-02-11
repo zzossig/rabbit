@@ -40,6 +40,14 @@ func evalInfixExpr(expr ast.ExprSingle, env *object.Env) object.Item {
 		left = Eval(expr.LeftExpr, env)
 		right = Eval(expr.RightExpr, env)
 		op = expr.Token
+	case *ast.ComparisonExpr:
+		left = Eval(expr.LeftExpr, env)
+		right = Eval(expr.RightExpr, env)
+		op = expr.Token
+	case *ast.SimpleMapExpr:
+		left = Eval(expr.LeftExpr, env)
+		right = Eval(expr.RightExpr, env)
+		op = expr.Token
 	default:
 		return bif.NewError("%T is not an infix expression\n", expr)
 	}
@@ -117,6 +125,33 @@ func evalInfixIntInt(op token.Token, left object.Item, right object.Item) object
 			seq.Items = append(seq.Items, &object.Integer{Value: i})
 		}
 		return seq
+	case token.EQ:
+		return &object.Boolean{Value: leftVal == rightVal}
+	case token.NE:
+		return &object.Boolean{Value: leftVal != rightVal}
+	case token.LT:
+		return &object.Boolean{Value: leftVal < rightVal}
+	case token.LE:
+		return &object.Boolean{Value: leftVal <= rightVal}
+	case token.GT:
+		return &object.Boolean{Value: leftVal > rightVal}
+	case token.GE:
+		return &object.Boolean{Value: leftVal >= rightVal}
+	case token.EQV:
+		return &object.Boolean{Value: leftVal == rightVal}
+	case token.NEV:
+		return &object.Boolean{Value: leftVal != rightVal}
+	case token.LTV:
+		return &object.Boolean{Value: leftVal < rightVal}
+	case token.LEV:
+		return &object.Boolean{Value: leftVal <= rightVal}
+	case token.GTV:
+		return &object.Boolean{Value: leftVal > rightVal}
+	case token.GEV:
+		return &object.Boolean{Value: leftVal >= rightVal}
+	// case token.IS:
+	// case token.DGT:
+	// case token.DLT:
 	default:
 		return bif.NewError("The operator '%s' is not defined for operands of type %s and %s\n", op.Literal, left.Type(), right.Type())
 	}
@@ -143,6 +178,33 @@ func evalInfixIntDecimal(op token.Token, left object.Item, right object.Item) ob
 		leftVal := strconv.FormatInt(int64(leftVal), 10)
 		rightVal := strconv.FormatFloat(rightVal, 'f', -1, 64)
 		return &object.String{Value: leftVal + rightVal}
+	case token.EQ:
+		return &object.Boolean{Value: float64(leftVal) == rightVal}
+	case token.NE:
+		return &object.Boolean{Value: float64(leftVal) != rightVal}
+	case token.LT:
+		return &object.Boolean{Value: float64(leftVal) < rightVal}
+	case token.LE:
+		return &object.Boolean{Value: float64(leftVal) <= rightVal}
+	case token.GT:
+		return &object.Boolean{Value: float64(leftVal) > rightVal}
+	case token.GE:
+		return &object.Boolean{Value: float64(leftVal) >= rightVal}
+	case token.EQV:
+		return &object.Boolean{Value: float64(leftVal) == rightVal}
+	case token.NEV:
+		return &object.Boolean{Value: float64(leftVal) != rightVal}
+	case token.LTV:
+		return &object.Boolean{Value: float64(leftVal) < rightVal}
+	case token.LEV:
+		return &object.Boolean{Value: float64(leftVal) <= rightVal}
+	case token.GTV:
+		return &object.Boolean{Value: float64(leftVal) > rightVal}
+	case token.GEV:
+		return &object.Boolean{Value: float64(leftVal) >= rightVal}
+	// case token.IS:
+	// case token.DGT:
+	// case token.DLT:
 	default:
 		return bif.NewError("The operator '%s' is not defined for operands of type %s and %s\n", op.Literal, left.Type(), right.Type())
 	}
@@ -169,6 +231,33 @@ func evalInfixIntDouble(op token.Token, left object.Item, right object.Item) obj
 		leftVal := strconv.FormatInt(int64(leftVal), 10)
 		rightVal := strconv.FormatFloat(rightVal, 'f', -1, 64)
 		return &object.String{Value: leftVal + rightVal}
+	case token.EQ:
+		return &object.Boolean{Value: float64(leftVal) == rightVal}
+	case token.NE:
+		return &object.Boolean{Value: float64(leftVal) != rightVal}
+	case token.LT:
+		return &object.Boolean{Value: float64(leftVal) < rightVal}
+	case token.LE:
+		return &object.Boolean{Value: float64(leftVal) <= rightVal}
+	case token.GT:
+		return &object.Boolean{Value: float64(leftVal) > rightVal}
+	case token.GE:
+		return &object.Boolean{Value: float64(leftVal) >= rightVal}
+	case token.EQV:
+		return &object.Boolean{Value: float64(leftVal) == rightVal}
+	case token.NEV:
+		return &object.Boolean{Value: float64(leftVal) != rightVal}
+	case token.LTV:
+		return &object.Boolean{Value: float64(leftVal) < rightVal}
+	case token.LEV:
+		return &object.Boolean{Value: float64(leftVal) <= rightVal}
+	case token.GTV:
+		return &object.Boolean{Value: float64(leftVal) > rightVal}
+	case token.GEV:
+		return &object.Boolean{Value: float64(leftVal) >= rightVal}
+	// case token.IS:
+	// case token.DGT:
+	// case token.DLT:
 	default:
 		return bif.NewError("The operator '%s' is not defined for operands of type %s and %s\n", op.Literal, left.Type(), right.Type())
 	}
@@ -182,6 +271,33 @@ func evalInfixIntString(op token.Token, left object.Item, right object.Item) obj
 	case token.DVBAR:
 		leftVal := strconv.FormatInt(int64(leftVal), 10)
 		return &object.String{Value: leftVal + rightVal}
+	case token.EQ:
+		return bif.NewError("Cannot compare %s(%d) with %s(%s)", left.Type(), leftVal, right.Type(), rightVal)
+	case token.NE:
+		return bif.NewError("Cannot compare %s(%d) with %s(%s)", left.Type(), leftVal, right.Type(), rightVal)
+	case token.LT:
+		return bif.NewError("Cannot compare %s(%d) with %s(%s)", left.Type(), leftVal, right.Type(), rightVal)
+	case token.LE:
+		return bif.NewError("Cannot compare %s(%d) with %s(%s)", left.Type(), leftVal, right.Type(), rightVal)
+	case token.GT:
+		return bif.NewError("Cannot compare %s(%d) with %s(%s)", left.Type(), leftVal, right.Type(), rightVal)
+	case token.GE:
+		return bif.NewError("Cannot compare %s(%d) with %s(%s)", left.Type(), leftVal, right.Type(), rightVal)
+	case token.EQV:
+		return bif.NewError("Cannot compare %s(%d) with %s(%s)", left.Type(), leftVal, right.Type(), rightVal)
+	case token.NEV:
+		return bif.NewError("Cannot compare %s(%d) with %s(%s)", left.Type(), leftVal, right.Type(), rightVal)
+	case token.LTV:
+		return bif.NewError("Cannot compare %s(%d) with %s(%s)", left.Type(), leftVal, right.Type(), rightVal)
+	case token.LEV:
+		return bif.NewError("Cannot compare %s(%d) with %s(%s)", left.Type(), leftVal, right.Type(), rightVal)
+	case token.GTV:
+		return bif.NewError("Cannot compare %s(%d) with %s(%s)", left.Type(), leftVal, right.Type(), rightVal)
+	case token.GEV:
+		return bif.NewError("Cannot compare %s(%d) with %s(%s)", left.Type(), leftVal, right.Type(), rightVal)
+	// case token.IS:
+	// case token.DGT:
+	// case token.DLT:
 	default:
 		return bif.NewError("The operator '%s' is not defined for operands of type %s and %s\n", op.Literal, left.Type(), right.Type())
 	}
@@ -208,6 +324,33 @@ func evalInfixDecimalInt(op token.Token, left object.Item, right object.Item) ob
 		leftVal := strconv.FormatFloat(leftVal, 'f', -1, 64)
 		rightVal := strconv.FormatInt(int64(rightVal), 10)
 		return &object.String{Value: leftVal + rightVal}
+	case token.EQ:
+		return &object.Boolean{Value: leftVal == float64(rightVal)}
+	case token.NE:
+		return &object.Boolean{Value: leftVal != float64(rightVal)}
+	case token.LT:
+		return &object.Boolean{Value: leftVal < float64(rightVal)}
+	case token.LE:
+		return &object.Boolean{Value: leftVal <= float64(rightVal)}
+	case token.GT:
+		return &object.Boolean{Value: leftVal > float64(rightVal)}
+	case token.GE:
+		return &object.Boolean{Value: leftVal >= float64(rightVal)}
+	case token.EQV:
+		return &object.Boolean{Value: leftVal == float64(rightVal)}
+	case token.NEV:
+		return &object.Boolean{Value: leftVal != float64(rightVal)}
+	case token.LTV:
+		return &object.Boolean{Value: leftVal < float64(rightVal)}
+	case token.LEV:
+		return &object.Boolean{Value: leftVal <= float64(rightVal)}
+	case token.GTV:
+		return &object.Boolean{Value: leftVal > float64(rightVal)}
+	case token.GEV:
+		return &object.Boolean{Value: leftVal >= float64(rightVal)}
+	// case token.IS:
+	// case token.DGT:
+	// case token.DLT:
 	default:
 		return bif.NewError("The operator '%s' is not defined for operands of type %s and %s\n", op.Literal, left.Type(), right.Type())
 	}
@@ -234,6 +377,33 @@ func evalInfixDecimalDecimal(op token.Token, left object.Item, right object.Item
 		leftVal := strconv.FormatFloat(leftVal, 'f', -1, 64)
 		rightVal := strconv.FormatFloat(rightVal, 'f', -1, 64)
 		return &object.String{Value: leftVal + rightVal}
+	case token.EQ:
+		return &object.Boolean{Value: leftVal == rightVal}
+	case token.NE:
+		return &object.Boolean{Value: leftVal != rightVal}
+	case token.LT:
+		return &object.Boolean{Value: leftVal < rightVal}
+	case token.LE:
+		return &object.Boolean{Value: leftVal <= rightVal}
+	case token.GT:
+		return &object.Boolean{Value: leftVal > rightVal}
+	case token.GE:
+		return &object.Boolean{Value: leftVal >= rightVal}
+	case token.EQV:
+		return &object.Boolean{Value: leftVal == rightVal}
+	case token.NEV:
+		return &object.Boolean{Value: leftVal != rightVal}
+	case token.LTV:
+		return &object.Boolean{Value: leftVal < rightVal}
+	case token.LEV:
+		return &object.Boolean{Value: leftVal <= rightVal}
+	case token.GTV:
+		return &object.Boolean{Value: leftVal > rightVal}
+	case token.GEV:
+		return &object.Boolean{Value: leftVal >= rightVal}
+	// case token.IS:
+	// case token.DGT:
+	// case token.DLT:
 	default:
 		return bif.NewError("The operator '%s' is not defined for operands of type %s and %s\n", op.Literal, left.Type(), right.Type())
 	}
@@ -260,6 +430,33 @@ func evalInfixDecimalDouble(op token.Token, left object.Item, right object.Item)
 		leftVal := strconv.FormatFloat(leftVal, 'f', -1, 64)
 		rightVal := strconv.FormatFloat(rightVal, 'f', -1, 64)
 		return &object.String{Value: leftVal + rightVal}
+	case token.EQ:
+		return &object.Boolean{Value: leftVal == rightVal}
+	case token.NE:
+		return &object.Boolean{Value: leftVal != rightVal}
+	case token.LT:
+		return &object.Boolean{Value: leftVal < rightVal}
+	case token.LE:
+		return &object.Boolean{Value: leftVal <= rightVal}
+	case token.GT:
+		return &object.Boolean{Value: leftVal > rightVal}
+	case token.GE:
+		return &object.Boolean{Value: leftVal >= rightVal}
+	case token.EQV:
+		return &object.Boolean{Value: leftVal == rightVal}
+	case token.NEV:
+		return &object.Boolean{Value: leftVal != rightVal}
+	case token.LTV:
+		return &object.Boolean{Value: leftVal < rightVal}
+	case token.LEV:
+		return &object.Boolean{Value: leftVal <= rightVal}
+	case token.GTV:
+		return &object.Boolean{Value: leftVal > rightVal}
+	case token.GEV:
+		return &object.Boolean{Value: leftVal >= rightVal}
+	// case token.IS:
+	// case token.DGT:
+	// case token.DLT:
 	default:
 		return bif.NewError("The operator '%s' is not defined for operands of type %s and %s\n", op.Literal, left.Type(), right.Type())
 	}
@@ -273,6 +470,33 @@ func evalInfixDecimalString(op token.Token, left object.Item, right object.Item)
 	case token.DVBAR:
 		leftVal := strconv.FormatFloat(leftVal, 'f', -1, 64)
 		return &object.String{Value: leftVal + rightVal}
+	case token.EQ:
+		return bif.NewError("Cannot compare %s(%f) with %s(%s)", left.Type(), leftVal, right.Type(), rightVal)
+	case token.NE:
+		return bif.NewError("Cannot compare %s(%f) with %s(%s)", left.Type(), leftVal, right.Type(), rightVal)
+	case token.LT:
+		return bif.NewError("Cannot compare %s(%f) with %s(%s)", left.Type(), leftVal, right.Type(), rightVal)
+	case token.LE:
+		return bif.NewError("Cannot compare %s(%f) with %s(%s)", left.Type(), leftVal, right.Type(), rightVal)
+	case token.GT:
+		return bif.NewError("Cannot compare %s(%f) with %s(%s)", left.Type(), leftVal, right.Type(), rightVal)
+	case token.GE:
+		return bif.NewError("Cannot compare %s(%f) with %s(%s)", left.Type(), leftVal, right.Type(), rightVal)
+	case token.EQV:
+		return bif.NewError("Cannot compare %s(%f) with %s(%s)", left.Type(), leftVal, right.Type(), rightVal)
+	case token.NEV:
+		return bif.NewError("Cannot compare %s(%f) with %s(%s)", left.Type(), leftVal, right.Type(), rightVal)
+	case token.LTV:
+		return bif.NewError("Cannot compare %s(%f) with %s(%s)", left.Type(), leftVal, right.Type(), rightVal)
+	case token.LEV:
+		return bif.NewError("Cannot compare %s(%f) with %s(%s)", left.Type(), leftVal, right.Type(), rightVal)
+	case token.GTV:
+		return bif.NewError("Cannot compare %s(%f) with %s(%s)", left.Type(), leftVal, right.Type(), rightVal)
+	case token.GEV:
+		return bif.NewError("Cannot compare %s(%f) with %s(%s)", left.Type(), leftVal, right.Type(), rightVal)
+	// case token.IS:
+	// case token.DGT:
+	// case token.DLT:
 	default:
 		return bif.NewError("The operator '%s' is not defined for operands of type %s and %s\n", op.Literal, left.Type(), right.Type())
 	}
@@ -299,6 +523,33 @@ func evalInfixDoubleInt(op token.Token, left object.Item, right object.Item) obj
 		leftVal := strconv.FormatFloat(leftVal, 'f', -1, 64)
 		rightVal := strconv.FormatInt(int64(rightVal), 10)
 		return &object.String{Value: leftVal + rightVal}
+	case token.EQ:
+		return &object.Boolean{Value: leftVal == float64(rightVal)}
+	case token.NE:
+		return &object.Boolean{Value: leftVal != float64(rightVal)}
+	case token.LT:
+		return &object.Boolean{Value: leftVal < float64(rightVal)}
+	case token.LE:
+		return &object.Boolean{Value: leftVal <= float64(rightVal)}
+	case token.GT:
+		return &object.Boolean{Value: leftVal > float64(rightVal)}
+	case token.GE:
+		return &object.Boolean{Value: leftVal >= float64(rightVal)}
+	case token.EQV:
+		return &object.Boolean{Value: leftVal == float64(rightVal)}
+	case token.NEV:
+		return &object.Boolean{Value: leftVal != float64(rightVal)}
+	case token.LTV:
+		return &object.Boolean{Value: leftVal < float64(rightVal)}
+	case token.LEV:
+		return &object.Boolean{Value: leftVal <= float64(rightVal)}
+	case token.GTV:
+		return &object.Boolean{Value: leftVal > float64(rightVal)}
+	case token.GEV:
+		return &object.Boolean{Value: leftVal >= float64(rightVal)}
+	// case token.IS:
+	// case token.DGT:
+	// case token.DLT:
 	default:
 		return bif.NewError("The operator '%s' is not defined for operands of type %s and %s\n", op.Literal, left.Type(), right.Type())
 	}
@@ -325,6 +576,33 @@ func evalInfixDoubleDecimal(op token.Token, left object.Item, right object.Item)
 		leftVal := strconv.FormatFloat(leftVal, 'f', -1, 64)
 		rightVal := strconv.FormatFloat(rightVal, 'f', -1, 64)
 		return &object.String{Value: leftVal + rightVal}
+	case token.EQ:
+		return &object.Boolean{Value: leftVal == rightVal}
+	case token.NE:
+		return &object.Boolean{Value: leftVal != rightVal}
+	case token.LT:
+		return &object.Boolean{Value: leftVal < rightVal}
+	case token.LE:
+		return &object.Boolean{Value: leftVal <= rightVal}
+	case token.GT:
+		return &object.Boolean{Value: leftVal > rightVal}
+	case token.GE:
+		return &object.Boolean{Value: leftVal >= rightVal}
+	case token.EQV:
+		return &object.Boolean{Value: leftVal == rightVal}
+	case token.NEV:
+		return &object.Boolean{Value: leftVal != rightVal}
+	case token.LTV:
+		return &object.Boolean{Value: leftVal < rightVal}
+	case token.LEV:
+		return &object.Boolean{Value: leftVal <= rightVal}
+	case token.GTV:
+		return &object.Boolean{Value: leftVal > rightVal}
+	case token.GEV:
+		return &object.Boolean{Value: leftVal >= rightVal}
+	// case token.IS:
+	// case token.DGT:
+	// case token.DLT:
 	default:
 		return bif.NewError("The operator '%s' is not defined for operands of type %s and %s\n", op.Literal, left.Type(), right.Type())
 	}
@@ -351,6 +629,33 @@ func evalInfixDoubleDouble(op token.Token, left object.Item, right object.Item) 
 		leftVal := strconv.FormatFloat(leftVal, 'f', -1, 64)
 		rightVal := strconv.FormatFloat(rightVal, 'f', -1, 64)
 		return &object.String{Value: leftVal + rightVal}
+	case token.EQ:
+		return &object.Boolean{Value: leftVal == rightVal}
+	case token.NE:
+		return &object.Boolean{Value: leftVal != rightVal}
+	case token.LT:
+		return &object.Boolean{Value: leftVal < rightVal}
+	case token.LE:
+		return &object.Boolean{Value: leftVal <= rightVal}
+	case token.GT:
+		return &object.Boolean{Value: leftVal > rightVal}
+	case token.GE:
+		return &object.Boolean{Value: leftVal >= rightVal}
+	case token.EQV:
+		return &object.Boolean{Value: leftVal == rightVal}
+	case token.NEV:
+		return &object.Boolean{Value: leftVal != rightVal}
+	case token.LTV:
+		return &object.Boolean{Value: leftVal < rightVal}
+	case token.LEV:
+		return &object.Boolean{Value: leftVal <= rightVal}
+	case token.GTV:
+		return &object.Boolean{Value: leftVal > rightVal}
+	case token.GEV:
+		return &object.Boolean{Value: leftVal >= rightVal}
+	// case token.IS:
+	// case token.DGT:
+	// case token.DLT:
 	default:
 		return bif.NewError("The operator '%s' is not defined for operands of type %s and %s\n", op.Literal, left.Type(), right.Type())
 	}
@@ -364,6 +669,33 @@ func evalInfixDoubleString(op token.Token, left object.Item, right object.Item) 
 	case token.DVBAR:
 		leftVal := strconv.FormatFloat(leftVal, 'f', -1, 64)
 		return &object.String{Value: leftVal + rightVal}
+	case token.EQ:
+		return bif.NewError("Cannot compare %s(%f) with %s(%s)", left.Type(), leftVal, right.Type(), rightVal)
+	case token.NE:
+		return bif.NewError("Cannot compare %s(%f) with %s(%s)", left.Type(), leftVal, right.Type(), rightVal)
+	case token.LT:
+		return bif.NewError("Cannot compare %s(%f) with %s(%s)", left.Type(), leftVal, right.Type(), rightVal)
+	case token.LE:
+		return bif.NewError("Cannot compare %s(%f) with %s(%s)", left.Type(), leftVal, right.Type(), rightVal)
+	case token.GT:
+		return bif.NewError("Cannot compare %s(%f) with %s(%s)", left.Type(), leftVal, right.Type(), rightVal)
+	case token.GE:
+		return bif.NewError("Cannot compare %s(%f) with %s(%s)", left.Type(), leftVal, right.Type(), rightVal)
+	case token.EQV:
+		return bif.NewError("Cannot compare %s(%f) with %s(%s)", left.Type(), leftVal, right.Type(), rightVal)
+	case token.NEV:
+		return bif.NewError("Cannot compare %s(%f) with %s(%s)", left.Type(), leftVal, right.Type(), rightVal)
+	case token.LTV:
+		return bif.NewError("Cannot compare %s(%f) with %s(%s)", left.Type(), leftVal, right.Type(), rightVal)
+	case token.LEV:
+		return bif.NewError("Cannot compare %s(%f) with %s(%s)", left.Type(), leftVal, right.Type(), rightVal)
+	case token.GTV:
+		return bif.NewError("Cannot compare %s(%f) with %s(%s)", left.Type(), leftVal, right.Type(), rightVal)
+	case token.GEV:
+		return bif.NewError("Cannot compare %s(%f) with %s(%s)", left.Type(), leftVal, right.Type(), rightVal)
+	// case token.IS:
+	// case token.DGT:
+	// case token.DLT:
 	default:
 		return bif.NewError("The operator '%s' is not defined for operands of type %s and %s\n", op.Literal, left.Type(), right.Type())
 	}
@@ -377,6 +709,33 @@ func evalInfixStringInt(op token.Token, left object.Item, right object.Item) obj
 	case token.DVBAR:
 		rightVal := strconv.FormatInt(int64(rightVal), 10)
 		return &object.String{Value: leftVal + rightVal}
+	case token.EQ:
+		return bif.NewError("Cannot compare %s(%s) with %s(%d)", left.Type(), leftVal, right.Type(), rightVal)
+	case token.NE:
+		return bif.NewError("Cannot compare %s(%s) with %s(%d)", left.Type(), leftVal, right.Type(), rightVal)
+	case token.LT:
+		return bif.NewError("Cannot compare %s(%s) with %s(%d)", left.Type(), leftVal, right.Type(), rightVal)
+	case token.LE:
+		return bif.NewError("Cannot compare %s(%s) with %s(%d)", left.Type(), leftVal, right.Type(), rightVal)
+	case token.GT:
+		return bif.NewError("Cannot compare %s(%s) with %s(%d)", left.Type(), leftVal, right.Type(), rightVal)
+	case token.GE:
+		return bif.NewError("Cannot compare %s(%s) with %s(%d)", left.Type(), leftVal, right.Type(), rightVal)
+	case token.EQV:
+		return bif.NewError("Cannot compare %s(%s) with %s(%d)", left.Type(), leftVal, right.Type(), rightVal)
+	case token.NEV:
+		return bif.NewError("Cannot compare %s(%s) with %s(%d)", left.Type(), leftVal, right.Type(), rightVal)
+	case token.LTV:
+		return bif.NewError("Cannot compare %s(%s) with %s(%d)", left.Type(), leftVal, right.Type(), rightVal)
+	case token.LEV:
+		return bif.NewError("Cannot compare %s(%s) with %s(%d)", left.Type(), leftVal, right.Type(), rightVal)
+	case token.GTV:
+		return bif.NewError("Cannot compare %s(%s) with %s(%d)", left.Type(), leftVal, right.Type(), rightVal)
+	case token.GEV:
+		return bif.NewError("Cannot compare %s(%s) with %s(%d)", left.Type(), leftVal, right.Type(), rightVal)
+	// case token.IS:
+	// case token.DGT:
+	// case token.DLT:
 	default:
 		return bif.NewError("The operator '%s' is not defined for operands of type %s and %s\n", op.Literal, left.Type(), right.Type())
 	}
@@ -390,6 +749,33 @@ func evalInfixStringDecimal(op token.Token, left object.Item, right object.Item)
 	case token.DVBAR:
 		rightVal := strconv.FormatFloat(rightVal, 'f', -1, 64)
 		return &object.String{Value: leftVal + rightVal}
+	case token.EQ:
+		return bif.NewError("Cannot compare %s(%s) with %s(%f)", left.Type(), leftVal, right.Type(), rightVal)
+	case token.NE:
+		return bif.NewError("Cannot compare %s(%s) with %s(%f)", left.Type(), leftVal, right.Type(), rightVal)
+	case token.LT:
+		return bif.NewError("Cannot compare %s(%s) with %s(%f)", left.Type(), leftVal, right.Type(), rightVal)
+	case token.LE:
+		return bif.NewError("Cannot compare %s(%s) with %s(%f)", left.Type(), leftVal, right.Type(), rightVal)
+	case token.GT:
+		return bif.NewError("Cannot compare %s(%s) with %s(%f)", left.Type(), leftVal, right.Type(), rightVal)
+	case token.GE:
+		return bif.NewError("Cannot compare %s(%s) with %s(%f)", left.Type(), leftVal, right.Type(), rightVal)
+	case token.EQV:
+		return bif.NewError("Cannot compare %s(%s) with %s(%f)", left.Type(), leftVal, right.Type(), rightVal)
+	case token.NEV:
+		return bif.NewError("Cannot compare %s(%s) with %s(%f)", left.Type(), leftVal, right.Type(), rightVal)
+	case token.LTV:
+		return bif.NewError("Cannot compare %s(%s) with %s(%f)", left.Type(), leftVal, right.Type(), rightVal)
+	case token.LEV:
+		return bif.NewError("Cannot compare %s(%s) with %s(%f)", left.Type(), leftVal, right.Type(), rightVal)
+	case token.GTV:
+		return bif.NewError("Cannot compare %s(%s) with %s(%f)", left.Type(), leftVal, right.Type(), rightVal)
+	case token.GEV:
+		return bif.NewError("Cannot compare %s(%s) with %s(%f)", left.Type(), leftVal, right.Type(), rightVal)
+	// case token.IS:
+	// case token.DGT:
+	// case token.DLT:
 	default:
 		return bif.NewError("The operator '%s' is not defined for operands of type %s and %s\n", op.Literal, left.Type(), right.Type())
 	}
@@ -403,6 +789,33 @@ func evalInfixStringDouble(op token.Token, left object.Item, right object.Item) 
 	case token.DVBAR:
 		rightVal := strconv.FormatFloat(rightVal, 'f', -1, 64)
 		return &object.String{Value: leftVal + rightVal}
+	case token.EQ:
+		return bif.NewError("Cannot compare %s(%s) with %s(%f)", left.Type(), leftVal, right.Type(), rightVal)
+	case token.NE:
+		return bif.NewError("Cannot compare %s(%s) with %s(%f)", left.Type(), leftVal, right.Type(), rightVal)
+	case token.LT:
+		return bif.NewError("Cannot compare %s(%s) with %s(%f)", left.Type(), leftVal, right.Type(), rightVal)
+	case token.LE:
+		return bif.NewError("Cannot compare %s(%s) with %s(%f)", left.Type(), leftVal, right.Type(), rightVal)
+	case token.GT:
+		return bif.NewError("Cannot compare %s(%s) with %s(%f)", left.Type(), leftVal, right.Type(), rightVal)
+	case token.GE:
+		return bif.NewError("Cannot compare %s(%s) with %s(%f)", left.Type(), leftVal, right.Type(), rightVal)
+	case token.EQV:
+		return bif.NewError("Cannot compare %s(%s) with %s(%f)", left.Type(), leftVal, right.Type(), rightVal)
+	case token.NEV:
+		return bif.NewError("Cannot compare %s(%s) with %s(%f)", left.Type(), leftVal, right.Type(), rightVal)
+	case token.LTV:
+		return bif.NewError("Cannot compare %s(%s) with %s(%f)", left.Type(), leftVal, right.Type(), rightVal)
+	case token.LEV:
+		return bif.NewError("Cannot compare %s(%s) with %s(%f)", left.Type(), leftVal, right.Type(), rightVal)
+	case token.GTV:
+		return bif.NewError("Cannot compare %s(%s) with %s(%f)", left.Type(), leftVal, right.Type(), rightVal)
+	case token.GEV:
+		return bif.NewError("Cannot compare %s(%s) with %s(%f)", left.Type(), leftVal, right.Type(), rightVal)
+	// case token.IS:
+	// case token.DGT:
+	// case token.DLT:
 	default:
 		return bif.NewError("The operator '%s' is not defined for operands of type %s and %s\n", op.Literal, left.Type(), right.Type())
 	}
@@ -415,6 +828,33 @@ func evalInfixStringString(op token.Token, left object.Item, right object.Item) 
 	switch op.Type {
 	case token.DVBAR:
 		return &object.String{Value: leftVal + rightVal}
+	case token.EQ:
+		return &object.Boolean{Value: leftVal == rightVal}
+	case token.NE:
+		return &object.Boolean{Value: leftVal != rightVal}
+	case token.LT:
+		return &object.Boolean{Value: leftVal < rightVal}
+	case token.LE:
+		return &object.Boolean{Value: leftVal <= rightVal}
+	case token.GT:
+		return &object.Boolean{Value: leftVal > rightVal}
+	case token.GE:
+		return &object.Boolean{Value: leftVal >= rightVal}
+	case token.EQV:
+		return &object.Boolean{Value: leftVal == rightVal}
+	case token.NEV:
+		return &object.Boolean{Value: leftVal != rightVal}
+	case token.LTV:
+		return &object.Boolean{Value: leftVal < rightVal}
+	case token.LEV:
+		return &object.Boolean{Value: leftVal <= rightVal}
+	case token.GTV:
+		return &object.Boolean{Value: leftVal > rightVal}
+	case token.GEV:
+		return &object.Boolean{Value: leftVal >= rightVal}
+	// case token.IS:
+	// case token.DGT:
+	// case token.DLT:
 	default:
 		return bif.NewError("The operator '%s' is not defined for operands of type %s and %s\n", op.Literal, left.Type(), right.Type())
 	}

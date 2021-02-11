@@ -13,6 +13,7 @@ var Builtins = map[string]object.Func{
 	"for-each-pair": forEachPair,
 	"upper-case":    upperCase,
 	"lower-case":    lowerCase,
+	"boolean":       boolean,
 }
 
 // NewError ..

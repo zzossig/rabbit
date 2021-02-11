@@ -18,6 +18,7 @@ type Env struct {
 	store map[string]Item
 	outer *Env
 	Args  []Item
+	CItem Item
 }
 
 // Get ...

@@ -140,6 +140,21 @@ func TestStringConcat(t *testing.T) {
 	}
 }
 
+func TestSimpleMapExpr(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected []interface{}
+	}{
+		{`(1,2,3)!concat("id-",.)`, []interface{}{"id-1", "id-2", "id-3"}},
+	}
+
+	for _, tt := range tests {
+		seq := testEval(tt.input)
+		sequence := seq.(*object.Sequence)
+		testSequenceObject(t, sequence, tt.expected)
+	}
+}
+
 func TestArrowExpr(t *testing.T) {
 	tests := []struct {
 		input    string
@@ -164,6 +179,31 @@ func TestArrowExpr(t *testing.T) {
 				testStringObject(t, item, tt.expected)
 			default:
 				t.Errorf("Unkown item type. got=%s", item.Type())
+			}
+		}
+	}
+}
+
+func TestPredicate(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected interface{}
+	}{
+		// {`(1,2,3,4)[1]`, 1},
+		// {`(1,2,3,4)[1+1]`, 2},
+		{`(2,1,3,4)[.=2]`, 2},
+	}
+
+	for _, tt := range tests {
+		seq := testEval(tt.input)
+		sequence := seq.(*object.Sequence)
+
+		for _, item := range sequence.Items {
+			switch item := item.(type) {
+			case *object.Integer:
+				if item.Value != tt.expected {
+					t.Errorf("item has wrong value. got=%d, want=%d", item.Value, tt.expected)
+				}
 			}
 		}
 	}

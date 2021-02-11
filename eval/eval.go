@@ -18,13 +18,15 @@ func Eval(expr ast.ExprSingle, env *object.Env) object.Item {
 	case *ast.XPath:
 		return evalXPath(expr, env)
 	case *ast.IntegerLiteral:
-		return &object.Integer{Value: expr.Value}
+		return evalIntegerLiteral(expr, env)
 	case *ast.DecimalLiteral:
-		return &object.Decimal{Value: expr.Value}
+		return evalDecimalLiteral(expr, env)
 	case *ast.DoubleLiteral:
-		return &object.Double{Value: expr.Value}
+		return evalDoubleLiteral(expr, env)
 	case *ast.StringLiteral:
-		return &object.String{Value: expr.Value}
+		return evalStringLiteral(expr, env)
+	case *ast.ContextItemExpr:
+		return env.CItem
 	case *ast.Expr:
 		return evalExpr(expr, env)
 	case *ast.ParenthesizedExpr:
@@ -55,6 +57,10 @@ func Eval(expr ast.ExprSingle, env *object.Env) object.Item {
 		return evalInfixExpr(expr, env)
 	case *ast.RangeExpr:
 		return evalInfixExpr(expr, env)
+	case *ast.ComparisonExpr:
+		return evalInfixExpr(expr, env)
+	case *ast.SimpleMapExpr:
+		return evalSimpleMapExpr(expr, env)
 	case *ast.UnaryExpr:
 		return evalPrefixExpr(expr, env)
 	case *ast.SquareArrayConstructor:
