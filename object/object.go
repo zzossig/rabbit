@@ -170,7 +170,13 @@ type String struct {
 }
 
 func (s *String) Type() Type      { return StringType }
-func (s *String) Inspect() string { return s.Value }
+func (s *String) Inspect() string { return fmt.Sprintf("%q", s.Value) }
+func (s *String) HashKey() HashKey {
+	h := fnv.New64a()
+	h.Write([]byte(s.Value))
+
+	return HashKey{Type: s.Type(), Value: h.Sum64()}
+}
 
 // FuncNamed ..
 type FuncNamed struct {
@@ -201,14 +207,6 @@ type FuncCall struct {
 
 func (fc *FuncCall) Type() Type      { return FuncCallType }
 func (fc *FuncCall) Inspect() string { return "functionC" }
-
-// HashKey ..
-func (s *String) HashKey() HashKey {
-	h := fnv.New64a()
-	h.Write([]byte(s.Value))
-
-	return HashKey{Type: s.Type(), Value: h.Sum64()}
-}
 
 // Array ..
 type Array struct {
@@ -251,6 +249,7 @@ func (m *Map) Inspect() string {
 		pairs = append(pairs, fmt.Sprintf("%s: %s", pair.Key.Inspect(), pair.Value.Inspect()))
 	}
 
+	sb.WriteString("map")
 	sb.WriteString("{")
 	sb.WriteString(strings.Join(pairs, ", "))
 	sb.WriteString("}")

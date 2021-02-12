@@ -343,6 +343,11 @@ func (p *Parser) parseMapExpr() ast.ExprSingle {
 	}
 	if p.peekTokenIs(token.RBRACE) {
 		p.nextToken()
+
+		if p.peekTokenIs(token.LBRACKET, token.LPAREN, token.QUESTION) {
+			return p.parsePostfixExpr(expr)
+		}
+
 		return expr
 	}
 

@@ -893,6 +893,6 @@ func evalLogicalExpr(expr ast.ExprSingle, env *object.Env) object.Item {
 	case token.OR:
 		return &object.Boolean{Value: l.Value || r.Value}
 	default:
-		return &object.Nil{}
+		return NIL
 	}
 }

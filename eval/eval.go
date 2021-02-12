@@ -77,6 +77,8 @@ func Eval(expr ast.ExprSingle, env *object.Env) object.Item {
 		return evalForExpr(expr, env)
 	case *ast.LetExpr:
 		return evalLetExpr(expr, env)
+	case *ast.MapConstructor:
+		return evalMapExpr(expr, env)
 	}
 
 	return nil

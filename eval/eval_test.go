@@ -282,6 +282,22 @@ func TestLetExpr(t *testing.T) {
 	}
 }
 
+func TestMapExpr(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected []interface{}
+	}{
+		{`map{"a":1}?a`, []interface{}{1}},
+		{`map{"a":1,"b":2,"c":3}?("a","b")`, []interface{}{1, 2}},
+	}
+
+	for _, tt := range tests {
+		seq := testEval(tt.input)
+		sequence := seq.(*object.Sequence)
+		testSequenceObject(t, sequence, tt.expected)
+	}
+}
+
 func testEval(input string) object.Item {
 	l := lexer.New(input)
 	p := parser.New(l)

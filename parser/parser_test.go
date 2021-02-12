@@ -655,6 +655,10 @@ func TestLookup(t *testing.T) {
 			"[[1, 2, 3], [4, 5, 6]]?*",
 		},
 		{
+			"map{}?*",
+			"map{}?*",
+		},
+		{
 			`map { "first" : "Jenna", "last" : "Scott" }?first`,
 			`map{'first': 'Jenna', 'last': 'Scott'}?first`,
 		},

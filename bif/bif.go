@@ -6,6 +6,13 @@ import (
 	"github.com/zzossig/xpath/object"
 )
 
+// predefined
+var (
+	NIL   = &object.Nil{}
+	TRUE  = &object.Boolean{Value: true}
+	FALSE = &object.Boolean{Value: false}
+)
+
 // Builtins defined in https://www.w3.org/TR/xpath-functions-31/
 var Builtins = map[string]object.Func{
 	"abs":           abs,

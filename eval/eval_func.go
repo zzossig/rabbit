@@ -58,13 +58,13 @@ func evalVarRef(expr ast.ExprSingle, env *object.Env) object.Item {
 func evalArgument(arg ast.Argument, env *object.Env) object.Item {
 	switch arg.TypeID {
 	case 0:
-		return &object.Nil{}
+		return NIL
 	case 1:
 		return Eval(arg.ExprSingle, env)
 	case 2:
 		return &object.Placeholder{}
 	default:
-		return &object.Nil{}
+		return NIL
 	}
 }
 
@@ -136,6 +136,88 @@ func evalPredicate(it object.Item, pred *ast.Predicate, env *object.Env) object.
 	return &object.Sequence{Items: items}
 }
 
+func evalLookup(it object.Item, lu *ast.Lookup, env *object.Env) object.Item {
+	seq := &object.Sequence{}
+
+	switch it := it.(type) {
+	case *object.Array:
+		switch lu.KeySpecifier.TypeID {
+		case 1:
+			return bif.NewError("[XPTY0004] Cannot convert xs:string to xs:integer: %s.", lu.NCName.Value())
+		case 2:
+			if lu.IntegerLiteral.Value == 0 || lu.IntegerLiteral.Value > len(it.Items) {
+				return bif.NewError("[FOAY0001] Array index %d out of bounds (1..%d)", lu.IntegerLiteral.Value, len(it.Items))
+			}
+			return it.Items[lu.IntegerLiteral.Value-1]
+		case 3:
+			evaled := Eval(&lu.ParenthesizedExpr, env)
+			src := evaled.(*object.Sequence)
+
+			for _, item := range src.Items {
+				if i, ok := item.(*object.Integer); ok {
+					if i.Value == 0 || i.Value > len(it.Items) {
+						return bif.NewError("[FOAY0001] Array index %d out of bounds (1..%d)", i.Value, len(it.Items))
+					}
+					seq.Items = append(seq.Items, it.Items[i.Value-1])
+				}
+			}
+			return seq
+		case 4:
+			for _, item := range it.Items {
+				seq.Items = append(seq.Items, item)
+			}
+			return seq
+		default:
+			return seq
+		}
+	case *object.Map:
+		switch lu.KeySpecifier.TypeID {
+		case 1:
+			key := object.String{Value: lu.NCName.Value()}
+			pair, ok := it.Pairs[key.HashKey()]
+			if !ok {
+				return seq
+			}
+			return pair.Value
+		case 2:
+			key := object.Integer{Value: lu.IntegerLiteral.Value}
+			pair, ok := it.Pairs[key.HashKey()]
+			if !ok {
+				return seq
+			}
+			return pair.Value
+		case 3:
+			evaled := Eval(&lu.ParenthesizedExpr, env)
+			src := evaled.(*object.Sequence)
+
+			for _, item := range src.Items {
+				if key, ok := item.(object.Hasher); ok {
+					if pair, ok := it.Pairs[key.HashKey()]; ok {
+						seq.Items = append(seq.Items, pair.Value)
+					}
+				}
+			}
+		case 4:
+			for _, pair := range it.Pairs {
+				seq.Items = append(seq.Items, pair.Value)
+			}
+			return seq
+		default:
+			return seq
+		}
+	case *object.Sequence:
+		for _, item := range it.Items {
+			evaled := evalLookup(item, lu, env)
+			seq.Items = append(seq.Items, evaled)
+		}
+		return seq
+	default:
+		return bif.NewError("[XPTY0004] Input of lookup operator is not a map or array: %v.", it)
+	}
+
+	return seq
+}
+
 func evalArrowExpr(expr ast.ExprSingle, env *object.Env) object.Item {
 	ae := expr.(*ast.ArrowExpr)
 	bindings := ae.Bindings
@@ -180,6 +262,7 @@ func evalPostfixExpr(expr ast.ExprSingle, env *object.Env) object.Item {
 			args, _ := evalArgumentList(pal.Args, env)
 			evaled = evalDynamicFunctionCall(evaled, args, env)
 		case *ast.Lookup:
+			evaled = evalLookup(evaled, pal, env)
 		}
 	}
 
@@ -248,4 +331,44 @@ func evalSimpleMapExpr(expr ast.ExprSingle, env *object.Env) object.Item {
 	}
 
 	return &object.Sequence{Items: items}
+}
+
+func evalArrayExpr(expr ast.ExprSingle, env *object.Env) object.Item {
+	array := &object.Array{}
+	var exprs []ast.ExprSingle
+
+	switch expr := expr.(type) {
+	case *ast.SquareArrayConstructor:
+		exprs = expr.Exprs
+	case *ast.CurlyArrayConstructor:
+		exprs = expr.EnclosedExpr.Exprs
+	}
+
+	for _, e := range exprs {
+		item := Eval(e, env)
+		array.Items = append(array.Items, item)
+	}
+
+	return array
+}
+
+func evalMapExpr(expr ast.ExprSingle, env *object.Env) object.Item {
+	mc := expr.(*ast.MapConstructor)
+	pairs := make(map[object.HashKey]object.Pair)
+
+	for _, entry := range mc.Entries {
+		key := Eval(entry.MapKeyExpr.ExprSingle, env)
+
+		hashKey, ok := key.(object.Hasher)
+		if !ok {
+			return bif.NewError("unusable as hash key: %s", key.Type())
+		}
+
+		value := Eval(entry.MapValueExpr.ExprSingle, env)
+
+		hashed := hashKey.HashKey()
+		pairs[hashed] = object.Pair{Key: key, Value: value}
+	}
+
+	return &object.Map{Pairs: pairs}
 }
