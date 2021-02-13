@@ -298,6 +298,29 @@ func TestMapExpr(t *testing.T) {
 	}
 }
 
+func TestQuantifiedExpr(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected bool
+	}{
+		{`some $i in (1,2,3), $j in (5,6,7,3) satisfies $i = $j`, true},
+		{`every $i in (1,2,3), $j in (5,6,7,3) satisfies $i = $j`, false},
+		{`some $x in (1, 2, 3), $y in (2, 3, 4) satisfies $x + $y = 4`, true},
+		{`every $x in (1, 2, 3), $y in (2, 3, 4) satisfies $x + $y = 4`, false},
+	}
+
+	for _, tt := range tests {
+		seq := testEval(tt.input)
+		sequence := seq.(*object.Sequence)
+		for _, item := range sequence.Items {
+			bl := item.(*object.Boolean)
+			if bl.Value != tt.expected {
+				t.Errorf("got: %v, expected: %v", bl.Value, tt.expected)
+			}
+		}
+	}
+}
+
 func testEval(input string) object.Item {
 	l := lexer.New(input)
 	p := parser.New(l)

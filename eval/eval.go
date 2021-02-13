@@ -57,6 +57,10 @@ func Eval(expr ast.ExprSingle, env *object.Env) object.Item {
 		return evalInfixExpr(expr, env)
 	case *ast.RangeExpr:
 		return evalInfixExpr(expr, env)
+	case *ast.UnionExpr:
+		return evalInfixExpr(expr, env)
+	case *ast.IntersectExceptExpr:
+		return evalInfixExpr(expr, env)
 	case *ast.ComparisonExpr:
 		return evalInfixExpr(expr, env)
 	case *ast.OrExpr:
@@ -77,6 +81,8 @@ func Eval(expr ast.ExprSingle, env *object.Env) object.Item {
 		return evalForExpr(expr, env)
 	case *ast.LetExpr:
 		return evalLetExpr(expr, env)
+	case *ast.QuantifiedExpr:
+		return evalQuantifiedExpr(expr, env)
 	case *ast.MapConstructor:
 		return evalMapExpr(expr, env)
 	case *ast.UnaryLookup:

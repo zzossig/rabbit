@@ -8,8 +8,8 @@ import (
 
 // QuantifiedExpr ::= ("some" | "every") "$" VarName "in" ExprSingle ("," "$" VarName "in" ExprSingle)* "satisfies" ExprSingle
 type QuantifiedExpr struct {
-	Token token.Token
-	ExprSingle
+	Token      token.Token
+	ExprSingle // satisfies ExprSingle
 	SimpleQClause
 }
 

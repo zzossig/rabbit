@@ -119,8 +119,13 @@ func evalPredicate(it object.Item, pred *ast.Predicate, env *object.Env) object.
 			}
 		case *object.String:
 			builtin := bif.Builtins["boolean"]
-			bl := builtin(ev).(*object.Boolean)
-			if bl.Value {
+			bl := builtin(ev)
+			if bif.IsError(bl) {
+				return bl
+			}
+
+			boolObj := bl.(*object.Boolean)
+			if boolObj.Value {
 				items = append(items, s)
 			}
 		case *object.Boolean:

@@ -101,12 +101,15 @@ func evalIfExpr(expr ast.ExprSingle, env *object.Env) object.Item {
 	builtin := bif.Builtins["boolean"]
 
 	testE := Eval(ie.TestExpr, env)
-	bl, ok := builtin(testE).(*object.Boolean)
-	if !ok {
-		return builtin(testE)
+	bl := builtin(testE)
+
+	if bif.IsError(bl) {
+		return bl
 	}
 
-	if bl.Value {
+	boolObj := bl.(*object.Boolean)
+
+	if boolObj.Value {
 		return Eval(ie.ThenExpr, env)
 	}
 	return Eval(ie.ElseExpr, env)
@@ -167,4 +170,106 @@ func evalLetExpr(expr ast.ExprSingle, env *object.Env) object.Item {
 	}
 
 	return Eval(le.ExprSingle, env)
+}
+
+func evalQuantifiedExpr(expr ast.ExprSingle, env *object.Env) object.Item {
+	qe := expr.(*ast.QuantifiedExpr)
+
+	if len(qe.Bindings) > 1 {
+		b := qe.Bindings[0]
+		bval := Eval(b.ExprSingle, env)
+
+		nqe := &ast.QuantifiedExpr{ExprSingle: qe.ExprSingle, Token: qe.Token}
+		nqe.Bindings = qe.Bindings[1:]
+
+		switch bval := bval.(type) {
+		case *object.Sequence:
+			for _, item := range bval.Items {
+				env.Set(b.VarName.Value(), item)
+				e := evalQuantifiedExpr(nqe, env).(*object.Boolean)
+
+				if qe.Token.Type == token.EVERY && !e.Value {
+					return FALSE
+				}
+				if qe.Token.Type == token.SOME && e.Value {
+					return TRUE
+				}
+			}
+		default:
+			env.Set(b.VarName.Value(), bval)
+			e := evalQuantifiedExpr(nqe, env).(*object.Boolean)
+
+			if qe.Token.Type == token.EVERY && !e.Value {
+				return FALSE
+			}
+			if qe.Token.Type == token.SOME && e.Value {
+				return TRUE
+			}
+		}
+	}
+
+	b := qe.Bindings[0]
+	bval := Eval(b.ExprSingle, env)
+
+	switch bval := bval.(type) {
+	case *object.Sequence:
+		for _, item := range bval.Items {
+			env.Set(b.VarName.Value(), item)
+			e, ok := Eval(qe.ExprSingle, env).(*object.Boolean)
+
+			if !ok {
+				builtin := bif.Builtins["boolean"]
+				bl := builtin(e)
+				if bif.IsError(bl) {
+					return bl
+				}
+
+				boolObj := bl.(*object.Boolean)
+				if qe.Token.Type == token.EVERY && !boolObj.Value {
+					return FALSE
+				}
+				if qe.Token.Type == token.SOME && boolObj.Value {
+					return TRUE
+				}
+			}
+
+			if qe.Token.Type == token.EVERY && !e.Value {
+				return FALSE
+			}
+			if qe.Token.Type == token.SOME && e.Value {
+				return TRUE
+			}
+		}
+	default:
+		env.Set(b.VarName.Value(), bval)
+		e, ok := Eval(qe.ExprSingle, env).(*object.Boolean)
+
+		if !ok {
+			builtin := bif.Builtins["boolean"]
+			bl := builtin(e)
+			if bif.IsError(bl) {
+				return bl
+			}
+
+			boolObj := bl.(*object.Boolean)
+			if qe.Token.Type == token.EVERY && !boolObj.Value {
+				return FALSE
+			}
+			if qe.Token.Type == token.SOME && boolObj.Value {
+				return TRUE
+			}
+		}
+
+		if qe.Token.Type == token.EVERY && !e.Value {
+			return FALSE
+		}
+		if qe.Token.Type == token.SOME && e.Value {
+			return TRUE
+		}
+	}
+
+	if qe.Token.Type == token.EVERY {
+		return TRUE
+	}
+	return FALSE
 }

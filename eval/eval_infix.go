@@ -48,6 +48,14 @@ func evalInfixExpr(expr ast.ExprSingle, env *object.Env) object.Item {
 		left = Eval(expr.LeftExpr, env)
 		right = Eval(expr.RightExpr, env)
 		op = expr.Token
+	case *ast.UnionExpr:
+		left = Eval(expr.LeftExpr, env)
+		right = Eval(expr.RightExpr, env)
+		op = expr.Token
+	case *ast.IntersectExceptExpr:
+		left = Eval(expr.LeftExpr, env)
+		right = Eval(expr.RightExpr, env)
+		op = expr.Token
 	default:
 		return bif.NewError("%T is not an infix expression\n", expr)
 	}
@@ -1732,20 +1740,23 @@ func evalLogicalExpr(expr ast.ExprSingle, env *object.Env) object.Item {
 		op = expr.Token
 	}
 
-	l, ok := builtin(left).(*object.Boolean)
-	if !ok {
-		return builtin(left)
+	l := builtin(left)
+	if bif.IsError(l) {
+		return l
 	}
-	r, ok := builtin(right).(*object.Boolean)
-	if !ok {
-		return builtin(right)
+	r := builtin(right)
+	if bif.IsError(r) {
+		return r
 	}
+
+	leftBool := l.(*object.Boolean)
+	rightBool := r.(*object.Boolean)
 
 	switch op.Type {
 	case token.AND:
-		return &object.Boolean{Value: l.Value && r.Value}
+		return &object.Boolean{Value: leftBool.Value && rightBool.Value}
 	case token.OR:
-		return &object.Boolean{Value: l.Value || r.Value}
+		return &object.Boolean{Value: leftBool.Value || rightBool.Value}
 	default:
 		return NIL
 	}
