@@ -670,6 +670,10 @@ func TestLookup(t *testing.T) {
 			"(map{'first': 'Tom'} ! ?first='Tom')",
 			"((map{'first': 'Tom'} ! (?)first) = 'Tom')",
 		},
+		{
+			`(map{"name": "Jack", "age": 1}, map{"name": "Mike", "age": 2})[?name='Jack']`,
+			`(map{'name': 'Jack', 'age': 1}, map{'name': 'Mike', 'age': 2})[((?)name = 'Jack')]`,
+		},
 	}
 
 	for _, tt := range tests {

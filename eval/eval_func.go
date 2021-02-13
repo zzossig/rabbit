@@ -121,9 +121,8 @@ func evalPredicate(it object.Item, pred *ast.Predicate, env *object.Env) object.
 			builtin := bif.Builtins["boolean"]
 			bl := builtin(ev).(*object.Boolean)
 			if bl.Value {
-				return &object.Sequence{Items: src}
+				items = append(items, s)
 			}
-			return &object.Sequence{}
 		case *object.Boolean:
 			if ev.Value {
 				items = append(items, s)
@@ -161,14 +160,10 @@ func evalLookup(it object.Item, lu *ast.Lookup, env *object.Env) object.Item {
 					seq.Items = append(seq.Items, it.Items[i.Value-1])
 				}
 			}
-			return seq
 		case 4:
 			for _, item := range it.Items {
 				seq.Items = append(seq.Items, item)
 			}
-			return seq
-		default:
-			return seq
 		}
 	case *object.Map:
 		switch lu.KeySpecifier.TypeID {
@@ -201,16 +196,12 @@ func evalLookup(it object.Item, lu *ast.Lookup, env *object.Env) object.Item {
 			for _, pair := range it.Pairs {
 				seq.Items = append(seq.Items, pair.Value)
 			}
-			return seq
-		default:
-			return seq
 		}
 	case *object.Sequence:
 		for _, item := range it.Items {
 			evaled := evalLookup(item, lu, env)
 			seq.Items = append(seq.Items, evaled)
 		}
-		return seq
 	default:
 		return bif.NewError("[XPTY0004] Input of lookup operator is not a map or array: %v.", it)
 	}
@@ -371,4 +362,78 @@ func evalMapExpr(expr ast.ExprSingle, env *object.Env) object.Item {
 	}
 
 	return &object.Map{Pairs: pairs}
+}
+
+// KeySpecifier ::= NCName | IntegerLiteral | ParenthesizedExpr | "*"
+// TypeID ::=				1			 | 2							| 3									| 4
+func evalUnaryLookup(expr ast.ExprSingle, env *object.Env) object.Item {
+	ul := expr.(*ast.UnaryLookup)
+	seq := &object.Sequence{}
+
+	switch it := env.CItem.(type) {
+	case *object.Array:
+		switch ul.KeySpecifier.TypeID {
+		case 1:
+			return bif.NewError("[err:XPTY0004] NCName not supported in unary lookup")
+		case 2:
+			if ul.IntegerLiteral.Value == 0 || ul.IntegerLiteral.Value > len(it.Items) {
+				return bif.NewError("[FOAY0001] Array index %d out of bounds (1..%d)", ul.IntegerLiteral.Value, len(it.Items))
+			}
+			return it.Items[ul.IntegerLiteral.Value-1]
+		case 3:
+			evaled := Eval(&ul.ParenthesizedExpr, env)
+			src := evaled.(*object.Sequence)
+
+			for _, item := range src.Items {
+				i, ok := item.(*object.Integer)
+				if !ok {
+					return bif.NewError("[XPTY0004] Cannot convert %s to xs:integer", i.Type())
+				}
+				if i.Value == 0 || i.Value > len(it.Items) {
+					return bif.NewError("[FOAY0001] Array index %d out of bounds (1..%d)", ul.IntegerLiteral.Value, len(it.Items))
+				}
+				seq.Items = append(seq.Items, it.Items[i.Value-1])
+			}
+		case 4:
+			for _, item := range it.Items {
+				seq.Items = append(seq.Items, item)
+			}
+		}
+	case *object.Map:
+		switch ul.KeySpecifier.TypeID {
+		case 1:
+			key := object.String{Value: ul.NCName.Value()}
+			pair, ok := it.Pairs[key.HashKey()]
+			if !ok {
+				return seq
+			}
+			return pair.Value
+		case 2:
+			key := object.Integer{Value: ul.IntegerLiteral.Value}
+			pair, ok := it.Pairs[key.HashKey()]
+			if !ok {
+				return seq
+			}
+			return pair.Value
+		case 3:
+			evaled := Eval(&ul.ParenthesizedExpr, env)
+			src := evaled.(*object.Sequence)
+
+			for _, item := range src.Items {
+				if key, ok := item.(object.Hasher); ok {
+					if pair, ok := it.Pairs[key.HashKey()]; ok {
+						seq.Items = append(seq.Items, pair.Value)
+					}
+				}
+			}
+		case 4:
+			for _, pair := range it.Pairs {
+				seq.Items = append(seq.Items, pair.Value)
+			}
+		}
+	default:
+		return bif.NewError("[err:XPTY0004] context item is not a map or an array")
+	}
+
+	return seq
 }

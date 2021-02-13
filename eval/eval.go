@@ -79,6 +79,8 @@ func Eval(expr ast.ExprSingle, env *object.Env) object.Item {
 		return evalLetExpr(expr, env)
 	case *ast.MapConstructor:
 		return evalMapExpr(expr, env)
+	case *ast.UnaryLookup:
+		return evalUnaryLookup(expr, env)
 	}
 
 	return nil

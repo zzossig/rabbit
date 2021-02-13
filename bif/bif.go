@@ -49,3 +49,279 @@ func isPlaceholder(item object.Item) bool {
 	}
 	return false
 }
+
+// IsEQ ..
+func IsEQ(left, right object.Item) object.Item {
+	if leftVal, ok := left.(*object.Integer); ok {
+		switch rightVal := right.(type) {
+		case *object.Integer:
+			return &object.Boolean{Value: leftVal.Value == rightVal.Value}
+		case *object.Decimal:
+			return &object.Boolean{Value: float64(leftVal.Value) == rightVal.Value}
+		case *object.Double:
+			return &object.Boolean{Value: float64(leftVal.Value) == rightVal.Value}
+		default:
+			return NewError("cannot convert %s to number", right.Type())
+		}
+	} else if leftVal, ok := left.(*object.Decimal); ok {
+		switch rightVal := right.(type) {
+		case *object.Integer:
+			return &object.Boolean{Value: leftVal.Value == float64(rightVal.Value)}
+		case *object.Decimal:
+			return &object.Boolean{Value: leftVal.Value == rightVal.Value}
+		case *object.Double:
+			return &object.Boolean{Value: leftVal.Value == rightVal.Value}
+		default:
+			return NewError("cannot convert %s to number", right.Type())
+		}
+	} else if leftVal, ok := left.(*object.Double); ok {
+		switch rightVal := right.(type) {
+		case *object.Integer:
+			return &object.Boolean{Value: leftVal.Value == float64(rightVal.Value)}
+		case *object.Decimal:
+			return &object.Boolean{Value: leftVal.Value == rightVal.Value}
+		case *object.Double:
+			return &object.Boolean{Value: leftVal.Value == rightVal.Value}
+		default:
+			return NewError("cannot convert %s to number", right.Type())
+		}
+	} else if leftVal, ok := left.(*object.String); ok {
+		switch rightVal := right.(type) {
+		case *object.String:
+			return &object.Boolean{Value: leftVal.Value == rightVal.Value}
+		default:
+			return NewError("cannot compare %s and %s", left.Type(), right.Type())
+		}
+	}
+	return NewError("cannot compare %s and %s", left.Type(), right.Type())
+}
+
+// IsNE ..
+func IsNE(left, right object.Item) object.Item {
+	if leftVal, ok := left.(*object.Integer); ok {
+		switch rightVal := right.(type) {
+		case *object.Integer:
+			return &object.Boolean{Value: leftVal.Value != rightVal.Value}
+		case *object.Decimal:
+			return &object.Boolean{Value: float64(leftVal.Value) != rightVal.Value}
+		case *object.Double:
+			return &object.Boolean{Value: float64(leftVal.Value) != rightVal.Value}
+		default:
+			return NewError("cannot convert %s to number", right.Type())
+		}
+	} else if leftVal, ok := left.(*object.Decimal); ok {
+		switch rightVal := right.(type) {
+		case *object.Integer:
+			return &object.Boolean{Value: leftVal.Value != float64(rightVal.Value)}
+		case *object.Decimal:
+			return &object.Boolean{Value: leftVal.Value != rightVal.Value}
+		case *object.Double:
+			return &object.Boolean{Value: leftVal.Value != rightVal.Value}
+		default:
+			return NewError("cannot convert %s to number", right.Type())
+		}
+	} else if leftVal, ok := left.(*object.Double); ok {
+		switch rightVal := right.(type) {
+		case *object.Integer:
+			return &object.Boolean{Value: leftVal.Value != float64(rightVal.Value)}
+		case *object.Decimal:
+			return &object.Boolean{Value: leftVal.Value != rightVal.Value}
+		case *object.Double:
+			return &object.Boolean{Value: leftVal.Value != rightVal.Value}
+		default:
+			return NewError("cannot convert %s to number", right.Type())
+		}
+	} else if leftVal, ok := left.(*object.String); ok {
+		switch rightVal := right.(type) {
+		case *object.String:
+			return &object.Boolean{Value: leftVal.Value != rightVal.Value}
+		default:
+			return NewError("cannot compare %s and %s", left.Type(), right.Type())
+		}
+	}
+	return NewError("cannot compare %s and %s", left.Type(), right.Type())
+}
+
+// IsLT ..
+func IsLT(left, right object.Item) object.Item {
+	if leftVal, ok := left.(*object.Integer); ok {
+		switch rightVal := right.(type) {
+		case *object.Integer:
+			return &object.Boolean{Value: leftVal.Value < rightVal.Value}
+		case *object.Decimal:
+			return &object.Boolean{Value: float64(leftVal.Value) < rightVal.Value}
+		case *object.Double:
+			return &object.Boolean{Value: float64(leftVal.Value) < rightVal.Value}
+		default:
+			return NewError("cannot convert %s to number", right.Type())
+		}
+	} else if leftVal, ok := left.(*object.Decimal); ok {
+		switch rightVal := right.(type) {
+		case *object.Integer:
+			return &object.Boolean{Value: leftVal.Value < float64(rightVal.Value)}
+		case *object.Decimal:
+			return &object.Boolean{Value: leftVal.Value < rightVal.Value}
+		case *object.Double:
+			return &object.Boolean{Value: leftVal.Value < rightVal.Value}
+		default:
+			return NewError("cannot convert %s to number", right.Type())
+		}
+	} else if leftVal, ok := left.(*object.Double); ok {
+		switch rightVal := right.(type) {
+		case *object.Integer:
+			return &object.Boolean{Value: leftVal.Value < float64(rightVal.Value)}
+		case *object.Decimal:
+			return &object.Boolean{Value: leftVal.Value < rightVal.Value}
+		case *object.Double:
+			return &object.Boolean{Value: leftVal.Value < rightVal.Value}
+		default:
+			return NewError("cannot convert %s to number", right.Type())
+		}
+	} else if leftVal, ok := left.(*object.String); ok {
+		switch rightVal := right.(type) {
+		case *object.String:
+			return &object.Boolean{Value: leftVal.Value < rightVal.Value}
+		default:
+			return NewError("cannot compare %s and %s", left.Type(), right.Type())
+		}
+	}
+	return NewError("cannot compare %s and %s", left.Type(), right.Type())
+}
+
+// IsLE ..
+func IsLE(left, right object.Item) object.Item {
+	if leftVal, ok := left.(*object.Integer); ok {
+		switch rightVal := right.(type) {
+		case *object.Integer:
+			return &object.Boolean{Value: leftVal.Value <= rightVal.Value}
+		case *object.Decimal:
+			return &object.Boolean{Value: float64(leftVal.Value) <= rightVal.Value}
+		case *object.Double:
+			return &object.Boolean{Value: float64(leftVal.Value) <= rightVal.Value}
+		default:
+			return NewError("cannot convert %s to number", right.Type())
+		}
+	} else if leftVal, ok := left.(*object.Decimal); ok {
+		switch rightVal := right.(type) {
+		case *object.Integer:
+			return &object.Boolean{Value: leftVal.Value <= float64(rightVal.Value)}
+		case *object.Decimal:
+			return &object.Boolean{Value: leftVal.Value <= rightVal.Value}
+		case *object.Double:
+			return &object.Boolean{Value: leftVal.Value <= rightVal.Value}
+		default:
+			return NewError("cannot convert %s to number", right.Type())
+		}
+	} else if leftVal, ok := left.(*object.Double); ok {
+		switch rightVal := right.(type) {
+		case *object.Integer:
+			return &object.Boolean{Value: leftVal.Value <= float64(rightVal.Value)}
+		case *object.Decimal:
+			return &object.Boolean{Value: leftVal.Value <= rightVal.Value}
+		case *object.Double:
+			return &object.Boolean{Value: leftVal.Value <= rightVal.Value}
+		default:
+			return NewError("cannot convert %s to number", right.Type())
+		}
+	} else if leftVal, ok := left.(*object.String); ok {
+		switch rightVal := right.(type) {
+		case *object.String:
+			return &object.Boolean{Value: leftVal.Value <= rightVal.Value}
+		default:
+			return NewError("cannot compare %s and %s", left.Type(), right.Type())
+		}
+	}
+	return NewError("cannot compare %s and %s", left.Type(), right.Type())
+}
+
+// IsGT ..
+func IsGT(left, right object.Item) object.Item {
+	if leftVal, ok := left.(*object.Integer); ok {
+		switch rightVal := right.(type) {
+		case *object.Integer:
+			return &object.Boolean{Value: leftVal.Value > rightVal.Value}
+		case *object.Decimal:
+			return &object.Boolean{Value: float64(leftVal.Value) > rightVal.Value}
+		case *object.Double:
+			return &object.Boolean{Value: float64(leftVal.Value) > rightVal.Value}
+		default:
+			return NewError("cannot convert %s to number", right.Type())
+		}
+	} else if leftVal, ok := left.(*object.Decimal); ok {
+		switch rightVal := right.(type) {
+		case *object.Integer:
+			return &object.Boolean{Value: leftVal.Value > float64(rightVal.Value)}
+		case *object.Decimal:
+			return &object.Boolean{Value: leftVal.Value > rightVal.Value}
+		case *object.Double:
+			return &object.Boolean{Value: leftVal.Value > rightVal.Value}
+		default:
+			return NewError("cannot convert %s to number", right.Type())
+		}
+	} else if leftVal, ok := left.(*object.Double); ok {
+		switch rightVal := right.(type) {
+		case *object.Integer:
+			return &object.Boolean{Value: leftVal.Value > float64(rightVal.Value)}
+		case *object.Decimal:
+			return &object.Boolean{Value: leftVal.Value > rightVal.Value}
+		case *object.Double:
+			return &object.Boolean{Value: leftVal.Value > rightVal.Value}
+		default:
+			return NewError("cannot convert %s to number", right.Type())
+		}
+	} else if leftVal, ok := left.(*object.String); ok {
+		switch rightVal := right.(type) {
+		case *object.String:
+			return &object.Boolean{Value: leftVal.Value > rightVal.Value}
+		default:
+			return NewError("cannot compare %s and %s", left.Type(), right.Type())
+		}
+	}
+	return NewError("cannot compare %s and %s", left.Type(), right.Type())
+}
+
+// IsGE ..
+func IsGE(left, right object.Item) object.Item {
+	if leftVal, ok := left.(*object.Integer); ok {
+		switch rightVal := right.(type) {
+		case *object.Integer:
+			return &object.Boolean{Value: leftVal.Value >= rightVal.Value}
+		case *object.Decimal:
+			return &object.Boolean{Value: float64(leftVal.Value) >= rightVal.Value}
+		case *object.Double:
+			return &object.Boolean{Value: float64(leftVal.Value) >= rightVal.Value}
+		default:
+			return NewError("cannot convert %s to number", right.Type())
+		}
+	} else if leftVal, ok := left.(*object.Decimal); ok {
+		switch rightVal := right.(type) {
+		case *object.Integer:
+			return &object.Boolean{Value: leftVal.Value >= float64(rightVal.Value)}
+		case *object.Decimal:
+			return &object.Boolean{Value: leftVal.Value >= rightVal.Value}
+		case *object.Double:
+			return &object.Boolean{Value: leftVal.Value >= rightVal.Value}
+		default:
+			return NewError("cannot convert %s to number", right.Type())
+		}
+	} else if leftVal, ok := left.(*object.Double); ok {
+		switch rightVal := right.(type) {
+		case *object.Integer:
+			return &object.Boolean{Value: leftVal.Value >= float64(rightVal.Value)}
+		case *object.Decimal:
+			return &object.Boolean{Value: leftVal.Value >= rightVal.Value}
+		case *object.Double:
+			return &object.Boolean{Value: leftVal.Value >= rightVal.Value}
+		default:
+			return NewError("cannot convert %s to number", right.Type())
+		}
+	} else if leftVal, ok := left.(*object.String); ok {
+		switch rightVal := right.(type) {
+		case *object.String:
+			return &object.Boolean{Value: leftVal.Value >= rightVal.Value}
+		default:
+			return NewError("cannot compare %s and %s", left.Type(), right.Type())
+		}
+	}
+	return NewError("cannot compare %s and %s", left.Type(), right.Type())
+}
