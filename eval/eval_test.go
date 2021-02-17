@@ -2,6 +2,7 @@ package eval
 
 import (
 	"fmt"
+	"github.com/zzossig/xpath/context"
 	"testing"
 
 	"github.com/zzossig/xpath/lexer"
@@ -325,10 +326,10 @@ func testEval(input string) object.Item {
 	l := lexer.New(input)
 	p := parser.New(l)
 	xpath := p.ParseXPath()
-	env := object.NewEnv()
-	env.NewReaderFile("text.txt", true)
+	ctx := context.NewContext()
+	ctx.NewReaderFile("text.txt", true)
 
-	return Eval(xpath, env)
+	return Eval(xpath, ctx)
 }
 
 func testNumberObject(t *testing.T, item object.Item, expected interface{}) {

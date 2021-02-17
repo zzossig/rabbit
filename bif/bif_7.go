@@ -12,10 +12,10 @@ func boolean(args ...object.Item) object.Item {
 	switch arg := args[0].(type) {
 	case *object.Sequence:
 		if len(arg.Items) == 0 {
-			return FALSE
+			return object.FALSE
 		}
 		if arg.Items[0].Type() == object.NodeType {
-			return TRUE
+			return object.TRUE
 		}
 		if len(arg.Items) == 1 {
 			return boolean(arg.Items[0])
@@ -24,24 +24,24 @@ func boolean(args ...object.Item) object.Item {
 		return arg
 	case *object.String:
 		if len(arg.Value) == 0 {
-			return FALSE
+			return object.FALSE
 		}
-		return TRUE
+		return object.TRUE
 	case *object.Integer:
 		if arg.Value == 0 {
-			return FALSE
+			return object.FALSE
 		}
-		return TRUE
+		return object.TRUE
 	case *object.Decimal:
 		if arg.Value == 0.0 {
-			return FALSE
+			return object.FALSE
 		}
-		return TRUE
+		return object.TRUE
 	case *object.Double:
 		if arg.Value == 0.0 {
-			return FALSE
+			return object.FALSE
 		}
-		return TRUE
+		return object.TRUE
 	}
 
 	return NewError("[err:FORG0006]")

@@ -21,7 +21,7 @@ func upperCase(args ...object.Item) object.Item {
 
 	arg := args[0]
 	if arg.Type() != object.StringType {
-		return NIL
+		return object.NIL
 	}
 	strItem := arg.(*object.String)
 	return &object.String{Value: strings.ToUpper(strItem.Value)}
@@ -34,7 +34,7 @@ func lowerCase(args ...object.Item) object.Item {
 
 	arg := args[0]
 	if arg.Type() != object.StringType {
-		return NIL
+		return object.NIL
 	}
 	strItem := arg.(*object.String)
 	return &object.String{Value: strings.ToLower(strItem.Value)}

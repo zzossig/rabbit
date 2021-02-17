@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"io"
 
+	"github.com/zzossig/xpath/context"
 	"github.com/zzossig/xpath/eval"
 	"github.com/zzossig/xpath/lexer"
-	"github.com/zzossig/xpath/object"
 	"github.com/zzossig/xpath/parser"
 )
 
@@ -15,7 +15,7 @@ const PROMPT = ">> "
 
 func Start(in io.Reader, out io.Writer) {
 	scanner := bufio.NewScanner(in)
-	env := object.NewEnv()
+	env := context.NewContext()
 	env.NewReaderFile("text.txt", true)
 
 	for {

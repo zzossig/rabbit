@@ -3,10 +3,11 @@ package eval
 import (
 	"github.com/zzossig/xpath/ast"
 	"github.com/zzossig/xpath/bif"
+	"github.com/zzossig/xpath/context"
 	"github.com/zzossig/xpath/object"
 )
 
-func evalFunctionLiteral(expr ast.ExprSingle, env *object.Env) object.Item {
+func evalFunctionLiteral(expr ast.ExprSingle, ctx *context.Context) object.Item {
 	switch expr := expr.(type) {
 	case *ast.NamedFunctionRef:
 		return &object.FuncNamed{Name: expr.EQName.Value(), Num: expr.IntegerLiteral.Value}
@@ -16,28 +17,28 @@ func evalFunctionLiteral(expr ast.ExprSingle, env *object.Env) object.Item {
 	return nil
 }
 
-func evalFunctionCall(expr ast.ExprSingle, env *object.Env) object.Item {
+func evalFunctionCall(expr ast.ExprSingle, ctx *context.Context) object.Item {
 	f := expr.(*ast.FunctionCall)
 
 	builtin, ok := bif.Builtins[f.EQName.Value()]
 	if !ok {
-		envFunc, ok := env.Get(f.EQName.Value())
+		ctxFunc, ok := ctx.Get(f.EQName.Value())
 		if !ok {
 			return bif.NewError("function not found: " + f.EQName.Value())
 		}
 
-		args, _ := evalArgumentList(f.Args, env)
-		return evalDynamicFunctionCall(envFunc, args, env)
+		args, _ := evalArgumentList(f.Args, ctx)
+		return evalDynamicFunctionCall(ctxFunc, args, ctx)
 	}
 
-	enclosedEnv := object.NewEnclosedEnv(env)
+	enclosedCtx := context.NewEnclosedContext(ctx)
 	fc := &object.FuncCall{}
-	fc.Env = enclosedEnv
+	fc.Context = enclosedCtx
 	fc.Name = f.EQName.Value()
 	fc.Func = &builtin
 
-	args, pcnt := evalArgumentList(f.Args, env)
-	enclosedEnv.Args = append(enclosedEnv.Args, args...)
+	args, pcnt := evalArgumentList(f.Args, ctx)
+	enclosedCtx.Args = append(enclosedCtx.Args, args...)
 
 	if pcnt > 0 {
 		return fc
@@ -46,34 +47,34 @@ func evalFunctionCall(expr ast.ExprSingle, env *object.Env) object.Item {
 	return builtin(args...)
 }
 
-func evalVarRef(expr ast.ExprSingle, env *object.Env) object.Item {
+func evalVarRef(expr ast.ExprSingle, ctx *context.Context) object.Item {
 	vr := expr.(*ast.VarRef)
 
-	if v, ok := env.Get(vr.VarName.Value()); ok {
+	if v, ok := ctx.Get(vr.VarName.Value()); ok {
 		return v
 	}
 	return bif.NewError("Undefined variable %s", vr.VarName.Value())
 }
 
-func evalArgument(arg ast.Argument, env *object.Env) object.Item {
+func evalArgument(arg ast.Argument, ctx *context.Context) object.Item {
 	switch arg.TypeID {
 	case 0:
-		return NIL
+		return object.NIL
 	case 1:
-		return Eval(arg.ExprSingle, env)
+		return Eval(arg.ExprSingle, ctx)
 	case 2:
 		return &object.Placeholder{}
 	default:
-		return NIL
+		return object.NIL
 	}
 }
 
-func evalArgumentList(args []ast.Argument, env *object.Env) ([]object.Item, int) {
+func evalArgumentList(args []ast.Argument, ctx *context.Context) ([]object.Item, int) {
 	var items []object.Item
 	pcnt := 0
 
 	for _, arg := range args {
-		item := evalArgument(arg, env)
+		item := evalArgument(arg, ctx)
 		items = append(items, item)
 		if item.Type() == object.PholderType {
 			pcnt++
@@ -83,7 +84,7 @@ func evalArgumentList(args []ast.Argument, env *object.Env) ([]object.Item, int)
 	return items, pcnt
 }
 
-func evalPredicate(it object.Item, pred *ast.Predicate, env *object.Env) object.Item {
+func evalPredicate(it object.Item, pred *ast.Predicate, ctx *context.Context) object.Item {
 	var src []object.Item
 
 	switch it := it.(type) {
@@ -97,9 +98,9 @@ func evalPredicate(it object.Item, pred *ast.Predicate, env *object.Env) object.
 
 	var items []object.Item
 	for i, s := range src {
-		env.CItem = s
+		ctx.CItem = s
 
-		evaled := Eval(&pred.Expr, env).(*object.Sequence)
+		evaled := Eval(&pred.Expr, ctx).(*object.Sequence)
 		if len(evaled.Items) != 1 {
 			return bif.NewError("Wrong number of argument. got=%d, want=1", len(evaled.Items))
 		}
@@ -140,7 +141,7 @@ func evalPredicate(it object.Item, pred *ast.Predicate, env *object.Env) object.
 	return &object.Sequence{Items: items}
 }
 
-func evalLookup(it object.Item, lu *ast.Lookup, env *object.Env) object.Item {
+func evalLookup(it object.Item, lu *ast.Lookup, ctx *context.Context) object.Item {
 	seq := &object.Sequence{}
 
 	switch it := it.(type) {
@@ -154,7 +155,7 @@ func evalLookup(it object.Item, lu *ast.Lookup, env *object.Env) object.Item {
 			}
 			return it.Items[lu.IntegerLiteral.Value-1]
 		case 3:
-			evaled := Eval(&lu.ParenthesizedExpr, env)
+			evaled := Eval(&lu.ParenthesizedExpr, ctx)
 			src := evaled.(*object.Sequence)
 
 			for _, item := range src.Items {
@@ -187,7 +188,7 @@ func evalLookup(it object.Item, lu *ast.Lookup, env *object.Env) object.Item {
 			}
 			return pair.Value
 		case 3:
-			evaled := Eval(&lu.ParenthesizedExpr, env)
+			evaled := Eval(&lu.ParenthesizedExpr, ctx)
 			src := evaled.(*object.Sequence)
 
 			for _, item := range src.Items {
@@ -204,7 +205,7 @@ func evalLookup(it object.Item, lu *ast.Lookup, env *object.Env) object.Item {
 		}
 	case *object.Sequence:
 		for _, item := range it.Items {
-			evaled := evalLookup(item, lu, env)
+			evaled := evalLookup(item, lu, ctx)
 			seq.Items = append(seq.Items, evaled)
 		}
 	default:
@@ -214,11 +215,11 @@ func evalLookup(it object.Item, lu *ast.Lookup, env *object.Env) object.Item {
 	return seq
 }
 
-func evalArrowExpr(expr ast.ExprSingle, env *object.Env) object.Item {
+func evalArrowExpr(expr ast.ExprSingle, ctx *context.Context) object.Item {
 	ae := expr.(*ast.ArrowExpr)
 	bindings := ae.Bindings
 
-	e := Eval(ae.ExprSingle, env)
+	e := Eval(ae.ExprSingle, ctx)
 	args := []object.Item{e}
 	var result object.Item
 
@@ -230,7 +231,7 @@ func evalArrowExpr(expr ast.ExprSingle, env *object.Env) object.Item {
 				bif.NewError("function not defined: %s", b.EQName.Value())
 			}
 
-			evaled, _ := evalArgumentList(b.Args, env)
+			evaled, _ := evalArgumentList(b.Args, ctx)
 			args = append(args, evaled...)
 			result = builtin(args...)
 			if i < len(bindings)-1 {
@@ -246,36 +247,36 @@ func evalArrowExpr(expr ast.ExprSingle, env *object.Env) object.Item {
 	return result
 }
 
-func evalPostfixExpr(expr ast.ExprSingle, env *object.Env) object.Item {
+func evalPostfixExpr(expr ast.ExprSingle, ctx *context.Context) object.Item {
 	pe := expr.(*ast.PostfixExpr)
-	evaled := Eval(pe.ExprSingle, env)
+	evaled := Eval(pe.ExprSingle, ctx)
 
 	for _, pal := range pe.Pals {
 		switch pal := pal.(type) {
 		case *ast.Predicate:
-			evaled = evalPredicate(evaled, pal, env)
+			evaled = evalPredicate(evaled, pal, ctx)
 		case *ast.ArgumentList:
-			args, _ := evalArgumentList(pal.Args, env)
-			evaled = evalDynamicFunctionCall(evaled, args, env)
+			args, _ := evalArgumentList(pal.Args, ctx)
+			evaled = evalDynamicFunctionCall(evaled, args, ctx)
 		case *ast.Lookup:
-			evaled = evalLookup(evaled, pal, env)
+			evaled = evalLookup(evaled, pal, ctx)
 		}
 	}
 
 	return evaled
 }
 
-func evalDynamicFunctionCall(f object.Item, args []object.Item, env *object.Env) object.Item {
+func evalDynamicFunctionCall(f object.Item, args []object.Item, ctx *context.Context) object.Item {
 	switch f := f.(type) {
 	case *object.FuncInline:
 		if len(f.PL.Params) != len(args) {
 			return bif.NewError("wrong number of argument. got=%d, want=%d", len(args), len(f.PL.Params))
 		}
 		for i, param := range f.PL.Params {
-			env.Set(param.EQName.Value(), args[i])
+			ctx.Set(param.EQName.Value(), args[i])
 		}
 
-		return Eval(&f.Body.Expr, env)
+		return Eval(&f.Body.Expr, ctx)
 	case *object.FuncNamed:
 		builtin, ok := bif.Builtins[f.Name]
 		if !ok {
@@ -305,9 +306,9 @@ func evalDynamicFunctionCall(f object.Item, args []object.Item, env *object.Env)
 	return nil
 }
 
-func evalSimpleMapExpr(expr ast.ExprSingle, env *object.Env) object.Item {
+func evalSimpleMapExpr(expr ast.ExprSingle, ctx *context.Context) object.Item {
 	sme := expr.(*ast.SimpleMapExpr)
-	left := Eval(sme.LeftExpr, env)
+	left := Eval(sme.LeftExpr, ctx)
 
 	var cItems []object.Item
 	switch left := left.(type) {
@@ -321,15 +322,15 @@ func evalSimpleMapExpr(expr ast.ExprSingle, env *object.Env) object.Item {
 
 	var items []object.Item
 	for _, c := range cItems {
-		env.CItem = c
-		right := Eval(sme.RightExpr, env)
+		ctx.CItem = c
+		right := Eval(sme.RightExpr, ctx)
 		items = append(items, right)
 	}
 
 	return &object.Sequence{Items: items}
 }
 
-func evalArrayExpr(expr ast.ExprSingle, env *object.Env) object.Item {
+func evalArrayExpr(expr ast.ExprSingle, ctx *context.Context) object.Item {
 	array := &object.Array{}
 	var exprs []ast.ExprSingle
 
@@ -341,26 +342,26 @@ func evalArrayExpr(expr ast.ExprSingle, env *object.Env) object.Item {
 	}
 
 	for _, e := range exprs {
-		item := Eval(e, env)
+		item := Eval(e, ctx)
 		array.Items = append(array.Items, item)
 	}
 
 	return array
 }
 
-func evalMapExpr(expr ast.ExprSingle, env *object.Env) object.Item {
+func evalMapExpr(expr ast.ExprSingle, ctx *context.Context) object.Item {
 	mc := expr.(*ast.MapConstructor)
 	pairs := make(map[object.HashKey]object.Pair)
 
 	for _, entry := range mc.Entries {
-		key := Eval(entry.MapKeyExpr.ExprSingle, env)
+		key := Eval(entry.MapKeyExpr.ExprSingle, ctx)
 
 		hashKey, ok := key.(object.Hasher)
 		if !ok {
 			return bif.NewError("unusable as hash key: %s", key.Type())
 		}
 
-		value := Eval(entry.MapValueExpr.ExprSingle, env)
+		value := Eval(entry.MapValueExpr.ExprSingle, ctx)
 
 		hashed := hashKey.HashKey()
 		pairs[hashed] = object.Pair{Key: key, Value: value}
@@ -371,11 +372,11 @@ func evalMapExpr(expr ast.ExprSingle, env *object.Env) object.Item {
 
 // KeySpecifier ::= NCName | IntegerLiteral | ParenthesizedExpr | "*"
 // TypeID ::=				1			 | 2							| 3									| 4
-func evalUnaryLookup(expr ast.ExprSingle, env *object.Env) object.Item {
+func evalUnaryLookup(expr ast.ExprSingle, ctx *context.Context) object.Item {
 	ul := expr.(*ast.UnaryLookup)
 	seq := &object.Sequence{}
 
-	switch it := env.CItem.(type) {
+	switch it := ctx.CItem.(type) {
 	case *object.Array:
 		switch ul.KeySpecifier.TypeID {
 		case 1:
@@ -386,7 +387,7 @@ func evalUnaryLookup(expr ast.ExprSingle, env *object.Env) object.Item {
 			}
 			return it.Items[ul.IntegerLiteral.Value-1]
 		case 3:
-			evaled := Eval(&ul.ParenthesizedExpr, env)
+			evaled := Eval(&ul.ParenthesizedExpr, ctx)
 			src := evaled.(*object.Sequence)
 
 			for _, item := range src.Items {
@@ -421,7 +422,7 @@ func evalUnaryLookup(expr ast.ExprSingle, env *object.Env) object.Item {
 			}
 			return pair.Value
 		case 3:
-			evaled := Eval(&ul.ParenthesizedExpr, env)
+			evaled := Eval(&ul.ParenthesizedExpr, ctx)
 			src := evaled.(*object.Sequence)
 
 			for _, item := range src.Items {

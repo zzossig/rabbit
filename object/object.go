@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/zzossig/xpath/ast"
+	"github.com/zzossig/xpath/context"
 )
 
 // Item ..
@@ -15,40 +16,11 @@ type Item interface {
 	Inspect() string
 }
 
-// Func represents function type
-type Func func(args ...Item) Item
-
-// Type represents Item Type
-type Type string
-
-// Value represents any value
-type Value interface{}
-
-// Item Types
-const (
-	NilType     Type = "nil"
-	ErrorType   Type = "error"
-	PholderType Type = "?"
-
-	NodeType     Type = "node"
-	MapType      Type = "map"
-	ArrayType    Type = "array"
-	SequenceType Type = "sequence"
-
-	FuncCallType   Type = "functionC"
-	FuncNamedType  Type = "functionN"
-	FuncInlineType Type = "functionI"
-
-	ByteType          Type = "xs:byte"
-	ShortType         Type = "xs:short"
-	IntType           Type = "xs:int"
-	LongType          Type = "xs:long"
-	IntegerType       Type = "xs:integer"
-	DecimalType       Type = "xs:decimal"
-	DoubleType        Type = "xs:double"
-	BooleanType       Type = "xs:boolean"
-	StringType        Type = "xs:string"
-	UntypedAtomicType Type = "xs:untypedAtomic"
+// predefined
+var (
+	NIL   = &Nil{}
+	TRUE  = &Boolean{Value: true}
+	FALSE = &Boolean{Value: false}
 )
 
 // Sequence ..
@@ -180,7 +152,7 @@ func (s *String) HashKey() HashKey {
 type FuncNamed struct {
 	Name string
 	Num  int
-	*Env
+	*context.Context
 }
 
 func (fn *FuncNamed) Type() Type      { return FuncNamedType }
@@ -200,7 +172,7 @@ func (fi *FuncInline) Inspect() string { return "functionI" }
 type FuncCall struct {
 	Name string
 	*Func
-	*Env
+	*context.Context
 }
 
 func (fc *FuncCall) Type() Type      { return FuncCallType }

@@ -1,4 +1,4 @@
-package object
+package context
 
 import (
 	"bytes"
@@ -9,18 +9,20 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/zzossig/xpath/object"
 )
 
-// NewEnclosedEnv ...
-func NewEnclosedEnv(outer *Env) *Env {
-	env := NewEnv()
-	env.outer = outer
-	return env
+// NewEnclosedContext ...
+func NewEnclosedContext(outer *Context) *Context {
+	ctx := NewContext()
+	ctx.outer = outer
+	return ctx
 }
 
-// NewEnv ...
-func NewEnv() *Env {
-	s := make(map[string]Item)
+// NewContext ...
+func NewContext() *Context {
+	s := make(map[string]object.Item)
 	ns := map[string]string{
 		"xs":    "http://www.w3.org/2001/XMLSchema",
 		"fn":    "http://www.w3.org/2005/xpath-functions",
@@ -30,55 +32,55 @@ func NewEnv() *Env {
 		"err":   "http://www.w3.org/2005/xqt-errors",
 	}
 
-	return &Env{store: s, outer: nil, NS: ns}
+	return &Context{store: s, outer: nil, NS: ns}
 }
 
-// Env ...
-type Env struct {
-	store map[string]Item
-	outer *Env
-	CItem Item
-	Args  []Item
+// Context ...
+type Context struct {
+	store map[string]object.Item
+	outer *Context
+	CItem object.Item
+	Args  []object.Item
 	NS    map[string]string
 	r     io.Reader
 	isXML bool
 }
 
 // Get ...
-func (e *Env) Get(name string) (Item, bool) {
-	item, ok := e.store[name]
-	if !ok && e.outer != nil {
-		item, ok = e.outer.Get(name)
+func (c *Context) Get(name string) (object.Item, bool) {
+	item, ok := c.store[name]
+	if !ok && c.outer != nil {
+		item, ok = c.outer.Get(name)
 	}
 	return item, ok
 }
 
 // Set ...
-func (e *Env) Set(name string, val Item) Item {
-	e.store[name] = val
+func (c *Context) Set(name string, val object.Item) object.Item {
+	c.store[name] = val
 	return val
 }
 
 // NewReader ..
-func (e *Env) NewReader(i interface{}, isXML bool) error {
-	e.isXML = isXML
+func (c *Context) NewReader(i interface{}, isXML bool) error {
+	c.isXML = isXML
 
 	switch i := i.(type) {
 	case string:
-		e.r = strings.NewReader(i)
+		c.r = strings.NewReader(i)
 		return nil
 	case []byte:
-		e.r = bytes.NewReader(i)
+		c.r = bytes.NewReader(i)
 		return nil
 	case *bytes.Buffer:
-		e.r = i
+		c.r = i
 		return nil
 	}
 	return fmt.Errorf("type now allowed: %T", i)
 }
 
 // NewReaderFile ..
-func (e *Env) NewReaderFile(path string, isXML bool) error {
+func (c *Context) NewReaderFile(path string, isXML bool) error {
 	dir, err := os.Getwd()
 	if err != nil {
 		return err
@@ -90,11 +92,11 @@ func (e *Env) NewReaderFile(path string, isXML bool) error {
 		return err
 	}
 
-	return e.NewReader(b, isXML)
+	return c.NewReader(b, isXML)
 }
 
 // NewReaderHTTP ..
-func (e *Env) NewReaderHTTP(addr string, isXML bool) error {
+func (c *Context) NewReaderHTTP(addr string, isXML bool) error {
 	resp, err := http.Get(addr)
 	if err != nil {
 		return err
@@ -107,5 +109,5 @@ func (e *Env) NewReaderHTTP(addr string, isXML bool) error {
 	}
 	resp.Body.Close()
 
-	return e.NewReader(buf, isXML)
+	return c.NewReader(buf, isXML)
 }

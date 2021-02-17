@@ -2,101 +2,95 @@ package eval
 
 import (
 	"github.com/zzossig/xpath/ast"
+	"github.com/zzossig/xpath/context"
 	"github.com/zzossig/xpath/object"
 )
 
-// predefined
-var (
-	NIL   = &object.Nil{}
-	TRUE  = &object.Boolean{Value: true}
-	FALSE = &object.Boolean{Value: false}
-)
-
 // Eval ..
-func Eval(expr ast.ExprSingle, env *object.Env) object.Item {
+func Eval(expr ast.ExprSingle, ctx *context.Context) object.Item {
 	switch expr := expr.(type) {
 	case *ast.XPath:
-		return evalXPath(expr, env)
+		return evalXPath(expr, ctx)
 	case *ast.IntegerLiteral:
-		return evalIntegerLiteral(expr, env)
+		return evalIntegerLiteral(expr, ctx)
 	case *ast.DecimalLiteral:
-		return evalDecimalLiteral(expr, env)
+		return evalDecimalLiteral(expr, ctx)
 	case *ast.DoubleLiteral:
-		return evalDoubleLiteral(expr, env)
+		return evalDoubleLiteral(expr, ctx)
 	case *ast.StringLiteral:
-		return evalStringLiteral(expr, env)
+		return evalStringLiteral(expr, ctx)
 	case *ast.ContextItemExpr:
-		return env.CItem
+		return ctx.CItem
 	case *ast.Expr:
-		return evalExpr(expr, env)
+		return evalExpr(expr, ctx)
 	case *ast.ParenthesizedExpr:
-		return evalExpr(expr, env)
+		return evalExpr(expr, ctx)
 	case *ast.EnclosedExpr:
-		return evalExpr(expr, env)
+		return evalExpr(expr, ctx)
 	case *ast.Predicate:
-		return evalExpr(expr, env)
+		return evalExpr(expr, ctx)
 	case *ast.Identifier:
-		return evalIdentifier(expr, env)
+		return evalIdentifier(expr, ctx)
 	case *ast.InlineFunctionExpr:
-		return evalFunctionLiteral(expr, env)
+		return evalFunctionLiteral(expr, ctx)
 	case *ast.NamedFunctionRef:
-		return evalFunctionLiteral(expr, env)
+		return evalFunctionLiteral(expr, ctx)
 	case *ast.FunctionCall:
-		return evalFunctionCall(expr, env)
+		return evalFunctionCall(expr, ctx)
 	case *ast.VarRef:
-		return evalVarRef(expr, env)
+		return evalVarRef(expr, ctx)
 	case *ast.ArrowExpr:
-		return evalArrowExpr(expr, env)
+		return evalArrowExpr(expr, ctx)
 	case *ast.PostfixExpr:
-		return evalPostfixExpr(expr, env)
+		return evalPostfixExpr(expr, ctx)
 	case *ast.AdditiveExpr:
-		return evalInfixExpr(expr, env)
+		return evalInfixExpr(expr, ctx)
 	case *ast.MultiplicativeExpr:
-		return evalInfixExpr(expr, env)
+		return evalInfixExpr(expr, ctx)
 	case *ast.StringConcatExpr:
-		return evalInfixExpr(expr, env)
+		return evalInfixExpr(expr, ctx)
 	case *ast.RangeExpr:
-		return evalInfixExpr(expr, env)
+		return evalInfixExpr(expr, ctx)
 	case *ast.UnionExpr:
-		return evalInfixExpr(expr, env)
+		return evalInfixExpr(expr, ctx)
 	case *ast.IntersectExceptExpr:
-		return evalInfixExpr(expr, env)
+		return evalInfixExpr(expr, ctx)
 	case *ast.ComparisonExpr:
-		return evalInfixExpr(expr, env)
+		return evalInfixExpr(expr, ctx)
 	case *ast.OrExpr:
-		return evalLogicalExpr(expr, env)
+		return evalLogicalExpr(expr, ctx)
 	case *ast.AndExpr:
-		return evalLogicalExpr(expr, env)
+		return evalLogicalExpr(expr, ctx)
 	case *ast.SimpleMapExpr:
-		return evalSimpleMapExpr(expr, env)
+		return evalSimpleMapExpr(expr, ctx)
 	case *ast.UnaryExpr:
-		return evalPrefixExpr(expr, env)
+		return evalPrefixExpr(expr, ctx)
 	case *ast.SquareArrayConstructor:
-		return evalArrayExpr(expr, env)
+		return evalArrayExpr(expr, ctx)
 	case *ast.CurlyArrayConstructor:
-		return evalArrayExpr(expr, env)
+		return evalArrayExpr(expr, ctx)
 	case *ast.IfExpr:
-		return evalIfExpr(expr, env)
+		return evalIfExpr(expr, ctx)
 	case *ast.ForExpr:
-		return evalForExpr(expr, env)
+		return evalForExpr(expr, ctx)
 	case *ast.LetExpr:
-		return evalLetExpr(expr, env)
+		return evalLetExpr(expr, ctx)
 	case *ast.QuantifiedExpr:
-		return evalQuantifiedExpr(expr, env)
+		return evalQuantifiedExpr(expr, ctx)
 	case *ast.MapConstructor:
-		return evalMapExpr(expr, env)
+		return evalMapExpr(expr, ctx)
 	case *ast.UnaryLookup:
-		return evalUnaryLookup(expr, env)
+		return evalUnaryLookup(expr, ctx)
 	}
 
-	return nil
+	return object.NIL
 }
 
-func evalXPath(expr *ast.XPath, env *object.Env) object.Item {
+func evalXPath(expr *ast.XPath, ctx *context.Context) object.Item {
 	xpath := &object.Sequence{}
 
 	for _, e := range expr.Exprs {
-		item := Eval(e, env)
+		item := Eval(e, ctx)
 
 		switch item := item.(type) {
 		case *object.Sequence:
@@ -109,36 +103,36 @@ func evalXPath(expr *ast.XPath, env *object.Env) object.Item {
 	return xpath
 }
 
-func evalExpr(expr ast.ExprSingle, env *object.Env) object.Item {
+func evalExpr(expr ast.ExprSingle, ctx *context.Context) object.Item {
 	switch expr := expr.(type) {
 	case *ast.Expr:
 		seq := &object.Sequence{}
 		for _, e := range expr.Exprs {
-			item := Eval(e, env)
+			item := Eval(e, ctx)
 			seq.Items = append(seq.Items, item)
 		}
 		return seq
 	case *ast.ParenthesizedExpr:
 		seq := &object.Sequence{}
 		for _, e := range expr.Exprs {
-			item := Eval(e, env)
+			item := Eval(e, ctx)
 			seq.Items = append(seq.Items, item)
 		}
 		return seq
 	case *ast.EnclosedExpr:
 		seq := &object.Sequence{}
 		for _, e := range expr.Exprs {
-			item := Eval(e, env)
+			item := Eval(e, ctx)
 			seq.Items = append(seq.Items, item)
 		}
 		return seq
 	case *ast.Predicate:
 		seq := &object.Sequence{}
 		for _, e := range expr.Exprs {
-			item := Eval(e, env)
+			item := Eval(e, ctx)
 			seq.Items = append(seq.Items, item)
 		}
 		return seq
 	}
-	return nil
+	return object.NIL
 }

@@ -6,55 +6,56 @@ import (
 
 	"github.com/zzossig/xpath/ast"
 	"github.com/zzossig/xpath/bif"
+	"github.com/zzossig/xpath/context"
 	"github.com/zzossig/xpath/object"
 	"github.com/zzossig/xpath/token"
 )
 
-func evalIdentifier(ident *ast.Identifier, env *object.Env) object.Item {
-	if val, ok := env.Get(ident.EQName.Value()); ok {
+func evalIdentifier(ident *ast.Identifier, ctx *context.Context) object.Item {
+	if val, ok := ctx.Get(ident.EQName.Value()); ok {
 		return val
 	}
 
 	return bif.NewError("identifier not found: " + ident.EQName.Value())
 }
 
-func evalInfixExpr(expr ast.ExprSingle, env *object.Env) object.Item {
+func evalInfixExpr(expr ast.ExprSingle, ctx *context.Context) object.Item {
 	var left object.Item
 	var right object.Item
 	var op token.Token
 
 	switch expr := expr.(type) {
 	case *ast.AdditiveExpr:
-		left = Eval(expr.LeftExpr, env)
-		right = Eval(expr.RightExpr, env)
+		left = Eval(expr.LeftExpr, ctx)
+		right = Eval(expr.RightExpr, ctx)
 		op = expr.Token
 	case *ast.MultiplicativeExpr:
-		left = Eval(expr.LeftExpr, env)
-		right = Eval(expr.RightExpr, env)
+		left = Eval(expr.LeftExpr, ctx)
+		right = Eval(expr.RightExpr, ctx)
 		op = expr.Token
 	case *ast.StringConcatExpr:
-		left = Eval(expr.LeftExpr, env)
-		right = Eval(expr.RightExpr, env)
+		left = Eval(expr.LeftExpr, ctx)
+		right = Eval(expr.RightExpr, ctx)
 		op = expr.Token
 	case *ast.RangeExpr:
-		left = Eval(expr.LeftExpr, env)
-		right = Eval(expr.RightExpr, env)
+		left = Eval(expr.LeftExpr, ctx)
+		right = Eval(expr.RightExpr, ctx)
 		op = expr.Token
 	case *ast.ComparisonExpr:
-		left = Eval(expr.LeftExpr, env)
-		right = Eval(expr.RightExpr, env)
+		left = Eval(expr.LeftExpr, ctx)
+		right = Eval(expr.RightExpr, ctx)
 		op = expr.Token
 	case *ast.SimpleMapExpr:
-		left = Eval(expr.LeftExpr, env)
-		right = Eval(expr.RightExpr, env)
+		left = Eval(expr.LeftExpr, ctx)
+		right = Eval(expr.RightExpr, ctx)
 		op = expr.Token
 	case *ast.UnionExpr:
-		left = Eval(expr.LeftExpr, env)
-		right = Eval(expr.RightExpr, env)
+		left = Eval(expr.LeftExpr, ctx)
+		right = Eval(expr.RightExpr, ctx)
 		op = expr.Token
 	case *ast.IntersectExceptExpr:
-		left = Eval(expr.LeftExpr, env)
-		right = Eval(expr.RightExpr, env)
+		left = Eval(expr.LeftExpr, ctx)
+		right = Eval(expr.RightExpr, ctx)
 		op = expr.Token
 	default:
 		return bif.NewError("%T is not an infix expression\n", expr)
@@ -655,10 +656,10 @@ func evalInfixNumberArray(op token.Token, left object.Item, right object.Item) o
 			}
 			bl := e.(*object.Boolean)
 			if bl.Value == true {
-				return TRUE
+				return object.TRUE
 			}
 		}
-		return FALSE
+		return object.FALSE
 	case token.NE:
 		for _, item := range rightVal.Items {
 			e := bif.IsNE(left, item)
@@ -667,10 +668,10 @@ func evalInfixNumberArray(op token.Token, left object.Item, right object.Item) o
 			}
 			bl := e.(*object.Boolean)
 			if bl.Value == true {
-				return TRUE
+				return object.TRUE
 			}
 		}
-		return FALSE
+		return object.FALSE
 	case token.LT:
 		for _, item := range rightVal.Items {
 			e := bif.IsLT(left, item)
@@ -679,10 +680,10 @@ func evalInfixNumberArray(op token.Token, left object.Item, right object.Item) o
 			}
 			bl := e.(*object.Boolean)
 			if bl.Value == true {
-				return TRUE
+				return object.TRUE
 			}
 		}
-		return FALSE
+		return object.FALSE
 	case token.LE:
 		for _, item := range rightVal.Items {
 			e := bif.IsLE(left, item)
@@ -691,10 +692,10 @@ func evalInfixNumberArray(op token.Token, left object.Item, right object.Item) o
 			}
 			bl := e.(*object.Boolean)
 			if bl.Value == true {
-				return TRUE
+				return object.TRUE
 			}
 		}
-		return FALSE
+		return object.FALSE
 	case token.GT:
 		for _, item := range rightVal.Items {
 			e := bif.IsGT(left, item)
@@ -703,10 +704,10 @@ func evalInfixNumberArray(op token.Token, left object.Item, right object.Item) o
 			}
 			bl := e.(*object.Boolean)
 			if bl.Value == true {
-				return TRUE
+				return object.TRUE
 			}
 		}
-		return FALSE
+		return object.FALSE
 	case token.GE:
 		for _, item := range rightVal.Items {
 			e := bif.IsGE(left, item)
@@ -715,10 +716,10 @@ func evalInfixNumberArray(op token.Token, left object.Item, right object.Item) o
 			}
 			bl := e.(*object.Boolean)
 			if bl.Value == true {
-				return TRUE
+				return object.TRUE
 			}
 		}
-		return FALSE
+		return object.FALSE
 	default:
 		return bif.NewError("The operator '%s' is not defined for operands of type %s and %s\n", op.Literal, left.Type(), right.Type())
 	}
@@ -736,10 +737,10 @@ func evalInfixNumberSeq(op token.Token, left object.Item, right object.Item) obj
 			}
 			bl := e.(*object.Boolean)
 			if bl.Value == true {
-				return TRUE
+				return object.TRUE
 			}
 		}
-		return FALSE
+		return object.FALSE
 	case token.NE:
 		for _, item := range rightVal.Items {
 			e := bif.IsNE(left, item)
@@ -748,10 +749,10 @@ func evalInfixNumberSeq(op token.Token, left object.Item, right object.Item) obj
 			}
 			bl := e.(*object.Boolean)
 			if bl.Value == true {
-				return TRUE
+				return object.TRUE
 			}
 		}
-		return FALSE
+		return object.FALSE
 	case token.LT:
 		for _, item := range rightVal.Items {
 			e := bif.IsLT(left, item)
@@ -760,10 +761,10 @@ func evalInfixNumberSeq(op token.Token, left object.Item, right object.Item) obj
 			}
 			bl := e.(*object.Boolean)
 			if bl.Value == true {
-				return TRUE
+				return object.TRUE
 			}
 		}
-		return FALSE
+		return object.FALSE
 	case token.LE:
 		for _, item := range rightVal.Items {
 			e := bif.IsLE(left, item)
@@ -772,10 +773,10 @@ func evalInfixNumberSeq(op token.Token, left object.Item, right object.Item) obj
 			}
 			bl := e.(*object.Boolean)
 			if bl.Value == true {
-				return TRUE
+				return object.TRUE
 			}
 		}
-		return FALSE
+		return object.FALSE
 	case token.GT:
 		for _, item := range rightVal.Items {
 			e := bif.IsGT(left, item)
@@ -784,10 +785,10 @@ func evalInfixNumberSeq(op token.Token, left object.Item, right object.Item) obj
 			}
 			bl := e.(*object.Boolean)
 			if bl.Value == true {
-				return TRUE
+				return object.TRUE
 			}
 		}
-		return FALSE
+		return object.FALSE
 	case token.GE:
 		for _, item := range rightVal.Items {
 			e := bif.IsGE(left, item)
@@ -796,10 +797,10 @@ func evalInfixNumberSeq(op token.Token, left object.Item, right object.Item) obj
 			}
 			bl := e.(*object.Boolean)
 			if bl.Value == true {
-				return TRUE
+				return object.TRUE
 			}
 		}
-		return FALSE
+		return object.FALSE
 	default:
 		return bif.NewError("The operator '%s' is not defined for operands of type %s and %s\n", op.Literal, left.Type(), right.Type())
 	}
@@ -892,10 +893,10 @@ func evalInfixStringArray(op token.Token, left object.Item, right object.Item) o
 				return bif.NewError("Types %s and %s are not comparable.", leftVal.Type(), item.Type())
 			}
 			if leftVal.Value == e.Value {
-				return TRUE
+				return object.TRUE
 			}
 		}
-		return FALSE
+		return object.FALSE
 	case token.NE:
 		for _, item := range rightVal.Items {
 			e, ok := item.(*object.String)
@@ -903,10 +904,10 @@ func evalInfixStringArray(op token.Token, left object.Item, right object.Item) o
 				return bif.NewError("Types %s and %s are not comparable.", leftVal.Type(), item.Type())
 			}
 			if leftVal.Value != e.Value {
-				return TRUE
+				return object.TRUE
 			}
 		}
-		return FALSE
+		return object.FALSE
 	case token.LT:
 		for _, item := range rightVal.Items {
 			e, ok := item.(*object.String)
@@ -914,10 +915,10 @@ func evalInfixStringArray(op token.Token, left object.Item, right object.Item) o
 				return bif.NewError("Types %s and %s are not comparable.", leftVal.Type(), item.Type())
 			}
 			if leftVal.Value < e.Value {
-				return TRUE
+				return object.TRUE
 			}
 		}
-		return FALSE
+		return object.FALSE
 	case token.LE:
 		for _, item := range rightVal.Items {
 			e, ok := item.(*object.String)
@@ -925,10 +926,10 @@ func evalInfixStringArray(op token.Token, left object.Item, right object.Item) o
 				return bif.NewError("Types %s and %s are not comparable.", leftVal.Type(), item.Type())
 			}
 			if leftVal.Value <= e.Value {
-				return TRUE
+				return object.TRUE
 			}
 		}
-		return FALSE
+		return object.FALSE
 	case token.GT:
 		for _, item := range rightVal.Items {
 			e, ok := item.(*object.String)
@@ -936,10 +937,10 @@ func evalInfixStringArray(op token.Token, left object.Item, right object.Item) o
 				return bif.NewError("Types %s and %s are not comparable.", leftVal.Type(), item.Type())
 			}
 			if leftVal.Value > e.Value {
-				return TRUE
+				return object.TRUE
 			}
 		}
-		return FALSE
+		return object.FALSE
 	case token.GE:
 		for _, item := range rightVal.Items {
 			e, ok := item.(*object.String)
@@ -947,10 +948,10 @@ func evalInfixStringArray(op token.Token, left object.Item, right object.Item) o
 				return bif.NewError("Types %s and %s are not comparable.", leftVal.Type(), item.Type())
 			}
 			if leftVal.Value >= e.Value {
-				return TRUE
+				return object.TRUE
 			}
 		}
-		return FALSE
+		return object.FALSE
 	default:
 		return bif.NewError("The operator '%s' is not defined for operands of type %s and %s\n", op.Literal, left.Type(), right.Type())
 	}
@@ -968,10 +969,10 @@ func evalInfixStringSeq(op token.Token, left object.Item, right object.Item) obj
 				return bif.NewError("Types %s and %s are not comparable.", leftVal.Type(), item.Type())
 			}
 			if leftVal.Value == e.Value {
-				return TRUE
+				return object.TRUE
 			}
 		}
-		return FALSE
+		return object.FALSE
 	case token.NE:
 		for _, item := range rightVal.Items {
 			e, ok := item.(*object.String)
@@ -979,10 +980,10 @@ func evalInfixStringSeq(op token.Token, left object.Item, right object.Item) obj
 				return bif.NewError("Types %s and %s are not comparable.", leftVal.Type(), item.Type())
 			}
 			if leftVal.Value != e.Value {
-				return TRUE
+				return object.TRUE
 			}
 		}
-		return FALSE
+		return object.FALSE
 	case token.LT:
 		for _, item := range rightVal.Items {
 			e, ok := item.(*object.String)
@@ -990,10 +991,10 @@ func evalInfixStringSeq(op token.Token, left object.Item, right object.Item) obj
 				return bif.NewError("Types %s and %s are not comparable.", leftVal.Type(), item.Type())
 			}
 			if leftVal.Value < e.Value {
-				return TRUE
+				return object.TRUE
 			}
 		}
-		return FALSE
+		return object.FALSE
 	case token.LE:
 		for _, item := range rightVal.Items {
 			e, ok := item.(*object.String)
@@ -1001,10 +1002,10 @@ func evalInfixStringSeq(op token.Token, left object.Item, right object.Item) obj
 				return bif.NewError("Types %s and %s are not comparable.", leftVal.Type(), item.Type())
 			}
 			if leftVal.Value <= e.Value {
-				return TRUE
+				return object.TRUE
 			}
 		}
-		return FALSE
+		return object.FALSE
 	case token.GT:
 		for _, item := range rightVal.Items {
 			e, ok := item.(*object.String)
@@ -1012,10 +1013,10 @@ func evalInfixStringSeq(op token.Token, left object.Item, right object.Item) obj
 				return bif.NewError("Types %s and %s are not comparable.", leftVal.Type(), item.Type())
 			}
 			if leftVal.Value > e.Value {
-				return TRUE
+				return object.TRUE
 			}
 		}
-		return FALSE
+		return object.FALSE
 	case token.GE:
 		for _, item := range rightVal.Items {
 			e, ok := item.(*object.String)
@@ -1023,10 +1024,10 @@ func evalInfixStringSeq(op token.Token, left object.Item, right object.Item) obj
 				return bif.NewError("Types %s and %s are not comparable.", leftVal.Type(), item.Type())
 			}
 			if leftVal.Value >= e.Value {
-				return TRUE
+				return object.TRUE
 			}
 		}
-		return FALSE
+		return object.FALSE
 	default:
 		return bif.NewError("The operator '%s' is not defined for operands of type %s and %s\n", op.Literal, left.Type(), right.Type())
 	}
@@ -1044,10 +1045,10 @@ func evalInfixSeqString(op token.Token, left, right object.Item) object.Item {
 				return bif.NewError("Types %s and %s are not comparable.", leftVal.Type(), item.Type())
 			}
 			if e.Value == rightVal.Value {
-				return TRUE
+				return object.TRUE
 			}
 		}
-		return FALSE
+		return object.FALSE
 	case token.NE:
 		for _, item := range leftVal.Items {
 			e, ok := item.(*object.String)
@@ -1055,10 +1056,10 @@ func evalInfixSeqString(op token.Token, left, right object.Item) object.Item {
 				return bif.NewError("Types %s and %s are not comparable.", leftVal.Type(), item.Type())
 			}
 			if e.Value != rightVal.Value {
-				return TRUE
+				return object.TRUE
 			}
 		}
-		return FALSE
+		return object.FALSE
 	case token.LT:
 		for _, item := range leftVal.Items {
 			e, ok := item.(*object.String)
@@ -1066,10 +1067,10 @@ func evalInfixSeqString(op token.Token, left, right object.Item) object.Item {
 				return bif.NewError("Types %s and %s are not comparable.", leftVal.Type(), item.Type())
 			}
 			if e.Value < rightVal.Value {
-				return TRUE
+				return object.TRUE
 			}
 		}
-		return FALSE
+		return object.FALSE
 	case token.LE:
 		for _, item := range leftVal.Items {
 			e, ok := item.(*object.String)
@@ -1077,10 +1078,10 @@ func evalInfixSeqString(op token.Token, left, right object.Item) object.Item {
 				return bif.NewError("Types %s and %s are not comparable.", leftVal.Type(), item.Type())
 			}
 			if e.Value <= rightVal.Value {
-				return TRUE
+				return object.TRUE
 			}
 		}
-		return FALSE
+		return object.FALSE
 	case token.GT:
 		for _, item := range leftVal.Items {
 			e, ok := item.(*object.String)
@@ -1088,10 +1089,10 @@ func evalInfixSeqString(op token.Token, left, right object.Item) object.Item {
 				return bif.NewError("Types %s and %s are not comparable.", leftVal.Type(), item.Type())
 			}
 			if e.Value > rightVal.Value {
-				return TRUE
+				return object.TRUE
 			}
 		}
-		return FALSE
+		return object.FALSE
 	case token.GE:
 		for _, item := range leftVal.Items {
 			e, ok := item.(*object.String)
@@ -1099,10 +1100,10 @@ func evalInfixSeqString(op token.Token, left, right object.Item) object.Item {
 				return bif.NewError("Types %s and %s are not comparable.", leftVal.Type(), item.Type())
 			}
 			if e.Value >= rightVal.Value {
-				return TRUE
+				return object.TRUE
 			}
 		}
-		return FALSE
+		return object.FALSE
 	default:
 		return bif.NewError("The operator '%s' is not defined for operands of type %s and %s\n", op.Literal, left.Type(), right.Type())
 	}
@@ -1120,10 +1121,10 @@ func evalInfixArrayNumber(op token.Token, left, right object.Item) object.Item {
 			}
 			bl := e.(*object.Boolean)
 			if bl.Value == true {
-				return TRUE
+				return object.TRUE
 			}
 		}
-		return FALSE
+		return object.FALSE
 	case token.NE:
 		for _, item := range leftVal.Items {
 			e := bif.IsNE(item, right)
@@ -1132,10 +1133,10 @@ func evalInfixArrayNumber(op token.Token, left, right object.Item) object.Item {
 			}
 			bl := e.(*object.Boolean)
 			if bl.Value == true {
-				return TRUE
+				return object.TRUE
 			}
 		}
-		return FALSE
+		return object.FALSE
 	case token.LT:
 		for _, item := range leftVal.Items {
 			e := bif.IsLT(item, right)
@@ -1144,10 +1145,10 @@ func evalInfixArrayNumber(op token.Token, left, right object.Item) object.Item {
 			}
 			bl := e.(*object.Boolean)
 			if bl.Value == true {
-				return TRUE
+				return object.TRUE
 			}
 		}
-		return FALSE
+		return object.FALSE
 	case token.LE:
 		for _, item := range leftVal.Items {
 			e := bif.IsLE(item, right)
@@ -1156,10 +1157,10 @@ func evalInfixArrayNumber(op token.Token, left, right object.Item) object.Item {
 			}
 			bl := e.(*object.Boolean)
 			if bl.Value == true {
-				return TRUE
+				return object.TRUE
 			}
 		}
-		return FALSE
+		return object.FALSE
 	case token.GT:
 		for _, item := range leftVal.Items {
 			e := bif.IsGT(item, right)
@@ -1168,10 +1169,10 @@ func evalInfixArrayNumber(op token.Token, left, right object.Item) object.Item {
 			}
 			bl := e.(*object.Boolean)
 			if bl.Value == true {
-				return TRUE
+				return object.TRUE
 			}
 		}
-		return FALSE
+		return object.FALSE
 	case token.GE:
 		for _, item := range leftVal.Items {
 			e := bif.IsGE(item, right)
@@ -1180,10 +1181,10 @@ func evalInfixArrayNumber(op token.Token, left, right object.Item) object.Item {
 			}
 			bl := e.(*object.Boolean)
 			if bl.Value == true {
-				return TRUE
+				return object.TRUE
 			}
 		}
-		return FALSE
+		return object.FALSE
 	default:
 		return bif.NewError("The operator '%s' is not defined for operands of type %s and %s\n", op.Literal, left.Type(), right.Type())
 	}
@@ -1201,10 +1202,10 @@ func evalInfixArrayString(op token.Token, left, right object.Item) object.Item {
 				return bif.NewError("Types %s and %s are not comparable.", leftVal.Type(), item.Type())
 			}
 			if e.Value == rightVal.Value {
-				return TRUE
+				return object.TRUE
 			}
 		}
-		return FALSE
+		return object.FALSE
 	case token.NE:
 		for _, item := range leftVal.Items {
 			e, ok := item.(*object.String)
@@ -1212,10 +1213,10 @@ func evalInfixArrayString(op token.Token, left, right object.Item) object.Item {
 				return bif.NewError("Types %s and %s are not comparable.", leftVal.Type(), item.Type())
 			}
 			if e.Value != rightVal.Value {
-				return TRUE
+				return object.TRUE
 			}
 		}
-		return FALSE
+		return object.FALSE
 	case token.LT:
 		for _, item := range leftVal.Items {
 			e, ok := item.(*object.String)
@@ -1223,10 +1224,10 @@ func evalInfixArrayString(op token.Token, left, right object.Item) object.Item {
 				return bif.NewError("Types %s and %s are not comparable.", leftVal.Type(), item.Type())
 			}
 			if e.Value < rightVal.Value {
-				return TRUE
+				return object.TRUE
 			}
 		}
-		return FALSE
+		return object.FALSE
 	case token.LE:
 		for _, item := range leftVal.Items {
 			e, ok := item.(*object.String)
@@ -1234,10 +1235,10 @@ func evalInfixArrayString(op token.Token, left, right object.Item) object.Item {
 				return bif.NewError("Types %s and %s are not comparable.", leftVal.Type(), item.Type())
 			}
 			if e.Value <= rightVal.Value {
-				return TRUE
+				return object.TRUE
 			}
 		}
-		return FALSE
+		return object.FALSE
 	case token.GT:
 		for _, item := range leftVal.Items {
 			e, ok := item.(*object.String)
@@ -1245,10 +1246,10 @@ func evalInfixArrayString(op token.Token, left, right object.Item) object.Item {
 				return bif.NewError("Types %s and %s are not comparable.", leftVal.Type(), item.Type())
 			}
 			if e.Value > rightVal.Value {
-				return TRUE
+				return object.TRUE
 			}
 		}
-		return FALSE
+		return object.FALSE
 	case token.GE:
 		for _, item := range leftVal.Items {
 			e, ok := item.(*object.String)
@@ -1256,10 +1257,10 @@ func evalInfixArrayString(op token.Token, left, right object.Item) object.Item {
 				return bif.NewError("Types %s and %s are not comparable.", leftVal.Type(), item.Type())
 			}
 			if e.Value >= rightVal.Value {
-				return TRUE
+				return object.TRUE
 			}
 		}
-		return FALSE
+		return object.FALSE
 	default:
 		return bif.NewError("The operator '%s' is not defined for operands of type %s and %s\n", op.Literal, left.Type(), right.Type())
 	}
@@ -1279,11 +1280,11 @@ func evalInfixArrayArray(op token.Token, left, right object.Item) object.Item {
 				}
 				bl := e.(*object.Boolean)
 				if bl.Value == true {
-					return TRUE
+					return object.TRUE
 				}
 			}
 		}
-		return FALSE
+		return object.FALSE
 	case token.NE:
 		for _, li := range leftVal.Items {
 			for _, ri := range rightVal.Items {
@@ -1293,11 +1294,11 @@ func evalInfixArrayArray(op token.Token, left, right object.Item) object.Item {
 				}
 				bl := e.(*object.Boolean)
 				if bl.Value == true {
-					return TRUE
+					return object.TRUE
 				}
 			}
 		}
-		return FALSE
+		return object.FALSE
 	case token.LT:
 		for _, li := range leftVal.Items {
 			for _, ri := range rightVal.Items {
@@ -1307,11 +1308,11 @@ func evalInfixArrayArray(op token.Token, left, right object.Item) object.Item {
 				}
 				bl := e.(*object.Boolean)
 				if bl.Value == true {
-					return TRUE
+					return object.TRUE
 				}
 			}
 		}
-		return FALSE
+		return object.FALSE
 	case token.LE:
 		for _, li := range leftVal.Items {
 			for _, ri := range rightVal.Items {
@@ -1321,11 +1322,11 @@ func evalInfixArrayArray(op token.Token, left, right object.Item) object.Item {
 				}
 				bl := e.(*object.Boolean)
 				if bl.Value == true {
-					return TRUE
+					return object.TRUE
 				}
 			}
 		}
-		return FALSE
+		return object.FALSE
 	case token.GT:
 		for _, li := range leftVal.Items {
 			for _, ri := range rightVal.Items {
@@ -1335,11 +1336,11 @@ func evalInfixArrayArray(op token.Token, left, right object.Item) object.Item {
 				}
 				bl := e.(*object.Boolean)
 				if bl.Value == true {
-					return TRUE
+					return object.TRUE
 				}
 			}
 		}
-		return FALSE
+		return object.FALSE
 	case token.GE:
 		for _, li := range leftVal.Items {
 			for _, ri := range rightVal.Items {
@@ -1349,11 +1350,11 @@ func evalInfixArrayArray(op token.Token, left, right object.Item) object.Item {
 				}
 				bl := e.(*object.Boolean)
 				if bl.Value == true {
-					return TRUE
+					return object.TRUE
 				}
 			}
 		}
-		return FALSE
+		return object.FALSE
 	default:
 		return bif.NewError("The operator '%s' is not defined for operands of type %s and %s\n", op.Literal, left.Type(), right.Type())
 	}
@@ -1373,11 +1374,11 @@ func evalInfixSeqArray(op token.Token, left, right object.Item) object.Item {
 				}
 				bl := e.(*object.Boolean)
 				if bl.Value == true {
-					return TRUE
+					return object.TRUE
 				}
 			}
 		}
-		return FALSE
+		return object.FALSE
 	case token.NE:
 		for _, li := range leftVal.Items {
 			for _, ri := range rightVal.Items {
@@ -1387,11 +1388,11 @@ func evalInfixSeqArray(op token.Token, left, right object.Item) object.Item {
 				}
 				bl := e.(*object.Boolean)
 				if bl.Value == true {
-					return TRUE
+					return object.TRUE
 				}
 			}
 		}
-		return FALSE
+		return object.FALSE
 	case token.LT:
 		for _, li := range leftVal.Items {
 			for _, ri := range rightVal.Items {
@@ -1401,11 +1402,11 @@ func evalInfixSeqArray(op token.Token, left, right object.Item) object.Item {
 				}
 				bl := e.(*object.Boolean)
 				if bl.Value == true {
-					return TRUE
+					return object.TRUE
 				}
 			}
 		}
-		return FALSE
+		return object.FALSE
 	case token.LE:
 		for _, li := range leftVal.Items {
 			for _, ri := range rightVal.Items {
@@ -1415,11 +1416,11 @@ func evalInfixSeqArray(op token.Token, left, right object.Item) object.Item {
 				}
 				bl := e.(*object.Boolean)
 				if bl.Value == true {
-					return TRUE
+					return object.TRUE
 				}
 			}
 		}
-		return FALSE
+		return object.FALSE
 	case token.GT:
 		for _, li := range leftVal.Items {
 			for _, ri := range rightVal.Items {
@@ -1429,11 +1430,11 @@ func evalInfixSeqArray(op token.Token, left, right object.Item) object.Item {
 				}
 				bl := e.(*object.Boolean)
 				if bl.Value == true {
-					return TRUE
+					return object.TRUE
 				}
 			}
 		}
-		return FALSE
+		return object.FALSE
 	case token.GE:
 		for _, li := range leftVal.Items {
 			for _, ri := range rightVal.Items {
@@ -1443,11 +1444,11 @@ func evalInfixSeqArray(op token.Token, left, right object.Item) object.Item {
 				}
 				bl := e.(*object.Boolean)
 				if bl.Value == true {
-					return TRUE
+					return object.TRUE
 				}
 			}
 		}
-		return FALSE
+		return object.FALSE
 	default:
 		return bif.NewError("The operator '%s' is not defined for operands of type %s and %s\n", op.Literal, left.Type(), right.Type())
 	}
@@ -1467,11 +1468,11 @@ func evalInfixArraySeq(op token.Token, left, right object.Item) object.Item {
 				}
 				bl := e.(*object.Boolean)
 				if bl.Value == true {
-					return TRUE
+					return object.TRUE
 				}
 			}
 		}
-		return FALSE
+		return object.FALSE
 	case token.NE:
 		for _, li := range leftVal.Items {
 			for _, ri := range rightVal.Items {
@@ -1481,11 +1482,11 @@ func evalInfixArraySeq(op token.Token, left, right object.Item) object.Item {
 				}
 				bl := e.(*object.Boolean)
 				if bl.Value == true {
-					return TRUE
+					return object.TRUE
 				}
 			}
 		}
-		return FALSE
+		return object.FALSE
 	case token.LT:
 		for _, li := range leftVal.Items {
 			for _, ri := range rightVal.Items {
@@ -1495,11 +1496,11 @@ func evalInfixArraySeq(op token.Token, left, right object.Item) object.Item {
 				}
 				bl := e.(*object.Boolean)
 				if bl.Value == true {
-					return TRUE
+					return object.TRUE
 				}
 			}
 		}
-		return FALSE
+		return object.FALSE
 	case token.LE:
 		for _, li := range leftVal.Items {
 			for _, ri := range rightVal.Items {
@@ -1509,11 +1510,11 @@ func evalInfixArraySeq(op token.Token, left, right object.Item) object.Item {
 				}
 				bl := e.(*object.Boolean)
 				if bl.Value == true {
-					return TRUE
+					return object.TRUE
 				}
 			}
 		}
-		return FALSE
+		return object.FALSE
 	case token.GT:
 		for _, li := range leftVal.Items {
 			for _, ri := range rightVal.Items {
@@ -1523,11 +1524,11 @@ func evalInfixArraySeq(op token.Token, left, right object.Item) object.Item {
 				}
 				bl := e.(*object.Boolean)
 				if bl.Value == true {
-					return TRUE
+					return object.TRUE
 				}
 			}
 		}
-		return FALSE
+		return object.FALSE
 	case token.GE:
 		for _, li := range leftVal.Items {
 			for _, ri := range rightVal.Items {
@@ -1537,11 +1538,11 @@ func evalInfixArraySeq(op token.Token, left, right object.Item) object.Item {
 				}
 				bl := e.(*object.Boolean)
 				if bl.Value == true {
-					return TRUE
+					return object.TRUE
 				}
 			}
 		}
-		return FALSE
+		return object.FALSE
 	default:
 		return bif.NewError("The operator '%s' is not defined for operands of type %s and %s\n", op.Literal, left.Type(), right.Type())
 	}
@@ -1561,11 +1562,11 @@ func evalInfixSeqSeq(op token.Token, left, right object.Item) object.Item {
 				}
 				bl := e.(*object.Boolean)
 				if bl.Value == true {
-					return TRUE
+					return object.TRUE
 				}
 			}
 		}
-		return FALSE
+		return object.FALSE
 	case token.NE:
 		for _, li := range leftVal.Items {
 			for _, ri := range rightVal.Items {
@@ -1575,11 +1576,11 @@ func evalInfixSeqSeq(op token.Token, left, right object.Item) object.Item {
 				}
 				bl := e.(*object.Boolean)
 				if bl.Value == true {
-					return TRUE
+					return object.TRUE
 				}
 			}
 		}
-		return FALSE
+		return object.FALSE
 	case token.LT:
 		for _, li := range leftVal.Items {
 			for _, ri := range rightVal.Items {
@@ -1589,11 +1590,11 @@ func evalInfixSeqSeq(op token.Token, left, right object.Item) object.Item {
 				}
 				bl := e.(*object.Boolean)
 				if bl.Value == true {
-					return TRUE
+					return object.TRUE
 				}
 			}
 		}
-		return FALSE
+		return object.FALSE
 	case token.LE:
 		for _, li := range leftVal.Items {
 			for _, ri := range rightVal.Items {
@@ -1603,11 +1604,11 @@ func evalInfixSeqSeq(op token.Token, left, right object.Item) object.Item {
 				}
 				bl := e.(*object.Boolean)
 				if bl.Value == true {
-					return TRUE
+					return object.TRUE
 				}
 			}
 		}
-		return FALSE
+		return object.FALSE
 	case token.GT:
 		for _, li := range leftVal.Items {
 			for _, ri := range rightVal.Items {
@@ -1617,11 +1618,11 @@ func evalInfixSeqSeq(op token.Token, left, right object.Item) object.Item {
 				}
 				bl := e.(*object.Boolean)
 				if bl.Value == true {
-					return TRUE
+					return object.TRUE
 				}
 			}
 		}
-		return FALSE
+		return object.FALSE
 	case token.GE:
 		for _, li := range leftVal.Items {
 			for _, ri := range rightVal.Items {
@@ -1631,11 +1632,11 @@ func evalInfixSeqSeq(op token.Token, left, right object.Item) object.Item {
 				}
 				bl := e.(*object.Boolean)
 				if bl.Value == true {
-					return TRUE
+					return object.TRUE
 				}
 			}
 		}
-		return FALSE
+		return object.FALSE
 	default:
 		return bif.NewError("The operator '%s' is not defined for operands of type %s and %s\n", op.Literal, left.Type(), right.Type())
 	}
@@ -1653,10 +1654,10 @@ func evalInfixSeqNumber(op token.Token, left, right object.Item) object.Item {
 			}
 			bl := e.(*object.Boolean)
 			if bl.Value == true {
-				return TRUE
+				return object.TRUE
 			}
 		}
-		return FALSE
+		return object.FALSE
 	case token.NE:
 		for _, item := range leftVal.Items {
 			e := bif.IsNE(item, right)
@@ -1665,10 +1666,10 @@ func evalInfixSeqNumber(op token.Token, left, right object.Item) object.Item {
 			}
 			bl := e.(*object.Boolean)
 			if bl.Value == true {
-				return TRUE
+				return object.TRUE
 			}
 		}
-		return FALSE
+		return object.FALSE
 	case token.LT:
 		for _, item := range leftVal.Items {
 			e := bif.IsLT(item, right)
@@ -1677,10 +1678,10 @@ func evalInfixSeqNumber(op token.Token, left, right object.Item) object.Item {
 			}
 			bl := e.(*object.Boolean)
 			if bl.Value == true {
-				return TRUE
+				return object.TRUE
 			}
 		}
-		return FALSE
+		return object.FALSE
 	case token.LE:
 		for _, item := range leftVal.Items {
 			e := bif.IsLE(item, right)
@@ -1689,10 +1690,10 @@ func evalInfixSeqNumber(op token.Token, left, right object.Item) object.Item {
 			}
 			bl := e.(*object.Boolean)
 			if bl.Value == true {
-				return TRUE
+				return object.TRUE
 			}
 		}
-		return FALSE
+		return object.FALSE
 	case token.GT:
 		for _, item := range leftVal.Items {
 			e := bif.IsGT(item, right)
@@ -1701,10 +1702,10 @@ func evalInfixSeqNumber(op token.Token, left, right object.Item) object.Item {
 			}
 			bl := e.(*object.Boolean)
 			if bl.Value == true {
-				return TRUE
+				return object.TRUE
 			}
 		}
-		return FALSE
+		return object.FALSE
 	case token.GE:
 		for _, item := range leftVal.Items {
 			e := bif.IsGE(item, right)
@@ -1713,16 +1714,16 @@ func evalInfixSeqNumber(op token.Token, left, right object.Item) object.Item {
 			}
 			bl := e.(*object.Boolean)
 			if bl.Value == true {
-				return TRUE
+				return object.TRUE
 			}
 		}
-		return FALSE
+		return object.FALSE
 	default:
 		return bif.NewError("The operator '%s' is not defined for operands of type %s and %s\n", op.Literal, left.Type(), right.Type())
 	}
 }
 
-func evalLogicalExpr(expr ast.ExprSingle, env *object.Env) object.Item {
+func evalLogicalExpr(expr ast.ExprSingle, ctx *context.Context) object.Item {
 	var left object.Item
 	var right object.Item
 	var op token.Token
@@ -1731,12 +1732,12 @@ func evalLogicalExpr(expr ast.ExprSingle, env *object.Env) object.Item {
 
 	switch expr := expr.(type) {
 	case *ast.AndExpr:
-		left = Eval(expr.LeftExpr, env)
-		right = Eval(expr.RightExpr, env)
+		left = Eval(expr.LeftExpr, ctx)
+		right = Eval(expr.RightExpr, ctx)
 		op = expr.Token
 	case *ast.OrExpr:
-		left = Eval(expr.LeftExpr, env)
-		right = Eval(expr.RightExpr, env)
+		left = Eval(expr.LeftExpr, ctx)
+		right = Eval(expr.RightExpr, ctx)
 		op = expr.Token
 	}
 
@@ -1758,7 +1759,7 @@ func evalLogicalExpr(expr ast.ExprSingle, env *object.Env) object.Item {
 	case token.OR:
 		return &object.Boolean{Value: leftBool.Value || rightBool.Value}
 	default:
-		return NIL
+		return object.NIL
 	}
 }
 
@@ -1786,30 +1787,30 @@ func evalInfixBool(op token.Token, left, right object.Item) object.Item {
 		fallthrough
 	case token.GTV:
 		if leftVal.Value && !rightVal.Value {
-			return TRUE
+			return object.TRUE
 		}
-		return FALSE
+		return object.FALSE
 	case token.GE:
 		fallthrough
 	case token.GEV:
 		if !leftVal.Value && rightVal.Value {
-			return FALSE
+			return object.FALSE
 		}
-		return TRUE
+		return object.TRUE
 	case token.LT:
 		fallthrough
 	case token.LTV:
 		if !leftVal.Value && rightVal.Value {
-			return TRUE
+			return object.TRUE
 		}
-		return FALSE
+		return object.FALSE
 	case token.LE:
 		fallthrough
 	case token.LEV:
 		if leftVal.Value && !rightVal.Value {
-			return FALSE
+			return object.FALSE
 		}
-		return TRUE
+		return object.TRUE
 	default:
 		return bif.NewError("The operator '%s' is not defined for operands of type %s and %s\n", op.Literal, left.Type(), right.Type())
 	}
