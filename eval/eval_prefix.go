@@ -3,32 +3,31 @@ package eval
 import (
 	"github.com/zzossig/xpath/ast"
 	"github.com/zzossig/xpath/bif"
-	"github.com/zzossig/xpath/context"
 	"github.com/zzossig/xpath/object"
 	"github.com/zzossig/xpath/token"
 )
 
-func evalIntegerLiteral(expr ast.ExprSingle, ctx *context.Context) object.Item {
+func evalIntegerLiteral(expr ast.ExprSingle, ctx *object.Context) object.Item {
 	il := expr.(*ast.IntegerLiteral)
 	return &object.Integer{Value: il.Value}
 }
 
-func evalDecimalLiteral(expr ast.ExprSingle, ctx *context.Context) object.Item {
+func evalDecimalLiteral(expr ast.ExprSingle, ctx *object.Context) object.Item {
 	dl := expr.(*ast.DecimalLiteral)
 	return &object.Decimal{Value: dl.Value}
 }
 
-func evalDoubleLiteral(expr ast.ExprSingle, ctx *context.Context) object.Item {
+func evalDoubleLiteral(expr ast.ExprSingle, ctx *object.Context) object.Item {
 	dl := expr.(*ast.DoubleLiteral)
 	return &object.Double{Value: dl.Value}
 }
 
-func evalStringLiteral(expr ast.ExprSingle, ctx *context.Context) object.Item {
+func evalStringLiteral(expr ast.ExprSingle, ctx *object.Context) object.Item {
 	sl := expr.(*ast.StringLiteral)
 	return &object.String{Value: sl.Value}
 }
 
-func evalPrefixExpr(expr ast.ExprSingle, ctx *context.Context) object.Item {
+func evalPrefixExpr(expr ast.ExprSingle, ctx *object.Context) object.Item {
 	var right object.Item
 	var op token.Token
 
@@ -58,7 +57,7 @@ func evalPrefixExpr(expr ast.ExprSingle, ctx *context.Context) object.Item {
 	}
 }
 
-func evalPrefixInt(op token.Token, right object.Item, ctx *context.Context) object.Item {
+func evalPrefixInt(op token.Token, right object.Item, ctx *object.Context) object.Item {
 	rightVal := right.(*object.Integer).Value
 
 	switch op.Type {
@@ -71,7 +70,7 @@ func evalPrefixInt(op token.Token, right object.Item, ctx *context.Context) obje
 	}
 }
 
-func evalPrefixDecimal(op token.Token, right object.Item, ctx *context.Context) object.Item {
+func evalPrefixDecimal(op token.Token, right object.Item, ctx *object.Context) object.Item {
 	rightVal := right.(*object.Decimal).Value
 
 	switch op.Type {
@@ -84,7 +83,7 @@ func evalPrefixDecimal(op token.Token, right object.Item, ctx *context.Context) 
 	}
 }
 
-func evalPrefixDouble(op token.Token, right object.Item, ctx *context.Context) object.Item {
+func evalPrefixDouble(op token.Token, right object.Item, ctx *object.Context) object.Item {
 	rightVal := right.(*object.Decimal).Value
 
 	switch op.Type {
@@ -97,7 +96,7 @@ func evalPrefixDouble(op token.Token, right object.Item, ctx *context.Context) o
 	}
 }
 
-func evalIfExpr(expr ast.ExprSingle, ctx *context.Context) object.Item {
+func evalIfExpr(expr ast.ExprSingle, ctx *object.Context) object.Item {
 	ie := expr.(*ast.IfExpr)
 	builtin := bif.Builtins["boolean"]
 
@@ -116,7 +115,7 @@ func evalIfExpr(expr ast.ExprSingle, ctx *context.Context) object.Item {
 	return Eval(ie.ElseExpr, ctx)
 }
 
-func evalForExpr(expr ast.ExprSingle, ctx *context.Context) object.Item {
+func evalForExpr(expr ast.ExprSingle, ctx *object.Context) object.Item {
 	fe := expr.(*ast.ForExpr)
 	var items []object.Item
 
@@ -162,7 +161,7 @@ func evalForExpr(expr ast.ExprSingle, ctx *context.Context) object.Item {
 	return &object.Sequence{Items: items}
 }
 
-func evalLetExpr(expr ast.ExprSingle, ctx *context.Context) object.Item {
+func evalLetExpr(expr ast.ExprSingle, ctx *object.Context) object.Item {
 	le := expr.(*ast.LetExpr)
 
 	for _, b := range le.Bindings {
@@ -173,7 +172,7 @@ func evalLetExpr(expr ast.ExprSingle, ctx *context.Context) object.Item {
 	return Eval(le.ExprSingle, ctx)
 }
 
-func evalQuantifiedExpr(expr ast.ExprSingle, ctx *context.Context) object.Item {
+func evalQuantifiedExpr(expr ast.ExprSingle, ctx *object.Context) object.Item {
 	qe := expr.(*ast.QuantifiedExpr)
 
 	if len(qe.Bindings) > 1 {

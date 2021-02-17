@@ -3,11 +3,10 @@ package eval
 import (
 	"github.com/zzossig/xpath/ast"
 	"github.com/zzossig/xpath/bif"
-	"github.com/zzossig/xpath/context"
 	"github.com/zzossig/xpath/object"
 )
 
-func evalFunctionLiteral(expr ast.ExprSingle, ctx *context.Context) object.Item {
+func evalFunctionLiteral(expr ast.ExprSingle, ctx *object.Context) object.Item {
 	switch expr := expr.(type) {
 	case *ast.NamedFunctionRef:
 		return &object.FuncNamed{Name: expr.EQName.Value(), Num: expr.IntegerLiteral.Value}
@@ -17,7 +16,7 @@ func evalFunctionLiteral(expr ast.ExprSingle, ctx *context.Context) object.Item 
 	return nil
 }
 
-func evalFunctionCall(expr ast.ExprSingle, ctx *context.Context) object.Item {
+func evalFunctionCall(expr ast.ExprSingle, ctx *object.Context) object.Item {
 	f := expr.(*ast.FunctionCall)
 
 	builtin, ok := bif.Builtins[f.EQName.Value()]
@@ -31,7 +30,7 @@ func evalFunctionCall(expr ast.ExprSingle, ctx *context.Context) object.Item {
 		return evalDynamicFunctionCall(ctxFunc, args, ctx)
 	}
 
-	enclosedCtx := context.NewEnclosedContext(ctx)
+	enclosedCtx := object.NewEnclosedContext(ctx)
 	fc := &object.FuncCall{}
 	fc.Context = enclosedCtx
 	fc.Name = f.EQName.Value()
@@ -47,7 +46,7 @@ func evalFunctionCall(expr ast.ExprSingle, ctx *context.Context) object.Item {
 	return builtin(args...)
 }
 
-func evalVarRef(expr ast.ExprSingle, ctx *context.Context) object.Item {
+func evalVarRef(expr ast.ExprSingle, ctx *object.Context) object.Item {
 	vr := expr.(*ast.VarRef)
 
 	if v, ok := ctx.Get(vr.VarName.Value()); ok {
@@ -56,7 +55,7 @@ func evalVarRef(expr ast.ExprSingle, ctx *context.Context) object.Item {
 	return bif.NewError("Undefined variable %s", vr.VarName.Value())
 }
 
-func evalArgument(arg ast.Argument, ctx *context.Context) object.Item {
+func evalArgument(arg ast.Argument, ctx *object.Context) object.Item {
 	switch arg.TypeID {
 	case 0:
 		return object.NIL
@@ -69,7 +68,7 @@ func evalArgument(arg ast.Argument, ctx *context.Context) object.Item {
 	}
 }
 
-func evalArgumentList(args []ast.Argument, ctx *context.Context) ([]object.Item, int) {
+func evalArgumentList(args []ast.Argument, ctx *object.Context) ([]object.Item, int) {
 	var items []object.Item
 	pcnt := 0
 
@@ -84,7 +83,7 @@ func evalArgumentList(args []ast.Argument, ctx *context.Context) ([]object.Item,
 	return items, pcnt
 }
 
-func evalPredicate(it object.Item, pred *ast.Predicate, ctx *context.Context) object.Item {
+func evalPredicate(it object.Item, pred *ast.Predicate, ctx *object.Context) object.Item {
 	var src []object.Item
 
 	switch it := it.(type) {
@@ -141,7 +140,7 @@ func evalPredicate(it object.Item, pred *ast.Predicate, ctx *context.Context) ob
 	return &object.Sequence{Items: items}
 }
 
-func evalLookup(it object.Item, lu *ast.Lookup, ctx *context.Context) object.Item {
+func evalLookup(it object.Item, lu *ast.Lookup, ctx *object.Context) object.Item {
 	seq := &object.Sequence{}
 
 	switch it := it.(type) {
@@ -215,7 +214,7 @@ func evalLookup(it object.Item, lu *ast.Lookup, ctx *context.Context) object.Ite
 	return seq
 }
 
-func evalArrowExpr(expr ast.ExprSingle, ctx *context.Context) object.Item {
+func evalArrowExpr(expr ast.ExprSingle, ctx *object.Context) object.Item {
 	ae := expr.(*ast.ArrowExpr)
 	bindings := ae.Bindings
 
@@ -247,7 +246,7 @@ func evalArrowExpr(expr ast.ExprSingle, ctx *context.Context) object.Item {
 	return result
 }
 
-func evalPostfixExpr(expr ast.ExprSingle, ctx *context.Context) object.Item {
+func evalPostfixExpr(expr ast.ExprSingle, ctx *object.Context) object.Item {
 	pe := expr.(*ast.PostfixExpr)
 	evaled := Eval(pe.ExprSingle, ctx)
 
@@ -266,7 +265,7 @@ func evalPostfixExpr(expr ast.ExprSingle, ctx *context.Context) object.Item {
 	return evaled
 }
 
-func evalDynamicFunctionCall(f object.Item, args []object.Item, ctx *context.Context) object.Item {
+func evalDynamicFunctionCall(f object.Item, args []object.Item, ctx *object.Context) object.Item {
 	switch f := f.(type) {
 	case *object.FuncInline:
 		if len(f.PL.Params) != len(args) {
@@ -306,7 +305,7 @@ func evalDynamicFunctionCall(f object.Item, args []object.Item, ctx *context.Con
 	return nil
 }
 
-func evalSimpleMapExpr(expr ast.ExprSingle, ctx *context.Context) object.Item {
+func evalSimpleMapExpr(expr ast.ExprSingle, ctx *object.Context) object.Item {
 	sme := expr.(*ast.SimpleMapExpr)
 	left := Eval(sme.LeftExpr, ctx)
 
@@ -330,7 +329,7 @@ func evalSimpleMapExpr(expr ast.ExprSingle, ctx *context.Context) object.Item {
 	return &object.Sequence{Items: items}
 }
 
-func evalArrayExpr(expr ast.ExprSingle, ctx *context.Context) object.Item {
+func evalArrayExpr(expr ast.ExprSingle, ctx *object.Context) object.Item {
 	array := &object.Array{}
 	var exprs []ast.ExprSingle
 
@@ -349,7 +348,7 @@ func evalArrayExpr(expr ast.ExprSingle, ctx *context.Context) object.Item {
 	return array
 }
 
-func evalMapExpr(expr ast.ExprSingle, ctx *context.Context) object.Item {
+func evalMapExpr(expr ast.ExprSingle, ctx *object.Context) object.Item {
 	mc := expr.(*ast.MapConstructor)
 	pairs := make(map[object.HashKey]object.Pair)
 
@@ -372,7 +371,7 @@ func evalMapExpr(expr ast.ExprSingle, ctx *context.Context) object.Item {
 
 // KeySpecifier ::= NCName | IntegerLiteral | ParenthesizedExpr | "*"
 // TypeID ::=				1			 | 2							| 3									| 4
-func evalUnaryLookup(expr ast.ExprSingle, ctx *context.Context) object.Item {
+func evalUnaryLookup(expr ast.ExprSingle, ctx *object.Context) object.Item {
 	ul := expr.(*ast.UnaryLookup)
 	seq := &object.Sequence{}
 

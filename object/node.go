@@ -5,7 +5,6 @@ import (
 	"math"
 
 	"github.com/zzossig/xpath/ast"
-	"github.com/zzossig/xpath/context"
 )
 
 // https://www.w3.org/TR/xpath-datamodel-31/
@@ -101,7 +100,7 @@ func (qn *QName) Local() string {
 	return qn.local.Value()
 }
 
-func (qn *QName) NamespaceURI(c *context.Context) string {
+func (qn *QName) NamespaceURI(c *Context) string {
 	return ""
 }
 

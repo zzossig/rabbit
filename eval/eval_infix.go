@@ -6,12 +6,11 @@ import (
 
 	"github.com/zzossig/xpath/ast"
 	"github.com/zzossig/xpath/bif"
-	"github.com/zzossig/xpath/context"
 	"github.com/zzossig/xpath/object"
 	"github.com/zzossig/xpath/token"
 )
 
-func evalIdentifier(ident *ast.Identifier, ctx *context.Context) object.Item {
+func evalIdentifier(ident *ast.Identifier, ctx *object.Context) object.Item {
 	if val, ok := ctx.Get(ident.EQName.Value()); ok {
 		return val
 	}
@@ -19,7 +18,7 @@ func evalIdentifier(ident *ast.Identifier, ctx *context.Context) object.Item {
 	return bif.NewError("identifier not found: " + ident.EQName.Value())
 }
 
-func evalInfixExpr(expr ast.ExprSingle, ctx *context.Context) object.Item {
+func evalInfixExpr(expr ast.ExprSingle, ctx *object.Context) object.Item {
 	var left object.Item
 	var right object.Item
 	var op token.Token
@@ -1723,7 +1722,7 @@ func evalInfixSeqNumber(op token.Token, left, right object.Item) object.Item {
 	}
 }
 
-func evalLogicalExpr(expr ast.ExprSingle, ctx *context.Context) object.Item {
+func evalLogicalExpr(expr ast.ExprSingle, ctx *object.Context) object.Item {
 	var left object.Item
 	var right object.Item
 	var op token.Token

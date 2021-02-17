@@ -1,4 +1,4 @@
-package context
+package object
 
 import (
 	"bytes"
@@ -9,8 +9,6 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-
-	"github.com/zzossig/xpath/object"
 )
 
 // NewEnclosedContext ...
@@ -22,7 +20,7 @@ func NewEnclosedContext(outer *Context) *Context {
 
 // NewContext ...
 func NewContext() *Context {
-	s := make(map[string]object.Item)
+	s := make(map[string]Item)
 	ns := map[string]string{
 		"xs":    "http://www.w3.org/2001/XMLSchema",
 		"fn":    "http://www.w3.org/2005/xpath-functions",
@@ -37,17 +35,17 @@ func NewContext() *Context {
 
 // Context ...
 type Context struct {
-	store map[string]object.Item
+	store map[string]Item
 	outer *Context
-	CItem object.Item
-	Args  []object.Item
+	CItem Item
+	Args  []Item
 	NS    map[string]string
 	r     io.Reader
 	isXML bool
 }
 
 // Get ...
-func (c *Context) Get(name string) (object.Item, bool) {
+func (c *Context) Get(name string) (Item, bool) {
 	item, ok := c.store[name]
 	if !ok && c.outer != nil {
 		item, ok = c.outer.Get(name)
@@ -56,7 +54,7 @@ func (c *Context) Get(name string) (object.Item, bool) {
 }
 
 // Set ...
-func (c *Context) Set(name string, val object.Item) object.Item {
+func (c *Context) Set(name string, val Item) Item {
 	c.store[name] = val
 	return val
 }

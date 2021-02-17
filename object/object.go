@@ -7,7 +7,6 @@ import (
 	"strings"
 
 	"github.com/zzossig/xpath/ast"
-	"github.com/zzossig/xpath/context"
 )
 
 // Item ..
@@ -152,7 +151,7 @@ func (s *String) HashKey() HashKey {
 type FuncNamed struct {
 	Name string
 	Num  int
-	*context.Context
+	*Context
 }
 
 func (fn *FuncNamed) Type() Type      { return FuncNamedType }
@@ -172,7 +171,7 @@ func (fi *FuncInline) Inspect() string { return "functionI" }
 type FuncCall struct {
 	Name string
 	*Func
-	*context.Context
+	*Context
 }
 
 func (fc *FuncCall) Type() Type      { return FuncCallType }

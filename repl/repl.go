@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/zzossig/xpath/context"
 	"github.com/zzossig/xpath/eval"
 	"github.com/zzossig/xpath/lexer"
+	"github.com/zzossig/xpath/object"
 	"github.com/zzossig/xpath/parser"
 )
 
@@ -15,8 +15,8 @@ const PROMPT = ">> "
 
 func Start(in io.Reader, out io.Writer) {
 	scanner := bufio.NewScanner(in)
-	env := context.NewContext()
-	env.NewReaderFile("text.txt", true)
+	ctx := object.NewContext()
+	ctx.NewReaderFile("text.txt", true)
 
 	for {
 		fmt.Fprintf(out, PROMPT)
@@ -35,7 +35,7 @@ func Start(in io.Reader, out io.Writer) {
 			continue
 		}
 
-		evaled := eval.Eval(xpath, env)
+		evaled := eval.Eval(xpath, ctx)
 		if evaled != nil {
 			io.WriteString(out, evaled.Inspect())
 			io.WriteString(out, "\n")

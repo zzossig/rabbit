@@ -70,7 +70,7 @@ func forEachPair(args ...object.Item) object.Item {
 				}
 			}
 
-			if pcnt != 0 && pcnt < len(action.Env.Args)-1 {
+			if pcnt != 0 && pcnt < len(action.Context.Args)-1 {
 				return NewError("too few arguments")
 			}
 

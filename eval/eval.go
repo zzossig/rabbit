@@ -2,12 +2,11 @@ package eval
 
 import (
 	"github.com/zzossig/xpath/ast"
-	"github.com/zzossig/xpath/context"
 	"github.com/zzossig/xpath/object"
 )
 
 // Eval ..
-func Eval(expr ast.ExprSingle, ctx *context.Context) object.Item {
+func Eval(expr ast.ExprSingle, ctx *object.Context) object.Item {
 	switch expr := expr.(type) {
 	case *ast.XPath:
 		return evalXPath(expr, ctx)
@@ -86,7 +85,7 @@ func Eval(expr ast.ExprSingle, ctx *context.Context) object.Item {
 	return object.NIL
 }
 
-func evalXPath(expr *ast.XPath, ctx *context.Context) object.Item {
+func evalXPath(expr *ast.XPath, ctx *object.Context) object.Item {
 	xpath := &object.Sequence{}
 
 	for _, e := range expr.Exprs {
@@ -103,7 +102,7 @@ func evalXPath(expr *ast.XPath, ctx *context.Context) object.Item {
 	return xpath
 }
 
-func evalExpr(expr ast.ExprSingle, ctx *context.Context) object.Item {
+func evalExpr(expr ast.ExprSingle, ctx *object.Context) object.Item {
 	switch expr := expr.(type) {
 	case *ast.Expr:
 		seq := &object.Sequence{}

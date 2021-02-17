@@ -2,7 +2,6 @@ package eval
 
 import (
 	"fmt"
-	"github.com/zzossig/xpath/context"
 	"testing"
 
 	"github.com/zzossig/xpath/lexer"
@@ -326,7 +325,7 @@ func testEval(input string) object.Item {
 	l := lexer.New(input)
 	p := parser.New(l)
 	xpath := p.ParseXPath()
-	ctx := context.NewContext()
+	ctx := object.NewContext()
 	ctx.NewReaderFile("text.txt", true)
 
 	return Eval(xpath, ctx)
