@@ -326,6 +326,7 @@ func testEval(input string) object.Item {
 	p := parser.New(l)
 	xpath := p.ParseXPath()
 	env := object.NewEnv()
+	env.NewReaderFile("text.txt", true)
 
 	return Eval(xpath, env)
 }

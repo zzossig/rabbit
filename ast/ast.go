@@ -1,5 +1,7 @@
 package ast
 
+// https://www.w3.org/TR/xpath-31/#id-grammar
+
 // XPath ::= Expr
 type XPath struct {
 	Expr

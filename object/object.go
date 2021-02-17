@@ -21,17 +21,16 @@ type Func func(args ...Item) Item
 // Type represents Item Type
 type Type string
 
+// Value represents any value
+type Value interface{}
+
 // Item Types
 const (
 	NilType     Type = "nil"
 	ErrorType   Type = "error"
 	PholderType Type = "?"
 
-	IntegerType  Type = "int"
-	DecimalType  Type = "decimal"
-	DoubleType   Type = "double"
-	BooleanType  Type = "bool"
-	StringType   Type = "string"
+	NodeType     Type = "node"
 	MapType      Type = "map"
 	ArrayType    Type = "array"
 	SequenceType Type = "sequence"
@@ -40,19 +39,17 @@ const (
 	FuncNamedType  Type = "functionN"
 	FuncInlineType Type = "functionI"
 
-	NodeType Type = "node"
+	ByteType          Type = "xs:byte"
+	ShortType         Type = "xs:short"
+	IntType           Type = "xs:int"
+	LongType          Type = "xs:long"
+	IntegerType       Type = "xs:integer"
+	DecimalType       Type = "xs:decimal"
+	DoubleType        Type = "xs:double"
+	BooleanType       Type = "xs:boolean"
+	StringType        Type = "xs:string"
+	UntypedAtomicType Type = "xs:untypedAtomic"
 )
-
-// Hasher ..
-type Hasher interface {
-	HashKey() HashKey
-}
-
-// HashKey ..
-type HashKey struct {
-	Type
-	Value uint64
-}
 
 // Sequence ..
 type Sequence struct {
@@ -166,7 +163,8 @@ func (p *Placeholder) Inspect() string {
 
 // String ..
 type String struct {
-	Value string
+	Value   string
+	TypeAnt string
 }
 
 func (s *String) Type() Type      { return StringType }
@@ -227,6 +225,17 @@ func (a *Array) Inspect() string {
 	sb.WriteString("]")
 
 	return sb.String()
+}
+
+// Hasher ..
+type Hasher interface {
+	HashKey() HashKey
+}
+
+// HashKey ..
+type HashKey struct {
+	Type
+	Value uint64
 }
 
 // Pair ..
