@@ -1,6 +1,7 @@
 package bif
 
 import (
+	"strconv"
 	"strings"
 
 	"github.com/zzossig/xpath/object"
@@ -9,7 +10,20 @@ import (
 func concat(args ...object.Item) object.Item {
 	var sb strings.Builder
 	for _, arg := range args {
-		sb.WriteString(arg.Inspect())
+		switch arg := arg.(type) {
+		case *object.Integer:
+			val := strconv.FormatInt(int64(arg.Value()), 10)
+			sb.WriteString(val)
+		case *object.Decimal:
+			val := strconv.FormatFloat(arg.Value(), 'f', -1, 64)
+			sb.WriteString(val)
+		case *object.Double:
+			val := strconv.FormatFloat(arg.Value(), 'f', -1, 64)
+			sb.WriteString(val)
+		default:
+			sb.WriteString(arg.Inspect())
+		}
+
 	}
 	return NewString(sb.String())
 }

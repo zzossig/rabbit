@@ -8,7 +8,18 @@ import (
 
 // Builtins defined in https://www.w3.org/TR/xpath-functions-31/
 var Builtins = map[string]object.Func{
-	// "op:numeric-add":   numericAdd,
+	"op:numeric-add":            numericAdd,
+	"op:numeric-subtract":       numericSubtract,
+	"op:numeric-multiply":       numericMultiply,
+	"op:numeric-divide":         numericDivide,
+	"op:numeric-integer-divide": numericIntegerDivide,
+	"op:numeric-mod":            numericMod,
+	"op:numeric-unary-plus":     numericUnaryPlus,
+	"op:numeric-unary-minus":    numericUnaryMinus,
+	"op:numeric-equal":          numericEqual,
+	"op:numeric-less-than":      numericLessThan,
+	"op:numeric-greater-than":   numericGreaterThan,
+
 	"fn:abs":           abs,
 	"fn:concat":        concat,
 	"fn:for-each-pair": forEachPair,

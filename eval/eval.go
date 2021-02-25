@@ -43,11 +43,11 @@ func Eval(expr ast.ExprSingle, ctx *object.Context) object.Item {
 	case *ast.PostfixExpr:
 		return evalPostfixExpr(expr, ctx)
 	case *ast.AdditiveExpr:
-		return evalInfixExpr(expr, ctx)
+		return evalAdditiveExpr(expr, ctx)
 	case *ast.MultiplicativeExpr:
-		return evalInfixExpr(expr, ctx)
+		return evalMultiplicativeExpr(expr, ctx)
 	case *ast.StringConcatExpr:
-		return evalInfixExpr(expr, ctx)
+		return evalStringConcatExpr(expr, ctx)
 	case *ast.RangeExpr:
 		return evalInfixExpr(expr, ctx)
 	case *ast.UnionExpr:

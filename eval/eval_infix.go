@@ -40,24 +40,52 @@ func evalAdditiveExpr(expr ast.ExprSingle, ctx *object.Context) object.Item {
 	return builtin(left, right)
 }
 
+func evalMultiplicativeExpr(expr ast.ExprSingle, ctx *object.Context) object.Item {
+	me := expr.(*ast.MultiplicativeExpr)
+
+	left := Eval(me.LeftExpr, ctx)
+	right := Eval(me.RightExpr, ctx)
+	op := me.Token
+
+	var funcName string
+	if op.Type == token.ASTERISK {
+		funcName = "op:numeric-multiply"
+	} else if op.Type == token.DIV {
+		funcName = "op:numeric-divide"
+	} else if op.Type == token.IDIV {
+		funcName = "op:numeric-integer-divide"
+	} else {
+		funcName = "op:numeric-mod"
+	}
+
+	builtin, ok := bif.Builtins[funcName]
+	if !ok {
+		return bif.NewError("function not found: " + funcName)
+	}
+
+	return builtin(left, right)
+}
+
+func evalStringConcatExpr(expr ast.ExprSingle, ctx *object.Context) object.Item {
+	sce := expr.(*ast.StringConcatExpr)
+
+	left := Eval(sce.LeftExpr, ctx)
+	right := Eval(sce.RightExpr, ctx)
+
+	builtin, ok := bif.Builtins["fn:concat"]
+	if !ok {
+		return bif.NewError("function not found: fn:concat")
+	}
+
+	return builtin(left, right)
+}
+
 func evalInfixExpr(expr ast.ExprSingle, ctx *object.Context) object.Item {
 	var left object.Item
 	var right object.Item
 	var op token.Token
 
 	switch expr := expr.(type) {
-	case *ast.AdditiveExpr:
-		left = Eval(expr.LeftExpr, ctx)
-		right = Eval(expr.RightExpr, ctx)
-		op = expr.Token
-	case *ast.MultiplicativeExpr:
-		left = Eval(expr.LeftExpr, ctx)
-		right = Eval(expr.RightExpr, ctx)
-		op = expr.Token
-	case *ast.StringConcatExpr:
-		left = Eval(expr.LeftExpr, ctx)
-		right = Eval(expr.RightExpr, ctx)
-		op = expr.Token
 	case *ast.RangeExpr:
 		left = Eval(expr.LeftExpr, ctx)
 		right = Eval(expr.RightExpr, ctx)

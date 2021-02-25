@@ -15,13 +15,6 @@ type Item interface {
 	Inspect() string
 }
 
-// Atomic ..
-type Atomic interface {
-	Item
-	Value() interface{}
-	SetValue(v interface{})
-}
-
 // predefined
 var (
 	NIL   = &Nil{}
