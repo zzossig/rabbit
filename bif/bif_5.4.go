@@ -11,7 +11,7 @@ func concat(args ...object.Item) object.Item {
 	for _, arg := range args {
 		sb.WriteString(arg.Inspect())
 	}
-	return &object.String{Value: sb.String()}
+	return NewString(sb.String())
 }
 
 func upperCase(args ...object.Item) object.Item {
@@ -24,7 +24,7 @@ func upperCase(args ...object.Item) object.Item {
 		return object.NIL
 	}
 	strItem := arg.(*object.String)
-	return &object.String{Value: strings.ToUpper(strItem.Value)}
+	return NewString(strings.ToUpper(strItem.Value()))
 }
 
 func lowerCase(args ...object.Item) object.Item {
@@ -37,5 +37,5 @@ func lowerCase(args ...object.Item) object.Item {
 		return object.NIL
 	}
 	strItem := arg.(*object.String)
-	return &object.String{Value: strings.ToLower(strItem.Value)}
+	return NewString(strings.ToLower(strItem.Value()))
 }

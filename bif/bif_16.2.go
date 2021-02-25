@@ -9,7 +9,7 @@ func forEachPair(args ...object.Item) object.Item {
 
 	var seq []object.Sequence
 
-	if isSeq(args[0]) {
+	if IsSeq(args[0]) {
 		s := args[0].(*object.Sequence)
 		seq = append(seq, *s)
 	} else {
@@ -18,7 +18,7 @@ func forEachPair(args ...object.Item) object.Item {
 		seq = append(seq, s)
 	}
 
-	if isSeq(args[1]) {
+	if IsSeq(args[1]) {
 		s := args[1].(*object.Sequence)
 		seq = append(seq, *s)
 	} else {
@@ -41,8 +41,12 @@ func forEachPair(args ...object.Item) object.Item {
 	switch action := action.(type) {
 	case *object.FuncNamed:
 	case *object.FuncInline:
-	case *object.FuncCall:
+	case *object.FuncPartial:
 		f := *action.Func
+
+		if action.PCnt != 2 {
+			return NewError("wrong number of placeholder. got=%d, expected=2", action.PCnt)
+		}
 
 		for i := 0; i < minLen; i++ {
 			pcnt := 0
@@ -58,20 +62,16 @@ func forEachPair(args ...object.Item) object.Item {
 					fallthrough
 				case object.StringType:
 					a = append(a, arg)
-				case object.PholderType:
-					if len(args)-1 <= pcnt {
-						return NewError("too many arguments")
+				case object.VarrefType:
+					it, ok := action.Context.Get(arg.Inspect())
+					if !ok {
+						return NewError("variable not defined: $%s", arg.Inspect())
 					}
-					ph := arg.(*object.Placeholder)
-					ph.Value = seq[pcnt].Items[i]
+					a = append(a, it)
+				case object.PholderType:
+					a = append(a, seq[pcnt].Items[i])
 					pcnt++
-
-					a = append(a, ph)
 				}
-			}
-
-			if pcnt != 0 && pcnt < len(action.Context.Args)-1 {
-				return NewError("too few arguments")
 			}
 
 			result.Items = append(result.Items, f(a...))

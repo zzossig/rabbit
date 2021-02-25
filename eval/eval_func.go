@@ -9,38 +9,53 @@ import (
 func evalFunctionLiteral(expr ast.ExprSingle, ctx *object.Context) object.Item {
 	switch expr := expr.(type) {
 	case *ast.NamedFunctionRef:
-		return &object.FuncNamed{Name: expr.EQName.Value(), Num: expr.IntegerLiteral.Value}
+		return &object.FuncNamed{Name: expr.EQName, Num: expr.IntegerLiteral.Value}
 	case *ast.InlineFunctionExpr:
-		return &object.FuncInline{Body: &expr.FunctionBody, PL: &expr.ParamList, SType: &expr.SequenceType}
+		return &object.FuncInline{Body: &expr.FunctionBody, PL: &expr.ParamList}
 	}
-	return nil
+	return object.NIL
 }
 
 func evalFunctionCall(expr ast.ExprSingle, ctx *object.Context) object.Item {
-	f := expr.(*ast.FunctionCall)
+	fc := expr.(*ast.FunctionCall)
 
-	builtin, ok := bif.Builtins[f.EQName.Value()]
-	if !ok {
-		ctxFunc, ok := ctx.Get(f.EQName.Value())
-		if !ok {
-			return bif.NewError("function not found: " + f.EQName.Value())
-		}
-
-		args, _ := evalArgumentList(f.Args, ctx)
+	if ctxFunc, ok := ctx.Get(fc.EQName.Value()); ok {
+		args := evalArgumentList(fc.Args, ctx)
 		return evalDynamicFunctionCall(ctxFunc, args, ctx)
 	}
 
-	enclosedCtx := object.NewEnclosedContext(ctx)
-	fc := &object.FuncCall{}
-	fc.Context = enclosedCtx
-	fc.Name = f.EQName.Value()
-	fc.Func = &builtin
+	if fc.EQName.Prefix() == "" {
+		fc.EQName.SetPrefix("fn")
+	}
 
-	args, pcnt := evalArgumentList(f.Args, ctx)
-	enclosedCtx.Args = append(enclosedCtx.Args, args...)
+	builtin, ok := bif.Builtins[fc.EQName.Value()]
+	if !ok {
+		return bif.NewError("function not found: " + fc.EQName.Value())
+	}
+
+	pcnt := 0
+	args := evalArgumentList(fc.Args, ctx)
+
+	for _, arg := range args {
+		if _, ok := arg.(*object.Placeholder); ok {
+			pcnt++
+		}
+	}
 
 	if pcnt > 0 {
-		return fc
+		fp := &object.FuncPartial{}
+		fp.Func = &builtin
+		fp.Name = fc.EQName
+		fp.Args = args
+		fp.PCnt = pcnt
+		fp.PNames = bif.BuiltinPNames(fp.Name.Value(), len(fp.Args))
+
+		return fp
+	}
+
+	check := bif.CheckBuiltinPTypes(fc.EQName.Value(), args)
+	if bif.IsError(check) {
+		return check
 	}
 
 	return builtin(args...)
@@ -52,13 +67,11 @@ func evalVarRef(expr ast.ExprSingle, ctx *object.Context) object.Item {
 	if v, ok := ctx.Get(vr.VarName.Value()); ok {
 		return v
 	}
-	return bif.NewError("Undefined variable %s", vr.VarName.Value())
+	return &object.Varref{Name: vr.VarName}
 }
 
 func evalArgument(arg ast.Argument, ctx *object.Context) object.Item {
 	switch arg.TypeID {
-	case 0:
-		return object.NIL
 	case 1:
 		return Eval(arg.ExprSingle, ctx)
 	case 2:
@@ -68,19 +81,15 @@ func evalArgument(arg ast.Argument, ctx *object.Context) object.Item {
 	}
 }
 
-func evalArgumentList(args []ast.Argument, ctx *object.Context) ([]object.Item, int) {
+func evalArgumentList(args []ast.Argument, ctx *object.Context) []object.Item {
 	var items []object.Item
-	pcnt := 0
 
 	for _, arg := range args {
 		item := evalArgument(arg, ctx)
 		items = append(items, item)
-		if item.Type() == object.PholderType {
-			pcnt++
-		}
 	}
 
-	return items, pcnt
+	return items
 }
 
 func evalPredicate(it object.Item, pred *ast.Predicate, ctx *object.Context) object.Item {
@@ -106,30 +115,30 @@ func evalPredicate(it object.Item, pred *ast.Predicate, ctx *object.Context) obj
 
 		switch ev := evaled.Items[0].(type) {
 		case *object.Integer:
-			if ev.Value-1 == i {
+			if ev.Value()-1 == i {
 				items = append(items, s)
 			}
 		case *object.Decimal:
-			if ev.Value-1 == float64(i) {
+			if ev.Value()-1 == float64(i) {
 				items = append(items, s)
 			}
 		case *object.Double:
-			if ev.Value-1 == float64(i) {
+			if ev.Value()-1 == float64(i) {
 				items = append(items, s)
 			}
 		case *object.String:
-			builtin := bif.Builtins["boolean"]
+			builtin := bif.Builtins["fn:boolean"]
 			bl := builtin(ev)
 			if bif.IsError(bl) {
 				return bl
 			}
 
 			boolObj := bl.(*object.Boolean)
-			if boolObj.Value {
+			if boolObj.Value() {
 				items = append(items, s)
 			}
 		case *object.Boolean:
-			if ev.Value {
+			if ev.Value() {
 				items = append(items, s)
 			}
 		case *object.Nil:
@@ -159,10 +168,10 @@ func evalLookup(it object.Item, lu *ast.Lookup, ctx *object.Context) object.Item
 
 			for _, item := range src.Items {
 				if i, ok := item.(*object.Integer); ok {
-					if i.Value == 0 || i.Value > len(it.Items) {
-						return bif.NewError("[FOAY0001] Array index %d out of bounds (1..%d)", i.Value, len(it.Items))
+					if i.Value() == 0 || i.Value() > len(it.Items) {
+						return bif.NewError("[FOAY0001] Array index %d out of bounds (1..%d)", i.Value(), len(it.Items))
 					}
-					seq.Items = append(seq.Items, it.Items[i.Value-1])
+					seq.Items = append(seq.Items, it.Items[i.Value()-1])
 				}
 			}
 		case 4:
@@ -173,14 +182,14 @@ func evalLookup(it object.Item, lu *ast.Lookup, ctx *object.Context) object.Item
 	case *object.Map:
 		switch lu.KeySpecifier.TypeID {
 		case 1:
-			key := object.String{Value: lu.NCName.Value()}
+			key := bif.NewString(lu.NCName.Value())
 			pair, ok := it.Pairs[key.HashKey()]
 			if !ok {
 				return seq
 			}
 			return pair.Value
 		case 2:
-			key := object.Integer{Value: lu.IntegerLiteral.Value}
+			key := bif.NewInteger(lu.IntegerLiteral.Value)
 			pair, ok := it.Pairs[key.HashKey()]
 			if !ok {
 				return seq
@@ -225,12 +234,15 @@ func evalArrowExpr(expr ast.ExprSingle, ctx *object.Context) object.Item {
 	for i, b := range bindings {
 		switch b.TypeID {
 		case 1:
+			if b.EQName.Prefix() == "" {
+				b.EQName.SetPrefix("fn")
+			}
 			builtin, ok := bif.Builtins[b.EQName.Value()]
 			if !ok {
 				bif.NewError("function not defined: %s", b.EQName.Value())
 			}
 
-			evaled, _ := evalArgumentList(b.Args, ctx)
+			evaled := evalArgumentList(b.Args, ctx)
 			args = append(args, evaled...)
 			result = builtin(args...)
 			if i < len(bindings)-1 {
@@ -255,7 +267,7 @@ func evalPostfixExpr(expr ast.ExprSingle, ctx *object.Context) object.Item {
 		case *ast.Predicate:
 			evaled = evalPredicate(evaled, pal, ctx)
 		case *ast.ArgumentList:
-			args, _ := evalArgumentList(pal.Args, ctx)
+			args := evalArgumentList(pal.Args, ctx)
 			evaled = evalDynamicFunctionCall(evaled, args, ctx)
 		case *ast.Lookup:
 			evaled = evalLookup(evaled, pal, ctx)
@@ -277,9 +289,12 @@ func evalDynamicFunctionCall(f object.Item, args []object.Item, ctx *object.Cont
 
 		return Eval(&f.Body.Expr, ctx)
 	case *object.FuncNamed:
-		builtin, ok := bif.Builtins[f.Name]
+		if f.Name.Prefix() == "" {
+			f.Name.SetPrefix("fn")
+		}
+		builtin, ok := bif.Builtins[f.Name.Value()]
 		if !ok {
-			return bif.NewError("built-in function not found: %s", f.Name)
+			return bif.NewError("built-in function not found: %s", f.Name.Value())
 		}
 		if len(args) != f.Num {
 			return bif.NewError("wrong number of argument. got=%d, want=%d", len(args), f.Num)
@@ -295,10 +310,10 @@ func evalDynamicFunctionCall(f object.Item, args []object.Item, ctx *object.Cont
 		if !ok {
 			return bif.NewError("dynamic function call on array should have integer argument")
 		}
-		if index.Value == 0 || index.Value > len(f.Items) {
+		if index.Value() == 0 || index.Value() > len(f.Items) {
 			return bif.NewError("Index out of range: size(%d)", len(f.Items))
 		}
-		return f.Items[index.Value-1]
+		return f.Items[index.Value()-1]
 	default:
 		bif.NewError("Cannot match item type with required type")
 	}
@@ -394,10 +409,10 @@ func evalUnaryLookup(expr ast.ExprSingle, ctx *object.Context) object.Item {
 				if !ok {
 					return bif.NewError("[XPTY0004] Cannot convert %s to xs:integer", i.Type())
 				}
-				if i.Value == 0 || i.Value > len(it.Items) {
+				if i.Value() == 0 || i.Value() > len(it.Items) {
 					return bif.NewError("[FOAY0001] Array index %d out of bounds (1..%d)", ul.IntegerLiteral.Value, len(it.Items))
 				}
-				seq.Items = append(seq.Items, it.Items[i.Value-1])
+				seq.Items = append(seq.Items, it.Items[i.Value()-1])
 			}
 		case 4:
 			for _, item := range it.Items {
@@ -407,14 +422,14 @@ func evalUnaryLookup(expr ast.ExprSingle, ctx *object.Context) object.Item {
 	case *object.Map:
 		switch ul.KeySpecifier.TypeID {
 		case 1:
-			key := object.String{Value: ul.NCName.Value()}
+			key := bif.NewString(ul.NCName.Value())
 			pair, ok := it.Pairs[key.HashKey()]
 			if !ok {
 				return seq
 			}
 			return pair.Value
 		case 2:
-			key := object.Integer{Value: ul.IntegerLiteral.Value}
+			key := bif.NewInteger(ul.IntegerLiteral.Value)
 			pair, ok := it.Pairs[key.HashKey()]
 			if !ok {
 				return seq

@@ -6,32 +6,40 @@ type Func func(args ...Item) Item
 // Type represents Item Type
 type Type string
 
-// Value represents any value
-type Value interface{}
-
 // Item Types
 const (
 	NilType     Type = "nil"
 	ErrorType   Type = "error"
 	PholderType Type = "?"
+	VarrefType  Type = "$"
 
-	NodeType     Type = "node"
-	MapType      Type = "map"
-	ArrayType    Type = "array"
+	ItemType     Type = "item"
 	SequenceType Type = "sequence"
+	EmptySeqType Type = "empty-sequence"
 
-	FuncCallType   Type = "functionC"
-	FuncNamedType  Type = "functionN"
-	FuncInlineType Type = "functionI"
+	// function
+	MapType   Type = "map"
+	ArrayType Type = "array"
+	FuncType  Type = "function"
 
-	ByteType          Type = "xs:byte"
-	ShortType         Type = "xs:short"
-	IntType           Type = "xs:int"
-	LongType          Type = "xs:long"
-	IntegerType       Type = "xs:integer"
-	DecimalType       Type = "xs:decimal"
-	DoubleType        Type = "xs:double"
-	BooleanType       Type = "xs:boolean"
-	StringType        Type = "xs:string"
-	UntypedAtomicType Type = "xs:untypedAtomic"
+	// node
+	NodeType    Type = "node"
+	DocType     Type = "document"
+	ElemType    Type = "element"
+	AttrType    Type = "attribute"
+	PIType      Type = "processing-instruction"
+	CommentType Type = "comment"
+	NSNodeType  Type = "namespace-node"
+	TextType    Type = "text"
+
+	// atomic
+	DoubleType  Type = "xs:double"
+	DecimalType Type = "xs:decimal"
+	IntegerType Type = "xs:integer"
+	StringType  Type = "xs:string"
+	BooleanType Type = "xs:boolean"
+
+	// abstract
+	NumericType   Type = "xs:numeric"
+	AnyAtomicType Type = "xs:anyAtomic"
 )

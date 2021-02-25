@@ -18,6 +18,28 @@ func evalIdentifier(ident *ast.Identifier, ctx *object.Context) object.Item {
 	return bif.NewError("identifier not found: " + ident.EQName.Value())
 }
 
+func evalAdditiveExpr(expr ast.ExprSingle, ctx *object.Context) object.Item {
+	ae := expr.(*ast.AdditiveExpr)
+
+	left := Eval(ae.LeftExpr, ctx)
+	right := Eval(ae.RightExpr, ctx)
+	op := ae.Token
+
+	var funcName string
+	if op.Type == token.PLUS {
+		funcName = "op:numeric-add"
+	} else {
+		funcName = "op:numeric-subtract"
+	}
+
+	builtin, ok := bif.Builtins[funcName]
+	if !ok {
+		return bif.NewError("function not found: " + funcName)
+	}
+
+	return builtin(left, right)
+}
+
 func evalInfixExpr(expr ast.ExprSingle, ctx *object.Context) object.Item {
 	var left object.Item
 	var right object.Item
@@ -149,495 +171,495 @@ func evalInfixExpr(expr ast.ExprSingle, ctx *object.Context) object.Item {
 }
 
 func evalInfixIntInt(op token.Token, left object.Item, right object.Item) object.Item {
-	leftVal := left.(*object.Integer).Value
-	rightVal := right.(*object.Integer).Value
+	leftVal := left.(*object.Integer).Value()
+	rightVal := right.(*object.Integer).Value()
 
 	switch op.Type {
 	case token.PLUS:
-		return &object.Integer{Value: leftVal + rightVal}
+		return bif.NewInteger(leftVal + rightVal)
 	case token.MINUS:
-		return &object.Integer{Value: leftVal - rightVal}
+		return bif.NewInteger(leftVal - rightVal)
 	case token.ASTERISK:
-		return &object.Integer{Value: leftVal * rightVal}
+		return bif.NewInteger(leftVal * rightVal)
 	case token.DIV:
-		return &object.Decimal{Value: float64(leftVal) / float64(rightVal)}
+		return bif.NewDecimal(float64(leftVal) / float64(rightVal))
 	case token.IDIV:
-		return &object.Integer{Value: int(float64(leftVal) / float64(rightVal))}
+		return bif.NewInteger(int(float64(leftVal) / float64(rightVal)))
 	case token.MOD:
-		return &object.Integer{Value: leftVal % rightVal}
+		return bif.NewInteger(leftVal % rightVal)
 	case token.DVBAR:
 		leftVal := strconv.FormatInt(int64(leftVal), 10)
 		rightVal := strconv.FormatInt(int64(rightVal), 10)
-		return &object.String{Value: leftVal + rightVal}
+		return bif.NewString(leftVal + rightVal)
 	case token.TO:
 		seq := &object.Sequence{}
 		for i := leftVal; i <= rightVal; i++ {
-			seq.Items = append(seq.Items, &object.Integer{Value: i})
+			seq.Items = append(seq.Items, bif.NewInteger(i))
 		}
 		return seq
 	case token.EQ:
-		return &object.Boolean{Value: leftVal == rightVal}
+		return bif.NewBoolean(leftVal == rightVal)
 	case token.NE:
-		return &object.Boolean{Value: leftVal != rightVal}
+		return bif.NewBoolean(leftVal != rightVal)
 	case token.LT:
-		return &object.Boolean{Value: leftVal < rightVal}
+		return bif.NewBoolean(leftVal < rightVal)
 	case token.LE:
-		return &object.Boolean{Value: leftVal <= rightVal}
+		return bif.NewBoolean(leftVal <= rightVal)
 	case token.GT:
-		return &object.Boolean{Value: leftVal > rightVal}
+		return bif.NewBoolean(leftVal > rightVal)
 	case token.GE:
-		return &object.Boolean{Value: leftVal >= rightVal}
+		return bif.NewBoolean(leftVal >= rightVal)
 	case token.EQV:
-		return &object.Boolean{Value: leftVal == rightVal}
+		return bif.NewBoolean(leftVal == rightVal)
 	case token.NEV:
-		return &object.Boolean{Value: leftVal != rightVal}
+		return bif.NewBoolean(leftVal != rightVal)
 	case token.LTV:
-		return &object.Boolean{Value: leftVal < rightVal}
+		return bif.NewBoolean(leftVal < rightVal)
 	case token.LEV:
-		return &object.Boolean{Value: leftVal <= rightVal}
+		return bif.NewBoolean(leftVal <= rightVal)
 	case token.GTV:
-		return &object.Boolean{Value: leftVal > rightVal}
+		return bif.NewBoolean(leftVal > rightVal)
 	case token.GEV:
-		return &object.Boolean{Value: leftVal >= rightVal}
+		return bif.NewBoolean(leftVal >= rightVal)
 	default:
 		return bif.NewError("The operator '%s' is not defined for operands of type %s and %s\n", op.Literal, left.Type(), right.Type())
 	}
 }
 
 func evalInfixIntDecimal(op token.Token, left object.Item, right object.Item) object.Item {
-	leftVal := left.(*object.Integer).Value
-	rightVal := right.(*object.Decimal).Value
+	leftVal := left.(*object.Integer).Value()
+	rightVal := right.(*object.Decimal).Value()
 
 	switch op.Type {
 	case token.PLUS:
-		return &object.Decimal{Value: float64(leftVal) + rightVal}
+		return bif.NewDecimal(float64(leftVal) + rightVal)
 	case token.MINUS:
-		return &object.Decimal{Value: float64(leftVal) - rightVal}
+		return bif.NewDecimal(float64(leftVal) - rightVal)
 	case token.ASTERISK:
-		return &object.Decimal{Value: float64(leftVal) * rightVal}
+		return bif.NewDecimal(float64(leftVal) * rightVal)
 	case token.DIV:
-		return &object.Decimal{Value: float64(leftVal) / rightVal}
+		return bif.NewDecimal(float64(leftVal) / rightVal)
 	case token.IDIV:
-		return &object.Integer{Value: int(float64(leftVal) / rightVal)}
+		return bif.NewInteger(int(float64(leftVal) / rightVal))
 	case token.MOD:
-		return &object.Decimal{Value: math.Mod(float64(leftVal), rightVal)}
+		return bif.NewDecimal(math.Mod(float64(leftVal), rightVal))
 	case token.DVBAR:
 		leftVal := strconv.FormatInt(int64(leftVal), 10)
 		rightVal := strconv.FormatFloat(rightVal, 'f', -1, 64)
-		return &object.String{Value: leftVal + rightVal}
+		return bif.NewString(leftVal + rightVal)
 	case token.EQ:
-		return &object.Boolean{Value: float64(leftVal) == rightVal}
+		return bif.NewBoolean(float64(leftVal) == rightVal)
 	case token.NE:
-		return &object.Boolean{Value: float64(leftVal) != rightVal}
+		return bif.NewBoolean(float64(leftVal) != rightVal)
 	case token.LT:
-		return &object.Boolean{Value: float64(leftVal) < rightVal}
+		return bif.NewBoolean(float64(leftVal) < rightVal)
 	case token.LE:
-		return &object.Boolean{Value: float64(leftVal) <= rightVal}
+		return bif.NewBoolean(float64(leftVal) <= rightVal)
 	case token.GT:
-		return &object.Boolean{Value: float64(leftVal) > rightVal}
+		return bif.NewBoolean(float64(leftVal) > rightVal)
 	case token.GE:
-		return &object.Boolean{Value: float64(leftVal) >= rightVal}
+		return bif.NewBoolean(float64(leftVal) >= rightVal)
 	case token.EQV:
-		return &object.Boolean{Value: float64(leftVal) == rightVal}
+		return bif.NewBoolean(float64(leftVal) == rightVal)
 	case token.NEV:
-		return &object.Boolean{Value: float64(leftVal) != rightVal}
+		return bif.NewBoolean(float64(leftVal) != rightVal)
 	case token.LTV:
-		return &object.Boolean{Value: float64(leftVal) < rightVal}
+		return bif.NewBoolean(float64(leftVal) < rightVal)
 	case token.LEV:
-		return &object.Boolean{Value: float64(leftVal) <= rightVal}
+		return bif.NewBoolean(float64(leftVal) <= rightVal)
 	case token.GTV:
-		return &object.Boolean{Value: float64(leftVal) > rightVal}
+		return bif.NewBoolean(float64(leftVal) > rightVal)
 	case token.GEV:
-		return &object.Boolean{Value: float64(leftVal) >= rightVal}
+		return bif.NewBoolean(float64(leftVal) >= rightVal)
 	default:
 		return bif.NewError("The operator '%s' is not defined for operands of type %s and %s\n", op.Literal, left.Type(), right.Type())
 	}
 }
 
 func evalInfixIntDouble(op token.Token, left object.Item, right object.Item) object.Item {
-	leftVal := left.(*object.Integer).Value
-	rightVal := right.(*object.Double).Value
+	leftVal := left.(*object.Integer).Value()
+	rightVal := right.(*object.Double).Value()
 
 	switch op.Type {
 	case token.PLUS:
-		return &object.Double{Value: float64(leftVal) + rightVal}
+		return bif.NewDouble(float64(leftVal) + rightVal)
 	case token.MINUS:
-		return &object.Double{Value: float64(leftVal) - rightVal}
+		return bif.NewDouble(float64(leftVal) - rightVal)
 	case token.ASTERISK:
-		return &object.Double{Value: float64(leftVal) * rightVal}
+		return bif.NewDouble(float64(leftVal) * rightVal)
 	case token.DIV:
-		return &object.Double{Value: float64(leftVal) / rightVal}
+		return bif.NewDouble(float64(leftVal) / rightVal)
 	case token.IDIV:
-		return &object.Integer{Value: int(float64(leftVal) / rightVal)}
+		return bif.NewInteger(int(float64(leftVal) / rightVal))
 	case token.MOD:
-		return &object.Double{Value: math.Mod(float64(leftVal), rightVal)}
+		return bif.NewDouble(math.Mod(float64(leftVal), rightVal))
 	case token.DVBAR:
 		leftVal := strconv.FormatInt(int64(leftVal), 10)
 		rightVal := strconv.FormatFloat(rightVal, 'f', -1, 64)
-		return &object.String{Value: leftVal + rightVal}
+		return bif.NewString(leftVal + rightVal)
 	case token.EQ:
-		return &object.Boolean{Value: float64(leftVal) == rightVal}
+		return bif.NewBoolean(float64(leftVal) == rightVal)
 	case token.NE:
-		return &object.Boolean{Value: float64(leftVal) != rightVal}
+		return bif.NewBoolean(float64(leftVal) != rightVal)
 	case token.LT:
-		return &object.Boolean{Value: float64(leftVal) < rightVal}
+		return bif.NewBoolean(float64(leftVal) < rightVal)
 	case token.LE:
-		return &object.Boolean{Value: float64(leftVal) <= rightVal}
+		return bif.NewBoolean(float64(leftVal) <= rightVal)
 	case token.GT:
-		return &object.Boolean{Value: float64(leftVal) > rightVal}
+		return bif.NewBoolean(float64(leftVal) > rightVal)
 	case token.GE:
-		return &object.Boolean{Value: float64(leftVal) >= rightVal}
+		return bif.NewBoolean(float64(leftVal) >= rightVal)
 	case token.EQV:
-		return &object.Boolean{Value: float64(leftVal) == rightVal}
+		return bif.NewBoolean(float64(leftVal) == rightVal)
 	case token.NEV:
-		return &object.Boolean{Value: float64(leftVal) != rightVal}
+		return bif.NewBoolean(float64(leftVal) != rightVal)
 	case token.LTV:
-		return &object.Boolean{Value: float64(leftVal) < rightVal}
+		return bif.NewBoolean(float64(leftVal) < rightVal)
 	case token.LEV:
-		return &object.Boolean{Value: float64(leftVal) <= rightVal}
+		return bif.NewBoolean(float64(leftVal) <= rightVal)
 	case token.GTV:
-		return &object.Boolean{Value: float64(leftVal) > rightVal}
+		return bif.NewBoolean(float64(leftVal) > rightVal)
 	case token.GEV:
-		return &object.Boolean{Value: float64(leftVal) >= rightVal}
+		return bif.NewBoolean(float64(leftVal) >= rightVal)
 	default:
 		return bif.NewError("The operator '%s' is not defined for operands of type %s and %s\n", op.Literal, left.Type(), right.Type())
 	}
 }
 
 func evalInfixIntString(op token.Token, left object.Item, right object.Item) object.Item {
-	leftVal := left.(*object.Integer).Value
-	rightVal := right.(*object.String).Value
+	leftVal := left.(*object.Integer).Value()
+	rightVal := right.(*object.String).Value()
 
 	switch op.Type {
 	case token.DVBAR:
 		leftVal := strconv.FormatInt(int64(leftVal), 10)
-		return &object.String{Value: leftVal + rightVal}
+		return bif.NewString(leftVal + rightVal)
 	default:
 		return bif.NewError("The operator '%s' is not defined for operands of type %s and %s\n", op.Literal, left.Type(), right.Type())
 	}
 }
 
 func evalInfixDecimalInt(op token.Token, left object.Item, right object.Item) object.Item {
-	leftVal := left.(*object.Decimal).Value
-	rightVal := right.(*object.Integer).Value
+	leftVal := left.(*object.Decimal).Value()
+	rightVal := right.(*object.Integer).Value()
 
 	switch op.Type {
 	case token.PLUS:
-		return &object.Decimal{Value: leftVal + float64(rightVal)}
+		return bif.NewDecimal(leftVal + float64(rightVal))
 	case token.MINUS:
-		return &object.Decimal{Value: leftVal - float64(rightVal)}
+		return bif.NewDecimal(leftVal - float64(rightVal))
 	case token.ASTERISK:
-		return &object.Decimal{Value: leftVal * float64(rightVal)}
+		return bif.NewDecimal(leftVal * float64(rightVal))
 	case token.DIV:
-		return &object.Decimal{Value: leftVal / float64(rightVal)}
+		return bif.NewDecimal(leftVal / float64(rightVal))
 	case token.IDIV:
-		return &object.Integer{Value: int(leftVal / float64(rightVal))}
+		return bif.NewInteger(int(leftVal / float64(rightVal)))
 	case token.MOD:
-		return &object.Decimal{Value: math.Mod(leftVal, float64(rightVal))}
+		return bif.NewDecimal(math.Mod(leftVal, float64(rightVal)))
 	case token.DVBAR:
 		leftVal := strconv.FormatFloat(leftVal, 'f', -1, 64)
 		rightVal := strconv.FormatInt(int64(rightVal), 10)
-		return &object.String{Value: leftVal + rightVal}
+		return bif.NewString(leftVal + rightVal)
 	case token.EQ:
-		return &object.Boolean{Value: leftVal == float64(rightVal)}
+		return bif.NewBoolean(leftVal == float64(rightVal))
 	case token.NE:
-		return &object.Boolean{Value: leftVal != float64(rightVal)}
+		return bif.NewBoolean(leftVal != float64(rightVal))
 	case token.LT:
-		return &object.Boolean{Value: leftVal < float64(rightVal)}
+		return bif.NewBoolean(leftVal < float64(rightVal))
 	case token.LE:
-		return &object.Boolean{Value: leftVal <= float64(rightVal)}
+		return bif.NewBoolean(leftVal <= float64(rightVal))
 	case token.GT:
-		return &object.Boolean{Value: leftVal > float64(rightVal)}
+		return bif.NewBoolean(leftVal > float64(rightVal))
 	case token.GE:
-		return &object.Boolean{Value: leftVal >= float64(rightVal)}
+		return bif.NewBoolean(leftVal >= float64(rightVal))
 	case token.EQV:
-		return &object.Boolean{Value: leftVal == float64(rightVal)}
+		return bif.NewBoolean(leftVal == float64(rightVal))
 	case token.NEV:
-		return &object.Boolean{Value: leftVal != float64(rightVal)}
+		return bif.NewBoolean(leftVal != float64(rightVal))
 	case token.LTV:
-		return &object.Boolean{Value: leftVal < float64(rightVal)}
+		return bif.NewBoolean(leftVal < float64(rightVal))
 	case token.LEV:
-		return &object.Boolean{Value: leftVal <= float64(rightVal)}
+		return bif.NewBoolean(leftVal <= float64(rightVal))
 	case token.GTV:
-		return &object.Boolean{Value: leftVal > float64(rightVal)}
+		return bif.NewBoolean(leftVal > float64(rightVal))
 	case token.GEV:
-		return &object.Boolean{Value: leftVal >= float64(rightVal)}
+		return bif.NewBoolean(leftVal >= float64(rightVal))
 	default:
 		return bif.NewError("The operator '%s' is not defined for operands of type %s and %s\n", op.Literal, left.Type(), right.Type())
 	}
 }
 
 func evalInfixDecimalDecimal(op token.Token, left object.Item, right object.Item) object.Item {
-	leftVal := left.(*object.Decimal).Value
-	rightVal := right.(*object.Decimal).Value
+	leftVal := left.(*object.Decimal).Value()
+	rightVal := right.(*object.Decimal).Value()
 
 	switch op.Type {
 	case token.PLUS:
-		return &object.Decimal{Value: leftVal + rightVal}
+		return bif.NewDecimal(leftVal + rightVal)
 	case token.MINUS:
-		return &object.Decimal{Value: leftVal - rightVal}
+		return bif.NewDecimal(leftVal - rightVal)
 	case token.ASTERISK:
-		return &object.Decimal{Value: leftVal * rightVal}
+		return bif.NewDecimal(leftVal * rightVal)
 	case token.DIV:
-		return &object.Decimal{Value: leftVal / rightVal}
+		return bif.NewDecimal(leftVal / rightVal)
 	case token.IDIV:
-		return &object.Integer{Value: int(leftVal / rightVal)}
+		return bif.NewInteger(int(leftVal / rightVal))
 	case token.MOD:
-		return &object.Decimal{Value: math.Mod(leftVal, rightVal)}
+		return bif.NewDecimal(math.Mod(leftVal, rightVal))
 	case token.DVBAR:
 		leftVal := strconv.FormatFloat(leftVal, 'f', -1, 64)
 		rightVal := strconv.FormatFloat(rightVal, 'f', -1, 64)
-		return &object.String{Value: leftVal + rightVal}
+		return bif.NewString(leftVal + rightVal)
 	case token.EQ:
-		return &object.Boolean{Value: leftVal == rightVal}
+		return bif.NewBoolean(leftVal == rightVal)
 	case token.NE:
-		return &object.Boolean{Value: leftVal != rightVal}
+		return bif.NewBoolean(leftVal != rightVal)
 	case token.LT:
-		return &object.Boolean{Value: leftVal < rightVal}
+		return bif.NewBoolean(leftVal < rightVal)
 	case token.LE:
-		return &object.Boolean{Value: leftVal <= rightVal}
+		return bif.NewBoolean(leftVal <= rightVal)
 	case token.GT:
-		return &object.Boolean{Value: leftVal > rightVal}
+		return bif.NewBoolean(leftVal > rightVal)
 	case token.GE:
-		return &object.Boolean{Value: leftVal >= rightVal}
+		return bif.NewBoolean(leftVal >= rightVal)
 	case token.EQV:
-		return &object.Boolean{Value: leftVal == rightVal}
+		return bif.NewBoolean(leftVal == rightVal)
 	case token.NEV:
-		return &object.Boolean{Value: leftVal != rightVal}
+		return bif.NewBoolean(leftVal != rightVal)
 	case token.LTV:
-		return &object.Boolean{Value: leftVal < rightVal}
+		return bif.NewBoolean(leftVal < rightVal)
 	case token.LEV:
-		return &object.Boolean{Value: leftVal <= rightVal}
+		return bif.NewBoolean(leftVal <= rightVal)
 	case token.GTV:
-		return &object.Boolean{Value: leftVal > rightVal}
+		return bif.NewBoolean(leftVal > rightVal)
 	case token.GEV:
-		return &object.Boolean{Value: leftVal >= rightVal}
+		return bif.NewBoolean(leftVal >= rightVal)
 	default:
 		return bif.NewError("The operator '%s' is not defined for operands of type %s and %s\n", op.Literal, left.Type(), right.Type())
 	}
 }
 
 func evalInfixDecimalDouble(op token.Token, left object.Item, right object.Item) object.Item {
-	leftVal := left.(*object.Decimal).Value
-	rightVal := right.(*object.Double).Value
+	leftVal := left.(*object.Decimal).Value()
+	rightVal := right.(*object.Double).Value()
 
 	switch op.Type {
 	case token.PLUS:
-		return &object.Decimal{Value: leftVal + rightVal}
+		return bif.NewDecimal(leftVal + rightVal)
 	case token.MINUS:
-		return &object.Decimal{Value: leftVal - rightVal}
+		return bif.NewDecimal(leftVal - rightVal)
 	case token.ASTERISK:
-		return &object.Decimal{Value: leftVal * rightVal}
+		return bif.NewDecimal(leftVal * rightVal)
 	case token.DIV:
-		return &object.Decimal{Value: leftVal / rightVal}
+		return bif.NewDecimal(leftVal / rightVal)
 	case token.IDIV:
-		return &object.Integer{Value: int(leftVal / rightVal)}
+		return bif.NewInteger(int(leftVal / rightVal))
 	case token.MOD:
-		return &object.Decimal{Value: math.Mod(leftVal, rightVal)}
+		return bif.NewDecimal(math.Mod(leftVal, rightVal))
 	case token.DVBAR:
 		leftVal := strconv.FormatFloat(leftVal, 'f', -1, 64)
 		rightVal := strconv.FormatFloat(rightVal, 'f', -1, 64)
-		return &object.String{Value: leftVal + rightVal}
+		return bif.NewString(leftVal + rightVal)
 	case token.EQ:
-		return &object.Boolean{Value: leftVal == rightVal}
+		return bif.NewBoolean(leftVal == rightVal)
 	case token.NE:
-		return &object.Boolean{Value: leftVal != rightVal}
+		return bif.NewBoolean(leftVal != rightVal)
 	case token.LT:
-		return &object.Boolean{Value: leftVal < rightVal}
+		return bif.NewBoolean(leftVal < rightVal)
 	case token.LE:
-		return &object.Boolean{Value: leftVal <= rightVal}
+		return bif.NewBoolean(leftVal <= rightVal)
 	case token.GT:
-		return &object.Boolean{Value: leftVal > rightVal}
+		return bif.NewBoolean(leftVal > rightVal)
 	case token.GE:
-		return &object.Boolean{Value: leftVal >= rightVal}
+		return bif.NewBoolean(leftVal >= rightVal)
 	case token.EQV:
-		return &object.Boolean{Value: leftVal == rightVal}
+		return bif.NewBoolean(leftVal == rightVal)
 	case token.NEV:
-		return &object.Boolean{Value: leftVal != rightVal}
+		return bif.NewBoolean(leftVal != rightVal)
 	case token.LTV:
-		return &object.Boolean{Value: leftVal < rightVal}
+		return bif.NewBoolean(leftVal < rightVal)
 	case token.LEV:
-		return &object.Boolean{Value: leftVal <= rightVal}
+		return bif.NewBoolean(leftVal <= rightVal)
 	case token.GTV:
-		return &object.Boolean{Value: leftVal > rightVal}
+		return bif.NewBoolean(leftVal > rightVal)
 	case token.GEV:
-		return &object.Boolean{Value: leftVal >= rightVal}
+		return bif.NewBoolean(leftVal >= rightVal)
 	default:
 		return bif.NewError("The operator '%s' is not defined for operands of type %s and %s\n", op.Literal, left.Type(), right.Type())
 	}
 }
 
 func evalInfixDecimalString(op token.Token, left object.Item, right object.Item) object.Item {
-	leftVal := left.(*object.Decimal).Value
-	rightVal := right.(*object.String).Value
+	leftVal := left.(*object.Decimal).Value()
+	rightVal := right.(*object.String).Value()
 
 	switch op.Type {
 	case token.DVBAR:
 		leftVal := strconv.FormatFloat(leftVal, 'f', -1, 64)
-		return &object.String{Value: leftVal + rightVal}
+		return bif.NewString(leftVal + rightVal)
 	default:
 		return bif.NewError("The operator '%s' is not defined for operands of type %s and %s\n", op.Literal, left.Type(), right.Type())
 	}
 }
 
 func evalInfixDoubleInt(op token.Token, left object.Item, right object.Item) object.Item {
-	leftVal := left.(*object.Double).Value
-	rightVal := right.(*object.Integer).Value
+	leftVal := left.(*object.Double).Value()
+	rightVal := right.(*object.Integer).Value()
 
 	switch op.Type {
 	case token.PLUS:
-		return &object.Double{Value: leftVal + float64(rightVal)}
+		return bif.NewDouble(leftVal + float64(rightVal))
 	case token.MINUS:
-		return &object.Double{Value: leftVal - float64(rightVal)}
+		return bif.NewDouble(leftVal - float64(rightVal))
 	case token.ASTERISK:
-		return &object.Double{Value: leftVal * float64(rightVal)}
+		return bif.NewDouble(leftVal * float64(rightVal))
 	case token.DIV:
-		return &object.Double{Value: leftVal / float64(rightVal)}
+		return bif.NewDouble(leftVal / float64(rightVal))
 	case token.IDIV:
-		return &object.Integer{Value: int(leftVal / float64(rightVal))}
+		return bif.NewInteger(int(leftVal / float64(rightVal)))
 	case token.MOD:
-		return &object.Double{Value: math.Mod(leftVal, float64(rightVal))}
+		return bif.NewDouble(math.Mod(leftVal, float64(rightVal)))
 	case token.DVBAR:
 		leftVal := strconv.FormatFloat(leftVal, 'f', -1, 64)
 		rightVal := strconv.FormatInt(int64(rightVal), 10)
-		return &object.String{Value: leftVal + rightVal}
+		return bif.NewString(leftVal + rightVal)
 	case token.EQ:
-		return &object.Boolean{Value: leftVal == float64(rightVal)}
+		return bif.NewBoolean(leftVal == float64(rightVal))
 	case token.NE:
-		return &object.Boolean{Value: leftVal != float64(rightVal)}
+		return bif.NewBoolean(leftVal != float64(rightVal))
 	case token.LT:
-		return &object.Boolean{Value: leftVal < float64(rightVal)}
+		return bif.NewBoolean(leftVal < float64(rightVal))
 	case token.LE:
-		return &object.Boolean{Value: leftVal <= float64(rightVal)}
+		return bif.NewBoolean(leftVal <= float64(rightVal))
 	case token.GT:
-		return &object.Boolean{Value: leftVal > float64(rightVal)}
+		return bif.NewBoolean(leftVal > float64(rightVal))
 	case token.GE:
-		return &object.Boolean{Value: leftVal >= float64(rightVal)}
+		return bif.NewBoolean(leftVal >= float64(rightVal))
 	case token.EQV:
-		return &object.Boolean{Value: leftVal == float64(rightVal)}
+		return bif.NewBoolean(leftVal == float64(rightVal))
 	case token.NEV:
-		return &object.Boolean{Value: leftVal != float64(rightVal)}
+		return bif.NewBoolean(leftVal != float64(rightVal))
 	case token.LTV:
-		return &object.Boolean{Value: leftVal < float64(rightVal)}
+		return bif.NewBoolean(leftVal < float64(rightVal))
 	case token.LEV:
-		return &object.Boolean{Value: leftVal <= float64(rightVal)}
+		return bif.NewBoolean(leftVal <= float64(rightVal))
 	case token.GTV:
-		return &object.Boolean{Value: leftVal > float64(rightVal)}
+		return bif.NewBoolean(leftVal > float64(rightVal))
 	case token.GEV:
-		return &object.Boolean{Value: leftVal >= float64(rightVal)}
+		return bif.NewBoolean(leftVal >= float64(rightVal))
 	default:
 		return bif.NewError("The operator '%s' is not defined for operands of type %s and %s\n", op.Literal, left.Type(), right.Type())
 	}
 }
 
 func evalInfixDoubleDecimal(op token.Token, left object.Item, right object.Item) object.Item {
-	leftVal := left.(*object.Double).Value
-	rightVal := right.(*object.Decimal).Value
+	leftVal := left.(*object.Double).Value()
+	rightVal := right.(*object.Decimal).Value()
 
 	switch op.Type {
 	case token.PLUS:
-		return &object.Decimal{Value: leftVal + rightVal}
+		return bif.NewDecimal(leftVal + rightVal)
 	case token.MINUS:
-		return &object.Decimal{Value: leftVal - rightVal}
+		return bif.NewDecimal(leftVal - rightVal)
 	case token.ASTERISK:
-		return &object.Decimal{Value: leftVal * rightVal}
+		return bif.NewDecimal(leftVal * rightVal)
 	case token.DIV:
-		return &object.Decimal{Value: leftVal / rightVal}
+		return bif.NewDecimal(leftVal / rightVal)
 	case token.IDIV:
-		return &object.Integer{Value: int(leftVal / rightVal)}
+		return bif.NewInteger(int(leftVal / rightVal))
 	case token.MOD:
-		return &object.Decimal{Value: math.Mod(leftVal, rightVal)}
+		return bif.NewDecimal(math.Mod(leftVal, rightVal))
 	case token.DVBAR:
 		leftVal := strconv.FormatFloat(leftVal, 'f', -1, 64)
 		rightVal := strconv.FormatFloat(rightVal, 'f', -1, 64)
-		return &object.String{Value: leftVal + rightVal}
+		return bif.NewString(leftVal + rightVal)
 	case token.EQ:
-		return &object.Boolean{Value: leftVal == rightVal}
+		return bif.NewBoolean(leftVal == rightVal)
 	case token.NE:
-		return &object.Boolean{Value: leftVal != rightVal}
+		return bif.NewBoolean(leftVal != rightVal)
 	case token.LT:
-		return &object.Boolean{Value: leftVal < rightVal}
+		return bif.NewBoolean(leftVal < rightVal)
 	case token.LE:
-		return &object.Boolean{Value: leftVal <= rightVal}
+		return bif.NewBoolean(leftVal <= rightVal)
 	case token.GT:
-		return &object.Boolean{Value: leftVal > rightVal}
+		return bif.NewBoolean(leftVal > rightVal)
 	case token.GE:
-		return &object.Boolean{Value: leftVal >= rightVal}
+		return bif.NewBoolean(leftVal >= rightVal)
 	case token.EQV:
-		return &object.Boolean{Value: leftVal == rightVal}
+		return bif.NewBoolean(leftVal == rightVal)
 	case token.NEV:
-		return &object.Boolean{Value: leftVal != rightVal}
+		return bif.NewBoolean(leftVal != rightVal)
 	case token.LTV:
-		return &object.Boolean{Value: leftVal < rightVal}
+		return bif.NewBoolean(leftVal < rightVal)
 	case token.LEV:
-		return &object.Boolean{Value: leftVal <= rightVal}
+		return bif.NewBoolean(leftVal <= rightVal)
 	case token.GTV:
-		return &object.Boolean{Value: leftVal > rightVal}
+		return bif.NewBoolean(leftVal > rightVal)
 	case token.GEV:
-		return &object.Boolean{Value: leftVal >= rightVal}
+		return bif.NewBoolean(leftVal >= rightVal)
 	default:
 		return bif.NewError("The operator '%s' is not defined for operands of type %s and %s\n", op.Literal, left.Type(), right.Type())
 	}
 }
 
 func evalInfixDoubleDouble(op token.Token, left object.Item, right object.Item) object.Item {
-	leftVal := left.(*object.Double).Value
-	rightVal := right.(*object.Double).Value
+	leftVal := left.(*object.Double).Value()
+	rightVal := right.(*object.Double).Value()
 
 	switch op.Type {
 	case token.PLUS:
-		return &object.Double{Value: leftVal + rightVal}
+		return bif.NewDouble(leftVal + rightVal)
 	case token.MINUS:
-		return &object.Double{Value: leftVal - rightVal}
+		return bif.NewDouble(leftVal - rightVal)
 	case token.ASTERISK:
-		return &object.Double{Value: leftVal * rightVal}
+		return bif.NewDouble(leftVal * rightVal)
 	case token.DIV:
-		return &object.Double{Value: leftVal / rightVal}
+		return bif.NewDouble(leftVal / rightVal)
 	case token.IDIV:
-		return &object.Integer{Value: int(leftVal / rightVal)}
+		return bif.NewInteger(int(leftVal / rightVal))
 	case token.MOD:
-		return &object.Double{Value: math.Mod(leftVal, rightVal)}
+		return bif.NewDouble(math.Mod(leftVal, rightVal))
 	case token.DVBAR:
 		leftVal := strconv.FormatFloat(leftVal, 'f', -1, 64)
 		rightVal := strconv.FormatFloat(rightVal, 'f', -1, 64)
-		return &object.String{Value: leftVal + rightVal}
+		return bif.NewString(leftVal + rightVal)
 	case token.EQ:
-		return &object.Boolean{Value: leftVal == rightVal}
+		return bif.NewBoolean(leftVal == rightVal)
 	case token.NE:
-		return &object.Boolean{Value: leftVal != rightVal}
+		return bif.NewBoolean(leftVal != rightVal)
 	case token.LT:
-		return &object.Boolean{Value: leftVal < rightVal}
+		return bif.NewBoolean(leftVal < rightVal)
 	case token.LE:
-		return &object.Boolean{Value: leftVal <= rightVal}
+		return bif.NewBoolean(leftVal <= rightVal)
 	case token.GT:
-		return &object.Boolean{Value: leftVal > rightVal}
+		return bif.NewBoolean(leftVal > rightVal)
 	case token.GE:
-		return &object.Boolean{Value: leftVal >= rightVal}
+		return bif.NewBoolean(leftVal >= rightVal)
 	case token.EQV:
-		return &object.Boolean{Value: leftVal == rightVal}
+		return bif.NewBoolean(leftVal == rightVal)
 	case token.NEV:
-		return &object.Boolean{Value: leftVal != rightVal}
+		return bif.NewBoolean(leftVal != rightVal)
 	case token.LTV:
-		return &object.Boolean{Value: leftVal < rightVal}
+		return bif.NewBoolean(leftVal < rightVal)
 	case token.LEV:
-		return &object.Boolean{Value: leftVal <= rightVal}
+		return bif.NewBoolean(leftVal <= rightVal)
 	case token.GTV:
-		return &object.Boolean{Value: leftVal > rightVal}
+		return bif.NewBoolean(leftVal > rightVal)
 	case token.GEV:
-		return &object.Boolean{Value: leftVal >= rightVal}
+		return bif.NewBoolean(leftVal >= rightVal)
 	default:
 		return bif.NewError("The operator '%s' is not defined for operands of type %s and %s\n", op.Literal, left.Type(), right.Type())
 	}
 }
 
 func evalInfixDoubleString(op token.Token, left object.Item, right object.Item) object.Item {
-	leftVal := left.(*object.Double).Value
-	rightVal := right.(*object.String).Value
+	leftVal := left.(*object.Double).Value()
+	rightVal := right.(*object.String).Value()
 
 	switch op.Type {
 	case token.DVBAR:
 		leftVal := strconv.FormatFloat(leftVal, 'f', -1, 64)
-		return &object.String{Value: leftVal + rightVal}
+		return bif.NewString(leftVal + rightVal)
 	default:
 		return bif.NewError("The operator '%s' is not defined for operands of type %s and %s\n", op.Literal, left.Type(), right.Type())
 	}
@@ -654,7 +676,7 @@ func evalInfixNumberArray(op token.Token, left object.Item, right object.Item) o
 				return e
 			}
 			bl := e.(*object.Boolean)
-			if bl.Value == true {
+			if bl.Value() == true {
 				return object.TRUE
 			}
 		}
@@ -666,7 +688,7 @@ func evalInfixNumberArray(op token.Token, left object.Item, right object.Item) o
 				return e
 			}
 			bl := e.(*object.Boolean)
-			if bl.Value == true {
+			if bl.Value() == true {
 				return object.TRUE
 			}
 		}
@@ -678,7 +700,7 @@ func evalInfixNumberArray(op token.Token, left object.Item, right object.Item) o
 				return e
 			}
 			bl := e.(*object.Boolean)
-			if bl.Value == true {
+			if bl.Value() == true {
 				return object.TRUE
 			}
 		}
@@ -690,7 +712,7 @@ func evalInfixNumberArray(op token.Token, left object.Item, right object.Item) o
 				return e
 			}
 			bl := e.(*object.Boolean)
-			if bl.Value == true {
+			if bl.Value() == true {
 				return object.TRUE
 			}
 		}
@@ -702,7 +724,7 @@ func evalInfixNumberArray(op token.Token, left object.Item, right object.Item) o
 				return e
 			}
 			bl := e.(*object.Boolean)
-			if bl.Value == true {
+			if bl.Value() == true {
 				return object.TRUE
 			}
 		}
@@ -714,7 +736,7 @@ func evalInfixNumberArray(op token.Token, left object.Item, right object.Item) o
 				return e
 			}
 			bl := e.(*object.Boolean)
-			if bl.Value == true {
+			if bl.Value() == true {
 				return object.TRUE
 			}
 		}
@@ -735,7 +757,7 @@ func evalInfixNumberSeq(op token.Token, left object.Item, right object.Item) obj
 				return e
 			}
 			bl := e.(*object.Boolean)
-			if bl.Value == true {
+			if bl.Value() == true {
 				return object.TRUE
 			}
 		}
@@ -747,7 +769,7 @@ func evalInfixNumberSeq(op token.Token, left object.Item, right object.Item) obj
 				return e
 			}
 			bl := e.(*object.Boolean)
-			if bl.Value == true {
+			if bl.Value() == true {
 				return object.TRUE
 			}
 		}
@@ -759,7 +781,7 @@ func evalInfixNumberSeq(op token.Token, left object.Item, right object.Item) obj
 				return e
 			}
 			bl := e.(*object.Boolean)
-			if bl.Value == true {
+			if bl.Value() == true {
 				return object.TRUE
 			}
 		}
@@ -771,7 +793,7 @@ func evalInfixNumberSeq(op token.Token, left object.Item, right object.Item) obj
 				return e
 			}
 			bl := e.(*object.Boolean)
-			if bl.Value == true {
+			if bl.Value() == true {
 				return object.TRUE
 			}
 		}
@@ -783,7 +805,7 @@ func evalInfixNumberSeq(op token.Token, left object.Item, right object.Item) obj
 				return e
 			}
 			bl := e.(*object.Boolean)
-			if bl.Value == true {
+			if bl.Value() == true {
 				return object.TRUE
 			}
 		}
@@ -795,7 +817,7 @@ func evalInfixNumberSeq(op token.Token, left object.Item, right object.Item) obj
 				return e
 			}
 			bl := e.(*object.Boolean)
-			if bl.Value == true {
+			if bl.Value() == true {
 				return object.TRUE
 			}
 		}
@@ -806,75 +828,75 @@ func evalInfixNumberSeq(op token.Token, left object.Item, right object.Item) obj
 }
 
 func evalInfixStringInt(op token.Token, left object.Item, right object.Item) object.Item {
-	leftVal := left.(*object.String).Value
-	rightVal := right.(*object.Integer).Value
+	leftVal := left.(*object.String).Value()
+	rightVal := right.(*object.Integer).Value()
 
 	switch op.Type {
 	case token.DVBAR:
 		rightVal := strconv.FormatInt(int64(rightVal), 10)
-		return &object.String{Value: leftVal + rightVal}
+		return bif.NewString(leftVal + rightVal)
 	default:
 		return bif.NewError("The operator '%s' is not defined for operands of type %s and %s\n", op.Literal, left.Type(), right.Type())
 	}
 }
 
 func evalInfixStringDecimal(op token.Token, left object.Item, right object.Item) object.Item {
-	leftVal := left.(*object.String).Value
-	rightVal := right.(*object.Decimal).Value
+	leftVal := left.(*object.String).Value()
+	rightVal := right.(*object.Decimal).Value()
 
 	switch op.Type {
 	case token.DVBAR:
 		rightVal := strconv.FormatFloat(rightVal, 'f', -1, 64)
-		return &object.String{Value: leftVal + rightVal}
+		return bif.NewString(leftVal + rightVal)
 	default:
 		return bif.NewError("The operator '%s' is not defined for operands of type %s and %s\n", op.Literal, left.Type(), right.Type())
 	}
 }
 
 func evalInfixStringDouble(op token.Token, left object.Item, right object.Item) object.Item {
-	leftVal := left.(*object.String).Value
-	rightVal := right.(*object.Double).Value
+	leftVal := left.(*object.String).Value()
+	rightVal := right.(*object.Double).Value()
 
 	switch op.Type {
 	case token.DVBAR:
 		rightVal := strconv.FormatFloat(rightVal, 'f', -1, 64)
-		return &object.String{Value: leftVal + rightVal}
+		return bif.NewString(leftVal + rightVal)
 	default:
 		return bif.NewError("The operator '%s' is not defined for operands of type %s and %s\n", op.Literal, left.Type(), right.Type())
 	}
 }
 
 func evalInfixStringString(op token.Token, left object.Item, right object.Item) object.Item {
-	leftVal := left.(*object.String).Value
-	rightVal := right.(*object.String).Value
+	leftVal := left.(*object.String).Value()
+	rightVal := right.(*object.String).Value()
 
 	switch op.Type {
 	case token.DVBAR:
-		return &object.String{Value: leftVal + rightVal}
+		return bif.NewString(leftVal + rightVal)
 	case token.EQ:
-		return &object.Boolean{Value: leftVal == rightVal}
+		return bif.NewBoolean(leftVal == rightVal)
 	case token.NE:
-		return &object.Boolean{Value: leftVal != rightVal}
+		return bif.NewBoolean(leftVal != rightVal)
 	case token.LT:
-		return &object.Boolean{Value: leftVal < rightVal}
+		return bif.NewBoolean(leftVal < rightVal)
 	case token.LE:
-		return &object.Boolean{Value: leftVal <= rightVal}
+		return bif.NewBoolean(leftVal <= rightVal)
 	case token.GT:
-		return &object.Boolean{Value: leftVal > rightVal}
+		return bif.NewBoolean(leftVal > rightVal)
 	case token.GE:
-		return &object.Boolean{Value: leftVal >= rightVal}
+		return bif.NewBoolean(leftVal >= rightVal)
 	case token.EQV:
-		return &object.Boolean{Value: leftVal == rightVal}
+		return bif.NewBoolean(leftVal == rightVal)
 	case token.NEV:
-		return &object.Boolean{Value: leftVal != rightVal}
+		return bif.NewBoolean(leftVal != rightVal)
 	case token.LTV:
-		return &object.Boolean{Value: leftVal < rightVal}
+		return bif.NewBoolean(leftVal < rightVal)
 	case token.LEV:
-		return &object.Boolean{Value: leftVal <= rightVal}
+		return bif.NewBoolean(leftVal <= rightVal)
 	case token.GTV:
-		return &object.Boolean{Value: leftVal > rightVal}
+		return bif.NewBoolean(leftVal > rightVal)
 	case token.GEV:
-		return &object.Boolean{Value: leftVal >= rightVal}
+		return bif.NewBoolean(leftVal >= rightVal)
 	default:
 		return bif.NewError("The operator '%s' is not defined for operands of type %s and %s\n", op.Literal, left.Type(), right.Type())
 	}
@@ -891,7 +913,7 @@ func evalInfixStringArray(op token.Token, left object.Item, right object.Item) o
 			if !ok {
 				return bif.NewError("Types %s and %s are not comparable.", leftVal.Type(), item.Type())
 			}
-			if leftVal.Value == e.Value {
+			if leftVal.Value() == e.Value() {
 				return object.TRUE
 			}
 		}
@@ -902,7 +924,7 @@ func evalInfixStringArray(op token.Token, left object.Item, right object.Item) o
 			if !ok {
 				return bif.NewError("Types %s and %s are not comparable.", leftVal.Type(), item.Type())
 			}
-			if leftVal.Value != e.Value {
+			if leftVal.Value() != e.Value() {
 				return object.TRUE
 			}
 		}
@@ -913,7 +935,7 @@ func evalInfixStringArray(op token.Token, left object.Item, right object.Item) o
 			if !ok {
 				return bif.NewError("Types %s and %s are not comparable.", leftVal.Type(), item.Type())
 			}
-			if leftVal.Value < e.Value {
+			if leftVal.Value() < e.Value() {
 				return object.TRUE
 			}
 		}
@@ -924,7 +946,7 @@ func evalInfixStringArray(op token.Token, left object.Item, right object.Item) o
 			if !ok {
 				return bif.NewError("Types %s and %s are not comparable.", leftVal.Type(), item.Type())
 			}
-			if leftVal.Value <= e.Value {
+			if leftVal.Value() <= e.Value() {
 				return object.TRUE
 			}
 		}
@@ -935,7 +957,7 @@ func evalInfixStringArray(op token.Token, left object.Item, right object.Item) o
 			if !ok {
 				return bif.NewError("Types %s and %s are not comparable.", leftVal.Type(), item.Type())
 			}
-			if leftVal.Value > e.Value {
+			if leftVal.Value() > e.Value() {
 				return object.TRUE
 			}
 		}
@@ -946,7 +968,7 @@ func evalInfixStringArray(op token.Token, left object.Item, right object.Item) o
 			if !ok {
 				return bif.NewError("Types %s and %s are not comparable.", leftVal.Type(), item.Type())
 			}
-			if leftVal.Value >= e.Value {
+			if leftVal.Value() >= e.Value() {
 				return object.TRUE
 			}
 		}
@@ -967,7 +989,7 @@ func evalInfixStringSeq(op token.Token, left object.Item, right object.Item) obj
 			if !ok {
 				return bif.NewError("Types %s and %s are not comparable.", leftVal.Type(), item.Type())
 			}
-			if leftVal.Value == e.Value {
+			if leftVal.Value() == e.Value() {
 				return object.TRUE
 			}
 		}
@@ -978,7 +1000,7 @@ func evalInfixStringSeq(op token.Token, left object.Item, right object.Item) obj
 			if !ok {
 				return bif.NewError("Types %s and %s are not comparable.", leftVal.Type(), item.Type())
 			}
-			if leftVal.Value != e.Value {
+			if leftVal.Value() != e.Value() {
 				return object.TRUE
 			}
 		}
@@ -989,7 +1011,7 @@ func evalInfixStringSeq(op token.Token, left object.Item, right object.Item) obj
 			if !ok {
 				return bif.NewError("Types %s and %s are not comparable.", leftVal.Type(), item.Type())
 			}
-			if leftVal.Value < e.Value {
+			if leftVal.Value() < e.Value() {
 				return object.TRUE
 			}
 		}
@@ -1000,7 +1022,7 @@ func evalInfixStringSeq(op token.Token, left object.Item, right object.Item) obj
 			if !ok {
 				return bif.NewError("Types %s and %s are not comparable.", leftVal.Type(), item.Type())
 			}
-			if leftVal.Value <= e.Value {
+			if leftVal.Value() <= e.Value() {
 				return object.TRUE
 			}
 		}
@@ -1011,7 +1033,7 @@ func evalInfixStringSeq(op token.Token, left object.Item, right object.Item) obj
 			if !ok {
 				return bif.NewError("Types %s and %s are not comparable.", leftVal.Type(), item.Type())
 			}
-			if leftVal.Value > e.Value {
+			if leftVal.Value() > e.Value() {
 				return object.TRUE
 			}
 		}
@@ -1022,7 +1044,7 @@ func evalInfixStringSeq(op token.Token, left object.Item, right object.Item) obj
 			if !ok {
 				return bif.NewError("Types %s and %s are not comparable.", leftVal.Type(), item.Type())
 			}
-			if leftVal.Value >= e.Value {
+			if leftVal.Value() >= e.Value() {
 				return object.TRUE
 			}
 		}
@@ -1043,7 +1065,7 @@ func evalInfixSeqString(op token.Token, left, right object.Item) object.Item {
 			if !ok {
 				return bif.NewError("Types %s and %s are not comparable.", leftVal.Type(), item.Type())
 			}
-			if e.Value == rightVal.Value {
+			if e.Value() == rightVal.Value() {
 				return object.TRUE
 			}
 		}
@@ -1054,7 +1076,7 @@ func evalInfixSeqString(op token.Token, left, right object.Item) object.Item {
 			if !ok {
 				return bif.NewError("Types %s and %s are not comparable.", leftVal.Type(), item.Type())
 			}
-			if e.Value != rightVal.Value {
+			if e.Value() != rightVal.Value() {
 				return object.TRUE
 			}
 		}
@@ -1065,7 +1087,7 @@ func evalInfixSeqString(op token.Token, left, right object.Item) object.Item {
 			if !ok {
 				return bif.NewError("Types %s and %s are not comparable.", leftVal.Type(), item.Type())
 			}
-			if e.Value < rightVal.Value {
+			if e.Value() < rightVal.Value() {
 				return object.TRUE
 			}
 		}
@@ -1076,7 +1098,7 @@ func evalInfixSeqString(op token.Token, left, right object.Item) object.Item {
 			if !ok {
 				return bif.NewError("Types %s and %s are not comparable.", leftVal.Type(), item.Type())
 			}
-			if e.Value <= rightVal.Value {
+			if e.Value() <= rightVal.Value() {
 				return object.TRUE
 			}
 		}
@@ -1087,7 +1109,7 @@ func evalInfixSeqString(op token.Token, left, right object.Item) object.Item {
 			if !ok {
 				return bif.NewError("Types %s and %s are not comparable.", leftVal.Type(), item.Type())
 			}
-			if e.Value > rightVal.Value {
+			if e.Value() > rightVal.Value() {
 				return object.TRUE
 			}
 		}
@@ -1098,7 +1120,7 @@ func evalInfixSeqString(op token.Token, left, right object.Item) object.Item {
 			if !ok {
 				return bif.NewError("Types %s and %s are not comparable.", leftVal.Type(), item.Type())
 			}
-			if e.Value >= rightVal.Value {
+			if e.Value() >= rightVal.Value() {
 				return object.TRUE
 			}
 		}
@@ -1119,7 +1141,7 @@ func evalInfixArrayNumber(op token.Token, left, right object.Item) object.Item {
 				return e
 			}
 			bl := e.(*object.Boolean)
-			if bl.Value == true {
+			if bl.Value() == true {
 				return object.TRUE
 			}
 		}
@@ -1131,7 +1153,7 @@ func evalInfixArrayNumber(op token.Token, left, right object.Item) object.Item {
 				return e
 			}
 			bl := e.(*object.Boolean)
-			if bl.Value == true {
+			if bl.Value() == true {
 				return object.TRUE
 			}
 		}
@@ -1143,7 +1165,7 @@ func evalInfixArrayNumber(op token.Token, left, right object.Item) object.Item {
 				return e
 			}
 			bl := e.(*object.Boolean)
-			if bl.Value == true {
+			if bl.Value() == true {
 				return object.TRUE
 			}
 		}
@@ -1155,7 +1177,7 @@ func evalInfixArrayNumber(op token.Token, left, right object.Item) object.Item {
 				return e
 			}
 			bl := e.(*object.Boolean)
-			if bl.Value == true {
+			if bl.Value() == true {
 				return object.TRUE
 			}
 		}
@@ -1167,7 +1189,7 @@ func evalInfixArrayNumber(op token.Token, left, right object.Item) object.Item {
 				return e
 			}
 			bl := e.(*object.Boolean)
-			if bl.Value == true {
+			if bl.Value() == true {
 				return object.TRUE
 			}
 		}
@@ -1179,7 +1201,7 @@ func evalInfixArrayNumber(op token.Token, left, right object.Item) object.Item {
 				return e
 			}
 			bl := e.(*object.Boolean)
-			if bl.Value == true {
+			if bl.Value() == true {
 				return object.TRUE
 			}
 		}
@@ -1200,7 +1222,7 @@ func evalInfixArrayString(op token.Token, left, right object.Item) object.Item {
 			if !ok {
 				return bif.NewError("Types %s and %s are not comparable.", leftVal.Type(), item.Type())
 			}
-			if e.Value == rightVal.Value {
+			if e.Value() == rightVal.Value() {
 				return object.TRUE
 			}
 		}
@@ -1211,7 +1233,7 @@ func evalInfixArrayString(op token.Token, left, right object.Item) object.Item {
 			if !ok {
 				return bif.NewError("Types %s and %s are not comparable.", leftVal.Type(), item.Type())
 			}
-			if e.Value != rightVal.Value {
+			if e.Value() != rightVal.Value() {
 				return object.TRUE
 			}
 		}
@@ -1222,7 +1244,7 @@ func evalInfixArrayString(op token.Token, left, right object.Item) object.Item {
 			if !ok {
 				return bif.NewError("Types %s and %s are not comparable.", leftVal.Type(), item.Type())
 			}
-			if e.Value < rightVal.Value {
+			if e.Value() < rightVal.Value() {
 				return object.TRUE
 			}
 		}
@@ -1233,7 +1255,7 @@ func evalInfixArrayString(op token.Token, left, right object.Item) object.Item {
 			if !ok {
 				return bif.NewError("Types %s and %s are not comparable.", leftVal.Type(), item.Type())
 			}
-			if e.Value <= rightVal.Value {
+			if e.Value() <= rightVal.Value() {
 				return object.TRUE
 			}
 		}
@@ -1244,7 +1266,7 @@ func evalInfixArrayString(op token.Token, left, right object.Item) object.Item {
 			if !ok {
 				return bif.NewError("Types %s and %s are not comparable.", leftVal.Type(), item.Type())
 			}
-			if e.Value > rightVal.Value {
+			if e.Value() > rightVal.Value() {
 				return object.TRUE
 			}
 		}
@@ -1255,7 +1277,7 @@ func evalInfixArrayString(op token.Token, left, right object.Item) object.Item {
 			if !ok {
 				return bif.NewError("Types %s and %s are not comparable.", leftVal.Type(), item.Type())
 			}
-			if e.Value >= rightVal.Value {
+			if e.Value() >= rightVal.Value() {
 				return object.TRUE
 			}
 		}
@@ -1278,7 +1300,7 @@ func evalInfixArrayArray(op token.Token, left, right object.Item) object.Item {
 					return e
 				}
 				bl := e.(*object.Boolean)
-				if bl.Value == true {
+				if bl.Value() == true {
 					return object.TRUE
 				}
 			}
@@ -1292,7 +1314,7 @@ func evalInfixArrayArray(op token.Token, left, right object.Item) object.Item {
 					return e
 				}
 				bl := e.(*object.Boolean)
-				if bl.Value == true {
+				if bl.Value() == true {
 					return object.TRUE
 				}
 			}
@@ -1306,7 +1328,7 @@ func evalInfixArrayArray(op token.Token, left, right object.Item) object.Item {
 					return e
 				}
 				bl := e.(*object.Boolean)
-				if bl.Value == true {
+				if bl.Value() == true {
 					return object.TRUE
 				}
 			}
@@ -1320,7 +1342,7 @@ func evalInfixArrayArray(op token.Token, left, right object.Item) object.Item {
 					return e
 				}
 				bl := e.(*object.Boolean)
-				if bl.Value == true {
+				if bl.Value() == true {
 					return object.TRUE
 				}
 			}
@@ -1334,7 +1356,7 @@ func evalInfixArrayArray(op token.Token, left, right object.Item) object.Item {
 					return e
 				}
 				bl := e.(*object.Boolean)
-				if bl.Value == true {
+				if bl.Value() == true {
 					return object.TRUE
 				}
 			}
@@ -1348,7 +1370,7 @@ func evalInfixArrayArray(op token.Token, left, right object.Item) object.Item {
 					return e
 				}
 				bl := e.(*object.Boolean)
-				if bl.Value == true {
+				if bl.Value() == true {
 					return object.TRUE
 				}
 			}
@@ -1372,7 +1394,7 @@ func evalInfixSeqArray(op token.Token, left, right object.Item) object.Item {
 					return e
 				}
 				bl := e.(*object.Boolean)
-				if bl.Value == true {
+				if bl.Value() == true {
 					return object.TRUE
 				}
 			}
@@ -1386,7 +1408,7 @@ func evalInfixSeqArray(op token.Token, left, right object.Item) object.Item {
 					return e
 				}
 				bl := e.(*object.Boolean)
-				if bl.Value == true {
+				if bl.Value() == true {
 					return object.TRUE
 				}
 			}
@@ -1400,7 +1422,7 @@ func evalInfixSeqArray(op token.Token, left, right object.Item) object.Item {
 					return e
 				}
 				bl := e.(*object.Boolean)
-				if bl.Value == true {
+				if bl.Value() == true {
 					return object.TRUE
 				}
 			}
@@ -1414,7 +1436,7 @@ func evalInfixSeqArray(op token.Token, left, right object.Item) object.Item {
 					return e
 				}
 				bl := e.(*object.Boolean)
-				if bl.Value == true {
+				if bl.Value() == true {
 					return object.TRUE
 				}
 			}
@@ -1428,7 +1450,7 @@ func evalInfixSeqArray(op token.Token, left, right object.Item) object.Item {
 					return e
 				}
 				bl := e.(*object.Boolean)
-				if bl.Value == true {
+				if bl.Value() == true {
 					return object.TRUE
 				}
 			}
@@ -1442,7 +1464,7 @@ func evalInfixSeqArray(op token.Token, left, right object.Item) object.Item {
 					return e
 				}
 				bl := e.(*object.Boolean)
-				if bl.Value == true {
+				if bl.Value() == true {
 					return object.TRUE
 				}
 			}
@@ -1466,7 +1488,7 @@ func evalInfixArraySeq(op token.Token, left, right object.Item) object.Item {
 					return e
 				}
 				bl := e.(*object.Boolean)
-				if bl.Value == true {
+				if bl.Value() == true {
 					return object.TRUE
 				}
 			}
@@ -1480,7 +1502,7 @@ func evalInfixArraySeq(op token.Token, left, right object.Item) object.Item {
 					return e
 				}
 				bl := e.(*object.Boolean)
-				if bl.Value == true {
+				if bl.Value() == true {
 					return object.TRUE
 				}
 			}
@@ -1494,7 +1516,7 @@ func evalInfixArraySeq(op token.Token, left, right object.Item) object.Item {
 					return e
 				}
 				bl := e.(*object.Boolean)
-				if bl.Value == true {
+				if bl.Value() == true {
 					return object.TRUE
 				}
 			}
@@ -1508,7 +1530,7 @@ func evalInfixArraySeq(op token.Token, left, right object.Item) object.Item {
 					return e
 				}
 				bl := e.(*object.Boolean)
-				if bl.Value == true {
+				if bl.Value() == true {
 					return object.TRUE
 				}
 			}
@@ -1522,7 +1544,7 @@ func evalInfixArraySeq(op token.Token, left, right object.Item) object.Item {
 					return e
 				}
 				bl := e.(*object.Boolean)
-				if bl.Value == true {
+				if bl.Value() == true {
 					return object.TRUE
 				}
 			}
@@ -1536,7 +1558,7 @@ func evalInfixArraySeq(op token.Token, left, right object.Item) object.Item {
 					return e
 				}
 				bl := e.(*object.Boolean)
-				if bl.Value == true {
+				if bl.Value() == true {
 					return object.TRUE
 				}
 			}
@@ -1560,7 +1582,7 @@ func evalInfixSeqSeq(op token.Token, left, right object.Item) object.Item {
 					return e
 				}
 				bl := e.(*object.Boolean)
-				if bl.Value == true {
+				if bl.Value() == true {
 					return object.TRUE
 				}
 			}
@@ -1574,7 +1596,7 @@ func evalInfixSeqSeq(op token.Token, left, right object.Item) object.Item {
 					return e
 				}
 				bl := e.(*object.Boolean)
-				if bl.Value == true {
+				if bl.Value() == true {
 					return object.TRUE
 				}
 			}
@@ -1588,7 +1610,7 @@ func evalInfixSeqSeq(op token.Token, left, right object.Item) object.Item {
 					return e
 				}
 				bl := e.(*object.Boolean)
-				if bl.Value == true {
+				if bl.Value() == true {
 					return object.TRUE
 				}
 			}
@@ -1602,7 +1624,7 @@ func evalInfixSeqSeq(op token.Token, left, right object.Item) object.Item {
 					return e
 				}
 				bl := e.(*object.Boolean)
-				if bl.Value == true {
+				if bl.Value() == true {
 					return object.TRUE
 				}
 			}
@@ -1616,7 +1638,7 @@ func evalInfixSeqSeq(op token.Token, left, right object.Item) object.Item {
 					return e
 				}
 				bl := e.(*object.Boolean)
-				if bl.Value == true {
+				if bl.Value() == true {
 					return object.TRUE
 				}
 			}
@@ -1630,7 +1652,7 @@ func evalInfixSeqSeq(op token.Token, left, right object.Item) object.Item {
 					return e
 				}
 				bl := e.(*object.Boolean)
-				if bl.Value == true {
+				if bl.Value() == true {
 					return object.TRUE
 				}
 			}
@@ -1652,7 +1674,7 @@ func evalInfixSeqNumber(op token.Token, left, right object.Item) object.Item {
 				return e
 			}
 			bl := e.(*object.Boolean)
-			if bl.Value == true {
+			if bl.Value() == true {
 				return object.TRUE
 			}
 		}
@@ -1664,7 +1686,7 @@ func evalInfixSeqNumber(op token.Token, left, right object.Item) object.Item {
 				return e
 			}
 			bl := e.(*object.Boolean)
-			if bl.Value == true {
+			if bl.Value() == true {
 				return object.TRUE
 			}
 		}
@@ -1676,7 +1698,7 @@ func evalInfixSeqNumber(op token.Token, left, right object.Item) object.Item {
 				return e
 			}
 			bl := e.(*object.Boolean)
-			if bl.Value == true {
+			if bl.Value() == true {
 				return object.TRUE
 			}
 		}
@@ -1688,7 +1710,7 @@ func evalInfixSeqNumber(op token.Token, left, right object.Item) object.Item {
 				return e
 			}
 			bl := e.(*object.Boolean)
-			if bl.Value == true {
+			if bl.Value() == true {
 				return object.TRUE
 			}
 		}
@@ -1700,7 +1722,7 @@ func evalInfixSeqNumber(op token.Token, left, right object.Item) object.Item {
 				return e
 			}
 			bl := e.(*object.Boolean)
-			if bl.Value == true {
+			if bl.Value() == true {
 				return object.TRUE
 			}
 		}
@@ -1712,7 +1734,7 @@ func evalInfixSeqNumber(op token.Token, left, right object.Item) object.Item {
 				return e
 			}
 			bl := e.(*object.Boolean)
-			if bl.Value == true {
+			if bl.Value() == true {
 				return object.TRUE
 			}
 		}
@@ -1727,7 +1749,7 @@ func evalLogicalExpr(expr ast.ExprSingle, ctx *object.Context) object.Item {
 	var right object.Item
 	var op token.Token
 
-	builtin := bif.Builtins["boolean"]
+	builtin := bif.Builtins["fn:boolean"]
 
 	switch expr := expr.(type) {
 	case *ast.AndExpr:
@@ -1754,9 +1776,9 @@ func evalLogicalExpr(expr ast.ExprSingle, ctx *object.Context) object.Item {
 
 	switch op.Type {
 	case token.AND:
-		return &object.Boolean{Value: leftBool.Value && rightBool.Value}
+		return bif.NewBoolean(leftBool.Value() && rightBool.Value())
 	case token.OR:
-		return &object.Boolean{Value: leftBool.Value || rightBool.Value}
+		return bif.NewBoolean(leftBool.Value() || rightBool.Value())
 	default:
 		return object.NIL
 	}
@@ -1777,36 +1799,36 @@ func evalInfixBool(op token.Token, left, right object.Item) object.Item {
 	case token.EQ:
 		fallthrough
 	case token.EQV:
-		return &object.Boolean{Value: leftVal.Value == rightVal.Value}
+		return bif.NewBoolean(leftVal.Value() == rightVal.Value())
 	case token.NE:
 		fallthrough
 	case token.NEV:
-		return &object.Boolean{Value: leftVal.Value != rightVal.Value}
+		return bif.NewBoolean(leftVal.Value() != rightVal.Value())
 	case token.GT:
 		fallthrough
 	case token.GTV:
-		if leftVal.Value && !rightVal.Value {
+		if leftVal.Value() && !rightVal.Value() {
 			return object.TRUE
 		}
 		return object.FALSE
 	case token.GE:
 		fallthrough
 	case token.GEV:
-		if !leftVal.Value && rightVal.Value {
+		if !leftVal.Value() && rightVal.Value() {
 			return object.FALSE
 		}
 		return object.TRUE
 	case token.LT:
 		fallthrough
 	case token.LTV:
-		if !leftVal.Value && rightVal.Value {
+		if !leftVal.Value() && rightVal.Value() {
 			return object.TRUE
 		}
 		return object.FALSE
 	case token.LE:
 		fallthrough
 	case token.LEV:
-		if leftVal.Value && !rightVal.Value {
+		if leftVal.Value() && !rightVal.Value() {
 			return object.FALSE
 		}
 		return object.TRUE

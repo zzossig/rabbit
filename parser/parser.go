@@ -302,7 +302,12 @@ func (p *Parser) readNCName() string {
 // *must* used when current token is token.IDENT
 func (p *Parser) readEQName() string {
 	var sb strings.Builder
-	sb.WriteString(p.curToken.Literal) // cur token must token.IDENT
+
+	if p.curToken.Literal == "Q" && !p.peekSpace && p.peekTokenIs(token.LBRACE) {
+		sb.WriteString(p.readBracedURI())
+	} else {
+		sb.WriteString(p.curToken.Literal)
+	}
 
 	for {
 		if p.peekTokenIs(token.EOF) {

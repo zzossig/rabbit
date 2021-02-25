@@ -332,7 +332,7 @@ func (p *Param) String() string {
 	if p.EQName.Value() != "" {
 		sb.WriteString("$")
 		sb.WriteString(p.EQName.Value())
-		if p.TypeID != 0 {
+		if p.TypeDeclaration.TypeID != 0 {
 			sb.WriteString(" ")
 			sb.WriteString(p.TypeDeclaration.String())
 		}

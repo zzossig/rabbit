@@ -201,8 +201,8 @@ func TestPredicate(t *testing.T) {
 		for _, item := range sequence.Items {
 			switch item := item.(type) {
 			case *object.Integer:
-				if item.Value != tt.expected {
-					t.Errorf("item has wrong value. got=%d, want=%d", item.Value, tt.expected)
+				if item.Value() != tt.expected {
+					t.Errorf("item has wrong value. got=%d, want=%d", item.Value(), tt.expected)
 				}
 			}
 		}
@@ -224,8 +224,8 @@ func TestIfExpr(t *testing.T) {
 		for _, item := range sequence.Items {
 			switch item := item.(type) {
 			case *object.Integer:
-				if item.Value != tt.expected {
-					t.Errorf("item has wrong value. got=%d, want=%d", item.Value, tt.expected)
+				if item.Value() != tt.expected {
+					t.Errorf("item has wrong value. got=%d, want=%d", item.Value(), tt.expected)
 				}
 			}
 		}
@@ -260,7 +260,7 @@ func TestLetExpr(t *testing.T) {
 			`area = 78.5`,
 		},
 		{
-			`let $pi := 3.14, 
+			`let $pi := 3.14,
 				$area := function ($arg)
 				{
 					'area = ' ||	$pi * $arg * $arg
@@ -276,8 +276,8 @@ func TestLetExpr(t *testing.T) {
 		sequence := seq.(*object.Sequence)
 		item := sequence.Items[0].(*object.String)
 
-		if item.Value != tt.expected {
-			t.Errorf("got=%s, expected=%s", item.Value, tt.expected)
+		if item.Value() != tt.expected {
+			t.Errorf("got=%s, expected=%s", item.Value(), tt.expected)
 		}
 	}
 }
@@ -314,8 +314,8 @@ func TestQuantifiedExpr(t *testing.T) {
 		sequence := seq.(*object.Sequence)
 		for _, item := range sequence.Items {
 			bl := item.(*object.Boolean)
-			if bl.Value != tt.expected {
-				t.Errorf("got: %v, expected: %v", bl.Value, tt.expected)
+			if bl.Value() != tt.expected {
+				t.Errorf("got: %v, expected: %v", bl.Value(), tt.expected)
 			}
 		}
 	}
@@ -326,7 +326,6 @@ func testEval(input string) object.Item {
 	p := parser.New(l)
 	xpath := p.ParseXPath()
 	ctx := object.NewContext()
-	ctx.NewReaderFile("text.txt", true)
 
 	return Eval(xpath, ctx)
 }
@@ -334,20 +333,20 @@ func testEval(input string) object.Item {
 func testNumberObject(t *testing.T, item object.Item, expected interface{}) {
 	switch item := item.(type) {
 	case *object.Integer:
-		if item.Value != expected {
-			t.Errorf("object.Integer has wrong value. got=%d, want=%d", item.Value, expected)
+		if item.Value() != expected {
+			t.Errorf("object.Integer has wrong value. got=%d, want=%d", item.Value(), expected)
 		}
 	case *object.Decimal:
 		e := fmt.Sprintf("%f", expected)
-		v := fmt.Sprintf("%f", item.Value)
+		v := fmt.Sprintf("%f", item.Value())
 		if v != e {
-			t.Errorf("object.Decimal has wrong value. got=%f, want=%f", item.Value, expected)
+			t.Errorf("object.Decimal has wrong value. got=%f, want=%f", item.Value(), expected)
 		}
 	case *object.Double:
 		e := fmt.Sprintf("%f", expected)
-		v := fmt.Sprintf("%f", item.Value)
+		v := fmt.Sprintf("%f", item.Value())
 		if v != e {
-			t.Errorf("object.Double has wrong value. got=%f, want=%f", item.Value, expected)
+			t.Errorf("object.Double has wrong value. got=%f, want=%f", item.Value(), expected)
 		}
 	default:
 		t.Errorf("Unkown item type. got=%s", item.Type())
@@ -357,8 +356,8 @@ func testNumberObject(t *testing.T, item object.Item, expected interface{}) {
 func testStringObject(t *testing.T, item object.Item, expected interface{}) {
 	switch item := item.(type) {
 	case *object.String:
-		if item.Value != expected {
-			t.Errorf("object.String has wrong value. got=%s, want=%s", item.Value, expected)
+		if item.Value() != expected {
+			t.Errorf("object.String has wrong value. got=%s, want=%s", item.Value(), expected)
 		}
 	default:
 		t.Errorf("item type must object.String. got=%s", item.Type())

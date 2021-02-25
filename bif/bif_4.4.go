@@ -13,16 +13,18 @@ func abs(args ...object.Item) object.Item {
 
 	switch arg := args[0].(type) {
 	case *object.Integer:
-		v := arg.Value
+		v := arg.Value()
 		if v < 0 {
-			v = -v
+			arg.SetValue(-v)
 		}
-		return &object.Integer{Value: v}
+		return arg
 	case *object.Decimal:
-		return &object.Decimal{Value: math.Abs(arg.Value)}
+		arg.SetValue(math.Abs(arg.Value()))
+		return arg
 	case *object.Double:
-		return &object.Double{Value: math.Abs(arg.Value)}
-	default:
-		return NewError("argument to `abs` not supported, got %s", args[0].Type())
+		arg.SetValue(math.Abs(arg.Value()))
+		return arg
 	}
+
+	return object.NIL
 }

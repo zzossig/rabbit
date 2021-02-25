@@ -693,10 +693,10 @@ func (p *Parser) parseAttribNameOrWildcard() ast.AttribNameOrWildcard {
 }
 
 func (p *Parser) parseEQName() ast.EQName {
-	name := ast.EQName{}
-	name.SetValue(p.readEQName())
+	eqn := ast.EQName{}
+	eqn.SetValue(p.readEQName())
 
-	return name
+	return eqn
 }
 
 func (p *Parser) parseSequenceType() ast.SequenceType {

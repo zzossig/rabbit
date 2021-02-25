@@ -1114,14 +1114,14 @@ func TestAbbreviatedSyntax(t *testing.T) {
 		input    string
 		expected string
 	}{
-		// {
-		// 	"para",
-		// 	"para",
-		// },
-		// {
-		// 	"*",
-		// 	"*",
-		// },
+		{
+			"para",
+			"para",
+		},
+		{
+			"*",
+			"*",
+		},
 		{
 			"text()",
 			"text()",
@@ -1205,6 +1205,37 @@ func TestAbbreviatedSyntax(t *testing.T) {
 		{
 			"book/(chapter|appendix)/section",
 			"((book / (chapter | appendix)) / section)",
+		},
+	}
+
+	for _, tt := range tests {
+		l := lexer.New(tt.input)
+		p := New(l)
+		xpath := p.ParseXPath()
+
+		actual := xpath.String()
+		if actual != tt.expected {
+			t.Errorf("expected=%q, got=%q", tt.expected, actual)
+		}
+	}
+}
+
+func TestEQName(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected string
+	}{
+		{
+			"abc",
+			"abc",
+		},
+		{
+			"fn:abc",
+			"fn:abc",
+		},
+		{
+			"Q{http://www.w3.org/2005/xpath-functions/math}pi",
+			"Q{http://www.w3.org/2005/xpath-functions/math}pi",
 		},
 	}
 

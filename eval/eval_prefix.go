@@ -9,22 +9,22 @@ import (
 
 func evalIntegerLiteral(expr ast.ExprSingle, ctx *object.Context) object.Item {
 	il := expr.(*ast.IntegerLiteral)
-	return &object.Integer{Value: il.Value}
+	return bif.NewInteger(il.Value)
 }
 
 func evalDecimalLiteral(expr ast.ExprSingle, ctx *object.Context) object.Item {
 	dl := expr.(*ast.DecimalLiteral)
-	return &object.Decimal{Value: dl.Value}
+	return bif.NewDecimal(dl.Value)
 }
 
 func evalDoubleLiteral(expr ast.ExprSingle, ctx *object.Context) object.Item {
 	dl := expr.(*ast.DoubleLiteral)
-	return &object.Double{Value: dl.Value}
+	return bif.NewDouble(dl.Value)
 }
 
 func evalStringLiteral(expr ast.ExprSingle, ctx *object.Context) object.Item {
 	sl := expr.(*ast.StringLiteral)
-	return &object.String{Value: sl.Value}
+	return bif.NewString(sl.Value)
 }
 
 func evalPrefixExpr(expr ast.ExprSingle, ctx *object.Context) object.Item {
@@ -58,39 +58,39 @@ func evalPrefixExpr(expr ast.ExprSingle, ctx *object.Context) object.Item {
 }
 
 func evalPrefixInt(op token.Token, right object.Item, ctx *object.Context) object.Item {
-	rightVal := right.(*object.Integer).Value
+	rightVal := right.(*object.Integer).Value()
 
 	switch op.Type {
 	case token.PLUS:
-		return &object.Integer{Value: rightVal}
+		return bif.NewInteger(rightVal)
 	case token.MINUS:
-		return &object.Integer{Value: -1 * rightVal}
+		return bif.NewInteger(-1 * rightVal)
 	default:
 		return bif.NewError("The operator '%s' is not defined for operand of type %s\n", op.Literal, right.Type())
 	}
 }
 
 func evalPrefixDecimal(op token.Token, right object.Item, ctx *object.Context) object.Item {
-	rightVal := right.(*object.Decimal).Value
+	rightVal := right.(*object.Decimal).Value()
 
 	switch op.Type {
 	case token.PLUS:
-		return &object.Decimal{Value: rightVal}
+		return bif.NewDecimal(rightVal)
 	case token.MINUS:
-		return &object.Decimal{Value: -1 * rightVal}
+		return bif.NewDecimal(-1 * rightVal)
 	default:
 		return bif.NewError("The operator '%s' is not defined for operand of type %s\n", op.Literal, right.Type())
 	}
 }
 
 func evalPrefixDouble(op token.Token, right object.Item, ctx *object.Context) object.Item {
-	rightVal := right.(*object.Decimal).Value
+	rightVal := right.(*object.Decimal).Value()
 
 	switch op.Type {
 	case token.PLUS:
-		return &object.Decimal{Value: rightVal}
+		return bif.NewDouble(rightVal)
 	case token.MINUS:
-		return &object.Decimal{Value: -1 * rightVal}
+		return bif.NewDouble(-1 * rightVal)
 	default:
 		return bif.NewError("The operator '%s' is not defined for operand of type %s\n", op.Literal, right.Type())
 	}
@@ -98,7 +98,7 @@ func evalPrefixDouble(op token.Token, right object.Item, ctx *object.Context) ob
 
 func evalIfExpr(expr ast.ExprSingle, ctx *object.Context) object.Item {
 	ie := expr.(*ast.IfExpr)
-	builtin := bif.Builtins["boolean"]
+	builtin := bif.Builtins["fn:boolean"]
 
 	testE := Eval(ie.TestExpr, ctx)
 	bl := builtin(testE)
@@ -109,7 +109,7 @@ func evalIfExpr(expr ast.ExprSingle, ctx *object.Context) object.Item {
 
 	boolObj := bl.(*object.Boolean)
 
-	if boolObj.Value {
+	if boolObj.Value() {
 		return Eval(ie.ThenExpr, ctx)
 	}
 	return Eval(ie.ElseExpr, ctx)
@@ -188,10 +188,10 @@ func evalQuantifiedExpr(expr ast.ExprSingle, ctx *object.Context) object.Item {
 				ctx.Set(b.VarName.Value(), item)
 				e := evalQuantifiedExpr(nqe, ctx).(*object.Boolean)
 
-				if qe.Token.Type == token.EVERY && !e.Value {
+				if qe.Token.Type == token.EVERY && !e.Value() {
 					return object.FALSE
 				}
-				if qe.Token.Type == token.SOME && e.Value {
+				if qe.Token.Type == token.SOME && e.Value() {
 					return object.TRUE
 				}
 			}
@@ -199,10 +199,10 @@ func evalQuantifiedExpr(expr ast.ExprSingle, ctx *object.Context) object.Item {
 			ctx.Set(b.VarName.Value(), bval)
 			e := evalQuantifiedExpr(nqe, ctx).(*object.Boolean)
 
-			if qe.Token.Type == token.EVERY && !e.Value {
+			if qe.Token.Type == token.EVERY && !e.Value() {
 				return object.FALSE
 			}
-			if qe.Token.Type == token.SOME && e.Value {
+			if qe.Token.Type == token.SOME && e.Value() {
 				return object.TRUE
 			}
 		}
@@ -218,25 +218,25 @@ func evalQuantifiedExpr(expr ast.ExprSingle, ctx *object.Context) object.Item {
 			e, ok := Eval(qe.ExprSingle, ctx).(*object.Boolean)
 
 			if !ok {
-				builtin := bif.Builtins["boolean"]
+				builtin := bif.Builtins["fn:boolean"]
 				bl := builtin(e)
 				if bif.IsError(bl) {
 					return bl
 				}
 
 				boolObj := bl.(*object.Boolean)
-				if qe.Token.Type == token.EVERY && !boolObj.Value {
+				if qe.Token.Type == token.EVERY && !boolObj.Value() {
 					return object.FALSE
 				}
-				if qe.Token.Type == token.SOME && boolObj.Value {
+				if qe.Token.Type == token.SOME && boolObj.Value() {
 					return object.TRUE
 				}
 			}
 
-			if qe.Token.Type == token.EVERY && !e.Value {
+			if qe.Token.Type == token.EVERY && !e.Value() {
 				return object.FALSE
 			}
-			if qe.Token.Type == token.SOME && e.Value {
+			if qe.Token.Type == token.SOME && e.Value() {
 				return object.TRUE
 			}
 		}
@@ -245,25 +245,25 @@ func evalQuantifiedExpr(expr ast.ExprSingle, ctx *object.Context) object.Item {
 		e, ok := Eval(qe.ExprSingle, ctx).(*object.Boolean)
 
 		if !ok {
-			builtin := bif.Builtins["boolean"]
+			builtin := bif.Builtins["fn:boolean"]
 			bl := builtin(e)
 			if bif.IsError(bl) {
 				return bl
 			}
 
 			boolObj := bl.(*object.Boolean)
-			if qe.Token.Type == token.EVERY && !boolObj.Value {
+			if qe.Token.Type == token.EVERY && !boolObj.Value() {
 				return object.FALSE
 			}
-			if qe.Token.Type == token.SOME && boolObj.Value {
+			if qe.Token.Type == token.SOME && boolObj.Value() {
 				return object.TRUE
 			}
 		}
 
-		if qe.Token.Type == token.EVERY && !e.Value {
+		if qe.Token.Type == token.EVERY && !e.Value() {
 			return object.FALSE
 		}
-		if qe.Token.Type == token.SOME && e.Value {
+		if qe.Token.Type == token.SOME && e.Value() {
 			return object.TRUE
 		}
 	}
