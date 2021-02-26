@@ -384,8 +384,6 @@ func evalMapExpr(expr ast.ExprSingle, ctx *object.Context) object.Item {
 	return &object.Map{Pairs: pairs}
 }
 
-// KeySpecifier ::= NCName | IntegerLiteral | ParenthesizedExpr | "*"
-// TypeID ::=				1			 | 2							| 3									| 4
 func evalUnaryLookup(expr ast.ExprSingle, ctx *object.Context) object.Item {
 	ul := expr.(*ast.UnaryLookup)
 	seq := &object.Sequence{}

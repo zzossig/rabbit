@@ -27,34 +27,38 @@ func evalStringLiteral(expr ast.ExprSingle, ctx *object.Context) object.Item {
 	return bif.NewString(sl.Value)
 }
 
-func evalPrefixExpr(expr ast.ExprSingle, ctx *object.Context) object.Item {
-	var right object.Item
-	var op token.Token
-
-	switch expr := expr.(type) {
-	case *ast.UnaryExpr:
-		right = Eval(expr.ExprSingle, ctx)
-		op = expr.Token
-	default:
-		return bif.NewError("%T is not an prefix expression\n", expr)
+func evalIdentifier(ident *ast.Identifier, ctx *object.Context) object.Item {
+	if val, ok := ctx.Get(ident.EQName.Value()); ok {
+		return val
 	}
 
-	if bif.IsError(right) {
-		return right
+	return bif.NewError("identifier not found: " + ident.EQName.Value())
+}
+
+func evalUnaryExpr(expr ast.ExprSingle, ctx *object.Context) object.Item {
+	ue := expr.(*ast.UnaryExpr)
+
+	right := Eval(ue.ExprSingle, ctx)
+	op := ue.Token
+
+	var funcName string
+	if op.Type == token.UPLUS {
+		funcName = "op:numeric-unary-plus"
+	} else {
+		funcName = "op:numeric-unary-minus"
 	}
 
-	switch {
-	case right.Type() == object.IntegerType:
-		return evalPrefixInt(op, right, ctx)
-	case right.Type() == object.DecimalType:
-		return evalPrefixDecimal(op, right, ctx)
-	case right.Type() == object.DoubleType:
-		return evalPrefixDouble(op, right, ctx)
-	case right.Type() == object.NilType:
-		return object.NIL
-	default:
-		return bif.NewError("The operator '%s' is not defined for operand of type %s\n", op.Literal, right.Type())
+	builtin, ok := bif.Builtins[funcName]
+	if !ok {
+		return bif.NewError("function not found: %s", funcName)
 	}
+
+	check := bif.CheckBuiltinPTypes(funcName, []object.Item{right})
+	if bif.IsError(check) {
+		return check
+	}
+
+	return builtin(right)
 }
 
 func evalPrefixInt(op token.Token, right object.Item, ctx *object.Context) object.Item {
@@ -272,4 +276,144 @@ func evalQuantifiedExpr(expr ast.ExprSingle, ctx *object.Context) object.Item {
 		return object.TRUE
 	}
 	return object.FALSE
+}
+
+func evalAdditiveExpr(expr ast.ExprSingle, ctx *object.Context) object.Item {
+	ae := expr.(*ast.AdditiveExpr)
+
+	left := Eval(ae.LeftExpr, ctx)
+	right := Eval(ae.RightExpr, ctx)
+	op := ae.Token
+
+	var funcName string
+	if op.Type == token.PLUS {
+		funcName = "op:numeric-add"
+	} else {
+		funcName = "op:numeric-subtract"
+	}
+
+	builtin := bif.Builtins[funcName]
+
+	check := bif.CheckBuiltinPTypes(funcName, []object.Item{left, right})
+	if bif.IsError(check) {
+		return check
+	}
+
+	return builtin(left, right)
+}
+
+func evalMultiplicativeExpr(expr ast.ExprSingle, ctx *object.Context) object.Item {
+	me := expr.(*ast.MultiplicativeExpr)
+
+	left := Eval(me.LeftExpr, ctx)
+	right := Eval(me.RightExpr, ctx)
+	op := me.Token
+
+	var funcName string
+	if op.Type == token.ASTERISK {
+		funcName = "op:numeric-multiply"
+	} else if op.Type == token.DIV {
+		funcName = "op:numeric-divide"
+	} else if op.Type == token.IDIV {
+		funcName = "op:numeric-integer-divide"
+	} else {
+		funcName = "op:numeric-mod"
+	}
+
+	builtin := bif.Builtins[funcName]
+
+	check := bif.CheckBuiltinPTypes(funcName, []object.Item{left, right})
+	if bif.IsError(check) {
+		return check
+	}
+
+	return builtin(left, right)
+}
+
+func evalStringConcatExpr(expr ast.ExprSingle, ctx *object.Context) object.Item {
+	sce := expr.(*ast.StringConcatExpr)
+
+	left := Eval(sce.LeftExpr, ctx)
+	right := Eval(sce.RightExpr, ctx)
+
+	funcName := "fn:concat"
+	builtin := bif.Builtins[funcName]
+
+	check := bif.CheckBuiltinPTypes(funcName, []object.Item{left, right})
+	if bif.IsError(check) {
+		return check
+	}
+
+	return builtin(left, right)
+}
+
+func evalRangeExpr(expr ast.ExprSingle, ctx *object.Context) object.Item {
+	re := expr.(*ast.RangeExpr)
+
+	l := Eval(re.LeftExpr, ctx)
+	r := Eval(re.RightExpr, ctx)
+
+	left, ok := l.(*object.Integer)
+	if !ok {
+		return bif.NewError("wrong argument type: %s", left.Type())
+	}
+
+	right, ok := r.(*object.Integer)
+	if right.Type() != object.IntegerType {
+		return bif.NewError("wrong argument type: %s", right.Type())
+	}
+
+	seq := &object.Sequence{}
+	for i := left.Value(); i <= right.Value(); i++ {
+		seq.Items = append(seq.Items, bif.NewInteger(i))
+	}
+	return seq
+}
+
+func evalLogicalExpr(expr ast.ExprSingle, ctx *object.Context) object.Item {
+	var left object.Item
+	var right object.Item
+	var op token.Token
+
+	builtin := bif.Builtins["fn:boolean"]
+
+	switch expr := expr.(type) {
+	case *ast.AndExpr:
+		left = Eval(expr.LeftExpr, ctx)
+		right = Eval(expr.RightExpr, ctx)
+		op = expr.Token
+	case *ast.OrExpr:
+		left = Eval(expr.LeftExpr, ctx)
+		right = Eval(expr.RightExpr, ctx)
+		op = expr.Token
+	}
+
+	l := builtin(left)
+	if bif.IsError(l) {
+		return l
+	}
+	r := builtin(right)
+	if bif.IsError(r) {
+		return r
+	}
+
+	leftBool := l.(*object.Boolean)
+	rightBool := r.(*object.Boolean)
+
+	switch op.Type {
+	case token.AND:
+		return bif.NewBoolean(leftBool.Value() && rightBool.Value())
+	case token.OR:
+		return bif.NewBoolean(leftBool.Value() || rightBool.Value())
+	default:
+		return object.NIL
+	}
+}
+
+func evalUnionExpr(expr ast.ExprSingle, ctx *object.Context) object.Item {
+	return nil
+}
+
+func evalIntersectExceptExpr(expr ast.ExprSingle, ctx *object.Context) object.Item {
+	return nil
 }

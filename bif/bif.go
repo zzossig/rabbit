@@ -51,6 +51,28 @@ func BuiltinPTypes(name string, num int) []object.Type {
 	var ptypes []object.Type
 
 	switch name {
+	case "op:numeric-add":
+		fallthrough
+	case "op:numeric-subtract":
+		fallthrough
+	case "op:numeric-multiply":
+		fallthrough
+	case "op:numeric-divide":
+		fallthrough
+	case "op:numeric-integer-divide":
+		fallthrough
+	case "op:numeric-mod":
+		fallthrough
+	case "op:numeric-equal":
+		fallthrough
+	case "op:numeric-less-than":
+		fallthrough
+	case "op:numeric-greater-than":
+		ptypes = append(ptypes, []object.Type{object.NumericType, object.NumericType}...)
+	case "op:numeric-unary-plus":
+		fallthrough
+	case "op:numeric-unary-minus":
+		ptypes = append(ptypes, object.NumericType)
 	case "fn:abs":
 		ptypes = append(ptypes, object.NumericType)
 	case "fn:lower-case":

@@ -49,13 +49,13 @@ func Eval(expr ast.ExprSingle, ctx *object.Context) object.Item {
 	case *ast.StringConcatExpr:
 		return evalStringConcatExpr(expr, ctx)
 	case *ast.RangeExpr:
-		return evalInfixExpr(expr, ctx)
-	case *ast.UnionExpr:
-		return evalInfixExpr(expr, ctx)
-	case *ast.IntersectExceptExpr:
-		return evalInfixExpr(expr, ctx)
+		return evalRangeExpr(expr, ctx)
 	case *ast.ComparisonExpr:
-		return evalInfixExpr(expr, ctx)
+		return evalComparisonExpr(expr, ctx)
+	case *ast.UnionExpr:
+		return evalUnionExpr(expr, ctx)
+	case *ast.IntersectExceptExpr:
+		return evalIntersectExceptExpr(expr, ctx)
 	case *ast.OrExpr:
 		return evalLogicalExpr(expr, ctx)
 	case *ast.AndExpr:
@@ -63,7 +63,7 @@ func Eval(expr ast.ExprSingle, ctx *object.Context) object.Item {
 	case *ast.SimpleMapExpr:
 		return evalSimpleMapExpr(expr, ctx)
 	case *ast.UnaryExpr:
-		return evalPrefixExpr(expr, ctx)
+		return evalUnaryExpr(expr, ctx)
 	case *ast.SquareArrayConstructor:
 		return evalArrayExpr(expr, ctx)
 	case *ast.CurlyArrayConstructor:
