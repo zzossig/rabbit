@@ -20,6 +20,7 @@ var Builtins = map[string]object.Func{
 	"op:numeric-less-than":      numericLessThan,
 	"op:numeric-greater-than":   numericGreaterThan,
 
+	"fn:doc":           doc,
 	"fn:abs":           abs,
 	"fn:concat":        concat,
 	"fn:for-each-pair": forEachPair,
@@ -41,6 +42,8 @@ func BuiltinPNames(name string, num int) []string {
 		}
 	case "fn:for-each-pair":
 		pnames = append(pnames, []string{"seq1", "seq2", "action"}...)
+	case "fn:doc":
+		pnames = append(pnames, "uri")
 	}
 
 	return pnames
@@ -73,6 +76,8 @@ func BuiltinPTypes(name string, num int) []object.Type {
 		fallthrough
 	case "op:numeric-unary-minus":
 		ptypes = append(ptypes, object.NumericType)
+	case "fn:doc":
+		ptypes = append(ptypes, object.StringType)
 	case "fn:abs":
 		ptypes = append(ptypes, object.NumericType)
 	case "fn:lower-case":
@@ -196,71 +201,96 @@ func NewDouble(d float64) *object.Double {
 
 // IsError ..
 func IsError(item object.Item) bool {
-	if item != nil {
-		return item.Type() == object.ErrorType
+	if item == nil {
+		return false
 	}
-	return false
+	return item.Type() == object.ErrorType
 }
 
 // IsSeq ..
 func IsSeq(item object.Item) bool {
-	if _, ok := item.(*object.Sequence); ok {
-		return true
+	if item == nil {
+		return false
 	}
-	return false
+	return item.Type() == object.SequenceType
 }
 
 // IsPlaceholder ..
 func IsPlaceholder(item object.Item) bool {
-	if _, ok := item.(*object.Sequence); ok {
-		return true
+	if item == nil {
+		return false
 	}
-	return false
+	return item.Type() == object.PholderType
 }
 
 // IsNumeric ..
 func IsNumeric(item object.Item) bool {
-	if item.Type() == object.IntegerType ||
-		item.Type() == object.DecimalType ||
-		item.Type() == object.DoubleType {
-		return true
+	if item == nil {
+		return false
 	}
-	return false
+	return item.Type() == object.IntegerType ||
+		item.Type() == object.DecimalType ||
+		item.Type() == object.DoubleType
 }
 
 // IsFunction ..
 func IsFunction(item object.Item) bool {
-	if item.Type() == object.FuncType {
-		return true
+	if item == nil {
+		return false
 	}
-	return false
+	return item.Type() == object.FuncType
 }
 
 // IsAnyAtomic ..
 func IsAnyAtomic(item object.Item) bool {
-	if item.Type() == object.DoubleType ||
+	if item == nil {
+		return false
+	}
+	return item.Type() == object.DoubleType ||
 		item.Type() == object.DecimalType ||
 		item.Type() == object.IntegerType ||
 		item.Type() == object.StringType ||
-		item.Type() == object.BooleanType {
-		return true
-	}
-	return false
+		item.Type() == object.BooleanType
 }
 
 // IsNode ..
 func IsNode(item object.Item) bool {
-	if item.Type() == object.NodeType ||
-		item.Type() == object.DocType ||
-		item.Type() == object.ElemType ||
-		item.Type() == object.AttrType ||
-		item.Type() == object.PIType ||
-		item.Type() == object.CommentType ||
-		item.Type() == object.NSNodeType ||
-		item.Type() == object.TextType {
-		return true
+	if item == nil {
+		return false
 	}
-	return false
+	return item.Type() == object.NodeType
+}
+
+// IsMap ..
+func IsMap(item object.Item) bool {
+	if item == nil {
+		return false
+	}
+	return item.Type() == object.MapType
+}
+
+// IsArray ..
+func IsArray(item object.Item) bool {
+	if item == nil {
+		return false
+	}
+	return item.Type() == object.ArrayType
+}
+
+// IsString ..
+func IsString(item object.Item) bool {
+	if item == nil {
+		return false
+	}
+	return item.Type() == object.StringType
+}
+
+// IsBoolean ..
+func IsBoolean(item object.Item) bool {
+	if item == nil {
+		return false
+	}
+	return item.Type() == object.BooleanType
 }
 
 // IsEQ ..

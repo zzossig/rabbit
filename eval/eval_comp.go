@@ -16,76 +16,82 @@ func evalComparisonExpr(expr ast.ExprSingle, ctx *object.Context) object.Item {
 
 	switch {
 	case bif.IsNumeric(left) && bif.IsNumeric(right):
-		if op.Type == token.EQ || op.Type == token.EQV {
-			builtin := bif.Builtins["op:numeric-equal"]
-			return builtin(left, right)
-		} else if op.Type == token.NE || op.Type == token.NEV {
-			builtin := bif.Builtins["op:numeric-equal"]
-			b := builtin(left, right)
-			boolean := b.(*object.Boolean)
-
-			return bif.NewBoolean(!boolean.Value())
-		} else if op.Type == token.LT || op.Type == token.LTV {
-			builtin := bif.Builtins["op:numeric-less-than"]
-			return builtin(left, right)
-		} else if op.Type == token.GT || op.Type == token.GTV {
-			builtin := bif.Builtins["op:numeric-greater-than"]
-			return builtin(left, right)
-		} else if op.Type == token.LE || op.Type == token.LEV {
-			builtin := bif.Builtins["op:numeric-less-than"]
-			b := builtin(left, right)
-			boolean := b.(*object.Boolean)
-
-			if !boolean.Value() {
-				builtin = bif.Builtins["op:numeric-equal"]
-				return builtin(left, right)
-			}
-			return boolean
-		} else if op.Type == token.GE || op.Type == token.GEV {
-			builtin := bif.Builtins["op:numeric-greater-than"]
-			b := builtin(left, right)
-			boolean := b.(*object.Boolean)
-
-			if !boolean.Value() {
-				builtin = bif.Builtins["op:numeric-equal"]
-				return builtin(left, right)
-			}
-			return boolean
-		}
+		return compNumberNumber(op, left, right)
 	case bif.IsNumeric(left) && bif.IsSeq(right):
 		return compNumberSeq(op, left, right)
-	case bif.IsNumeric(left) && right.Type() == object.ArrayType:
+	case bif.IsNumeric(left) && bif.IsArray(right):
 		return compNumberArray(op, left, right)
-	case left.Type() == object.StringType && right.Type() == object.StringType:
+	case bif.IsString(left) && bif.IsString(right):
 		return compStringString(op, left, right)
-	case left.Type() == object.StringType && right.Type() == object.ArrayType:
+	case bif.IsString(left) && bif.IsArray(right):
 		return compStringArray(op, left, right)
-	case left.Type() == object.StringType && bif.IsSeq(right):
+	case bif.IsString(left) && bif.IsSeq(right):
 		return compStringSeq(op, left, right)
-	case left.Type() == object.ArrayType && bif.IsNumeric(right):
+	case bif.IsArray(left) && bif.IsNumeric(right):
 		return compArrayNumber(op, left, right)
-	case left.Type() == object.ArrayType && right.Type() == object.StringType:
+	case bif.IsArray(left) && bif.IsString(right):
 		return compArrayString(op, left, right)
-	case left.Type() == object.ArrayType && right.Type() == object.ArrayType:
+	case bif.IsArray(left) && bif.IsArray(right):
 		return compArrayArray(op, left, right)
-	case left.Type() == object.ArrayType && bif.IsSeq(right):
+	case bif.IsArray(left) && bif.IsSeq(right):
 		return compArraySeq(op, left, right)
 	case bif.IsSeq(left) && bif.IsNumeric(right):
 		return compSeqNumber(op, left, right)
-	case bif.IsSeq(left) && right.Type() == object.StringType:
+	case bif.IsSeq(left) && bif.IsString(right):
 		return compSeqString(op, left, right)
-	case bif.IsSeq(left) && right.Type() == object.ArrayType:
+	case bif.IsSeq(left) && bif.IsArray(right):
 		return compSeqArray(op, left, right)
 	case bif.IsSeq(left) && bif.IsSeq(right):
 		return compSeqSeq(op, left, right)
-	case left.Type() == object.BooleanType && right.Type() == object.BooleanType:
+	case bif.IsBoolean(left) && bif.IsBoolean(right):
 		return compBool(op, left, right)
 	}
 
 	return bif.NewError("The operator '%s' is not defined for operands of type %s and %s\n", op.Literal, left.Type(), right.Type())
 }
 
-func compNumberArray(op token.Token, left object.Item, right object.Item) object.Item {
+func compNumberNumber(op token.Token, left, right object.Item) object.Item {
+	if op.Type == token.EQ || op.Type == token.EQV {
+		builtin := bif.Builtins["op:numeric-equal"]
+		return builtin(left, right)
+	} else if op.Type == token.NE || op.Type == token.NEV {
+		builtin := bif.Builtins["op:numeric-equal"]
+		b := builtin(left, right)
+		boolean := b.(*object.Boolean)
+
+		return bif.NewBoolean(!boolean.Value())
+	} else if op.Type == token.LT || op.Type == token.LTV {
+		builtin := bif.Builtins["op:numeric-less-than"]
+		return builtin(left, right)
+	} else if op.Type == token.GT || op.Type == token.GTV {
+		builtin := bif.Builtins["op:numeric-greater-than"]
+		return builtin(left, right)
+	} else if op.Type == token.LE || op.Type == token.LEV {
+		builtin := bif.Builtins["op:numeric-less-than"]
+		b := builtin(left, right)
+		boolean := b.(*object.Boolean)
+
+		if !boolean.Value() {
+			builtin = bif.Builtins["op:numeric-equal"]
+			return builtin(left, right)
+		}
+		return boolean
+	} else if op.Type == token.GE || op.Type == token.GEV {
+		builtin := bif.Builtins["op:numeric-greater-than"]
+		b := builtin(left, right)
+		boolean := b.(*object.Boolean)
+
+		if !boolean.Value() {
+			builtin = bif.Builtins["op:numeric-equal"]
+			return builtin(left, right)
+		}
+		return boolean
+	}
+
+	return object.NIL
+}
+
+func compNumberArray(op token.Token, left, right object.Item) object.Item {
 	rightVal := right.(*object.Array)
 
 	switch op.Type {
@@ -166,7 +172,7 @@ func compNumberArray(op token.Token, left object.Item, right object.Item) object
 	}
 }
 
-func compNumberSeq(op token.Token, left object.Item, right object.Item) object.Item {
+func compNumberSeq(op token.Token, left, right object.Item) object.Item {
 	rightVal := right.(*object.Sequence)
 
 	switch op.Type {
@@ -247,7 +253,7 @@ func compNumberSeq(op token.Token, left object.Item, right object.Item) object.I
 	}
 }
 
-func compStringString(op token.Token, left object.Item, right object.Item) object.Item {
+func compStringString(op token.Token, left, right object.Item) object.Item {
 	leftVal := left.(*object.String).Value()
 	rightVal := right.(*object.String).Value()
 
@@ -281,7 +287,7 @@ func compStringString(op token.Token, left object.Item, right object.Item) objec
 	}
 }
 
-func compStringArray(op token.Token, left object.Item, right object.Item) object.Item {
+func compStringArray(op token.Token, left, right object.Item) object.Item {
 	leftVal := left.(*object.String)
 	rightVal := right.(*object.Array)
 
@@ -357,7 +363,7 @@ func compStringArray(op token.Token, left object.Item, right object.Item) object
 	}
 }
 
-func compStringSeq(op token.Token, left object.Item, right object.Item) object.Item {
+func compStringSeq(op token.Token, left, right object.Item) object.Item {
 	leftVal := left.(*object.String)
 	rightVal := right.(*object.Sequence)
 

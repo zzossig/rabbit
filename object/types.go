@@ -23,14 +23,7 @@ const (
 	FuncType  Type = "function"
 
 	// node
-	NodeType    Type = "node"
-	DocType     Type = "document"
-	ElemType    Type = "element"
-	AttrType    Type = "attribute"
-	PIType      Type = "processing-instruction"
-	CommentType Type = "comment"
-	NSNodeType  Type = "namespace-node"
-	TextType    Type = "text"
+	NodeType Type = "node"
 
 	// atomic
 	DoubleType  Type = "xs:double"

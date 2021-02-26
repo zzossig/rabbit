@@ -15,6 +15,12 @@ type Item interface {
 	Inspect() string
 }
 
+// Node ..
+type Node interface {
+	Item
+	node()
+}
+
 // predefined
 var (
 	NIL   = &Nil{}
@@ -239,3 +245,58 @@ func (s *String) HashKey() HashKey {
 
 	return HashKey{Type: s.Type(), Value: h.Sum64()}
 }
+
+type DocNode struct {
+	Parent, FirstChild, LastChild *Node
+
+	NodeName ast.EQName
+	Children []*Node
+	Attr     []*Node
+}
+
+func (dn *DocNode) node()           {}
+func (dn *DocNode) Type() Type      { return NodeType }
+func (dn *DocNode) Inspect() string { return dn.NodeName.Value() }
+
+type ElemNode struct {
+	Parent, FirstChild, LastChild, PrevSibling, NextSibling *Node
+
+	NodeName ast.EQName
+	Children []*Node
+	Attr     []*AttrNode
+}
+
+func (en *ElemNode) node()           {}
+func (en *ElemNode) Type() Type      { return NodeType }
+func (en *ElemNode) Inspect() string { return en.NodeName.Value() }
+
+type AttrNode struct {
+	Parent, PrevSibling, NextSibling *Node
+
+	NodeName ast.EQName
+	Data     string
+}
+
+func (an *AttrNode) node()           {}
+func (an *AttrNode) Type() Type      { return NodeType }
+func (an *AttrNode) Inspect() string { return an.Data }
+
+type TextNode struct {
+	Parent, PrevSibling, NextSibling *Node
+
+	Content string
+}
+
+func (tn *TextNode) node()           {}
+func (tn *TextNode) Type() Type      { return NodeType }
+func (tn *TextNode) Inspect() string { return tn.Content }
+
+type CommentNode struct {
+	Parent, PrevSibling, NextSibling *Node
+
+	Content string
+}
+
+func (cn *CommentNode) node()           {}
+func (cn *CommentNode) Type() Type      { return NodeType }
+func (cn *CommentNode) Inspect() string { return cn.Content }

@@ -7,6 +7,57 @@ import (
 	"github.com/zzossig/xpath/token"
 )
 
+func evalXPath(expr *ast.XPath, ctx *object.Context) object.Item {
+	xpath := &object.Sequence{}
+
+	for _, e := range expr.Exprs {
+		item := Eval(e, ctx)
+
+		switch item := item.(type) {
+		case *object.Sequence:
+			xpath.Items = append(xpath.Items, item.Items...)
+		default:
+			xpath.Items = append(xpath.Items, item)
+		}
+	}
+
+	return xpath
+}
+
+func evalExpr(expr ast.ExprSingle, ctx *object.Context) object.Item {
+	switch expr := expr.(type) {
+	case *ast.Expr:
+		seq := &object.Sequence{}
+		for _, e := range expr.Exprs {
+			item := Eval(e, ctx)
+			seq.Items = append(seq.Items, item)
+		}
+		return seq
+	case *ast.ParenthesizedExpr:
+		seq := &object.Sequence{}
+		for _, e := range expr.Exprs {
+			item := Eval(e, ctx)
+			seq.Items = append(seq.Items, item)
+		}
+		return seq
+	case *ast.EnclosedExpr:
+		seq := &object.Sequence{}
+		for _, e := range expr.Exprs {
+			item := Eval(e, ctx)
+			seq.Items = append(seq.Items, item)
+		}
+		return seq
+	case *ast.Predicate:
+		seq := &object.Sequence{}
+		for _, e := range expr.Exprs {
+			item := Eval(e, ctx)
+			seq.Items = append(seq.Items, item)
+		}
+		return seq
+	}
+	return object.NIL
+}
+
 func evalIntegerLiteral(expr ast.ExprSingle, ctx *object.Context) object.Item {
 	il := expr.(*ast.IntegerLiteral)
 	return bif.NewInteger(il.Value)
