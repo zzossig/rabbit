@@ -68,8 +68,8 @@ func (rpe *RelativePathExpr) String() string {
 // AxisStep ::= (ReverseStep | ForwardStep) PredicateList
 // TypeID ::= 	1						 | 2
 type AxisStep struct {
-	ForwardStep
 	ReverseStep
+	ForwardStep
 	PredicateList
 	TypeID byte
 }

@@ -23,7 +23,11 @@ const (
 	FuncType  Type = "function"
 
 	// node
-	NodeType Type = "node"
+	ErrorNodeType    Type = "0"
+	TextNodeType     Type = "1"
+	DocumentNodeType Type = "2"
+	ElementNodeType  Type = "3"
+	CommentNodeType  Type = "4"
 
 	// atomic
 	DoubleType  Type = "xs:double"
@@ -33,6 +37,7 @@ const (
 	BooleanType Type = "xs:boolean"
 
 	// abstract
+	NodeType      Type = "node"
 	NumericType   Type = "xs:numeric"
 	AnyAtomicType Type = "xs:anyAtomic"
 )

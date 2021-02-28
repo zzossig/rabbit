@@ -72,58 +72,7 @@ func (p *Parser) parseIdentifier() ast.ExprSingle {
 		return p.parseNamedFunctionRef(i)
 	}
 
-	if p.peekTokenIs(token.DCOLON) {
-		p.nextToken()
-
-		var sb strings.Builder
-		sb.WriteString(name.Value())
-		sb.WriteString(p.curToken.Literal)
-		axis := sb.String()
-
-		if util.IsForwardAxis(axis) {
-			as := &ast.AxisStep{}
-			as.TypeID = 2
-			as.ForwardStep.TypeID = 1
-			as.ForwardAxis.SetValue(axis)
-
-			p.nextToken()
-			as.ForwardStep.NodeTest = p.parseNodeTest()
-
-			if p.peekTokenIs(token.LBRACKET) {
-				p.nextToken()
-				as.PredicateList = p.parsePredicateList()
-			}
-
-			return as
-		}
-
-		if util.IsReverseAxis(axis) {
-			as := &ast.AxisStep{}
-
-			as.TypeID = 1
-			as.ReverseStep.TypeID = 1
-			as.ReverseAxis.SetValue(axis)
-
-			p.nextToken()
-			as.ReverseStep.NodeTest = p.parseNodeTest()
-
-			if p.peekTokenIs(token.LBRACKET) {
-				p.nextToken()
-				as.PredicateList = p.parsePredicateList()
-			}
-
-			return as
-		}
-	}
-
-	i := &ast.Identifier{}
-	i.EQName = name
-
-	if p.peekTokenIs(token.LBRACKET, token.LPAREN, token.QUESTION) {
-		return p.parsePostfixExpr(i)
-	}
-
-	return i
+	return p.parseAxisStep(&name)
 }
 
 func (p *Parser) parseIntegerLiteral() ast.ExprSingle {
@@ -794,56 +743,124 @@ func (p *Parser) parseParenthesizedExpr() ast.ExprSingle {
 }
 
 func (p *Parser) parsePathExpr() ast.ExprSingle {
-	expr := &ast.PathExpr{Token: p.curToken}
+	pe := &ast.PathExpr{Token: p.curToken}
+
+	if p.curTokenIs(token.DSLASH) && p.peekTokenIs(token.EOF) {
+		// TODO error unexpected end of xpath expr
+		return nil
+	}
 
 	precedence := p.curPrecedence()
 	p.nextToken()
-	expr.ExprSingle = p.parseExprSingle(precedence)
 
-	if p.peekTokenIs(token.LBRACKET, token.LPAREN, token.QUESTION) {
-		return p.parsePostfixExpr(expr)
+	if p.curTokenIs(token.AT) || p.curTokenIs(token.DDOT) {
+		pe.ExprSingle = p.parseAbbrevToken()
+	} else {
+		pe.ExprSingle = p.parseExprSingle(precedence)
 	}
 
-	return expr
+	return pe
 }
 
 func (p *Parser) parseRelativePathExpr(left ast.ExprSingle) ast.ExprSingle {
-	expr := &ast.RelativePathExpr{LeftExpr: left, Token: p.curToken}
+	rpe := &ast.RelativePathExpr{LeftExpr: left, Token: p.curToken}
+
+	if (p.curTokenIs(token.DSLASH) && p.peekTokenIs(token.EOF)) ||
+		(p.curTokenIs(token.SLASH) && p.peekTokenIs(token.EOF)) {
+		// TODO error unexpected end of xpath expr
+		return nil
+	}
 
 	precedence := p.curPrecedence()
 	p.nextToken()
-	right := p.parseExprSingle(precedence)
 
-	if right != nil {
-		expr.RightExpr = right
+	if p.curTokenIs(token.AT) || p.curTokenIs(token.DDOT) {
+		rpe.RightExpr = p.parseAbbrevToken()
+	} else {
+		rpe.RightExpr = p.parseExprSingle(precedence)
 	}
 
-	return expr
+	return rpe
 }
 
-func (p *Parser) parseAxisStep() ast.ExprSingle {
-	expr := &ast.AxisStep{}
+func (p *Parser) parseAxisStep(name *ast.EQName) ast.ExprSingle {
+	as := &ast.AxisStep{}
 
-	if p.curTokenIs(token.DDOT) {
-		expr.TypeID = 1
-		expr.ReverseStep.TypeID = 2
-		expr.ReverseStep.AbbrevReverseStep.Token = p.curToken
-	}
-	if p.curTokenIs(token.AT) {
-		expr.TypeID = 2
-		expr.ForwardStep.TypeID = 2
-		expr.ForwardStep.AbbrevForwardStep.Token = p.curToken
-
+	if p.peekTokenIs(token.DCOLON) {
 		p.nextToken()
-		expr.ForwardStep.AbbrevForwardStep.NodeTest = p.parseNodeTest()
+
+		var sb strings.Builder
+		sb.WriteString(name.Value())
+		sb.WriteString(p.curToken.Literal)
+		axis := sb.String()
+
+		if util.IsForwardAxis(axis) {
+			as.TypeID = 2
+			as.ForwardStep.TypeID = 1
+			as.ForwardAxis.SetValue(axis)
+
+			p.nextToken()
+			as.ForwardStep.NodeTest = p.parseNodeTest()
+
+			if p.peekTokenIs(token.LBRACKET) {
+				p.nextToken()
+				as.PredicateList = p.parsePredicateList()
+			}
+		} else if util.IsReverseAxis(axis) {
+			as.TypeID = 1
+			as.ReverseStep.TypeID = 1
+			as.ReverseAxis.SetValue(axis)
+
+			p.nextToken()
+			as.ReverseStep.NodeTest = p.parseNodeTest()
+
+			if p.peekTokenIs(token.LBRACKET) {
+				p.nextToken()
+				as.PredicateList = p.parsePredicateList()
+			}
+		} else {
+			// TODO error unknown axis
+			return nil
+		}
+	} else {
+		as.TypeID = 2
+		as.ForwardStep.TypeID = 2
+		as.AbbrevForwardStep.NodeTest = &ast.NameTest{EQName: *name, TypeID: 1}
 	}
 
 	if p.peekTokenIs(token.LBRACKET) {
 		p.nextToken()
-		expr.PredicateList = p.parsePredicateList()
+		as.PredicateList = p.parsePredicateList()
+	} else if p.peekTokenIs(token.LPAREN) {
+		return p.parsePostfixExpr(as)
 	}
 
-	return expr
+	return as
+}
+
+func (p *Parser) parseAbbrevToken() ast.ExprSingle {
+	as := &ast.AxisStep{}
+
+	switch p.curToken.Type {
+	case token.DDOT:
+		as.TypeID = 1
+		as.ReverseStep.TypeID = 2
+		as.ReverseStep.AbbrevReverseStep.Token = p.curToken
+	case token.AT:
+		as.TypeID = 2
+		as.ForwardStep.TypeID = 2
+		as.ForwardStep.AbbrevForwardStep.Token = p.curToken
+
+		p.nextToken()
+		as.ForwardStep.AbbrevForwardStep.NodeTest = p.parseNodeTest()
+	}
+
+	if p.peekTokenIs(token.LBRACKET) {
+		p.nextToken()
+		as.PredicateList = p.parsePredicateList()
+	}
+
+	return as
 }
 
 func (p *Parser) parseWildcard() ast.ExprSingle {

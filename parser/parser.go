@@ -137,8 +137,8 @@ func New(l *lexer.Lexer) *Parser {
 	p.prefixParseFns[token.DOT] = p.parseContextItemExpr
 	p.prefixParseFns[token.SLASH] = p.parsePathExpr
 	p.prefixParseFns[token.DSLASH] = p.parsePathExpr
-	p.prefixParseFns[token.DDOT] = p.parseAxisStep
-	p.prefixParseFns[token.AT] = p.parseAxisStep
+	p.prefixParseFns[token.DDOT] = p.parseAbbrevToken
+	p.prefixParseFns[token.AT] = p.parseAbbrevToken
 	p.prefixParseFns[token.IDENT] = p.parseIdentifier
 	p.prefixParseFns[token.ATTRIBUTE] = p.parseIdentifier
 	p.prefixParseFns[token.COMMENT] = p.parseIdentifier

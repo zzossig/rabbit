@@ -121,11 +121,11 @@ func CheckBuiltinPTypes(fname string, args []object.Item) object.Item {
 					isMatch = false
 				}
 			case object.MapType:
-				if args[i].Type() != object.MapType {
+				if !IsMap(args[i]) {
 					isMatch = false
 				}
 			case object.ArrayType:
-				if args[i].Type() != object.ArrayType {
+				if IsArray(args[i]) {
 					isMatch = false
 				}
 			case object.NodeType:
@@ -133,11 +133,11 @@ func CheckBuiltinPTypes(fname string, args []object.Item) object.Item {
 					isMatch = false
 				}
 			case object.StringType:
-				if args[i].Type() != object.StringType {
+				if IsString(args[i]) {
 					isMatch = false
 				}
 			case object.BooleanType:
-				if args[i].Type() != object.BooleanType {
+				if IsBoolean(args[i]) {
 					isMatch = false
 				}
 			case object.DoubleType, object.DecimalType:
@@ -258,7 +258,10 @@ func IsNode(item object.Item) bool {
 	if item == nil {
 		return false
 	}
-	return item.Type() == object.NodeType
+	return item.Type() == object.TextNodeType ||
+		item.Type() == object.DocumentNodeType ||
+		item.Type() == object.ElementNodeType ||
+		item.Type() == object.CommentNodeType
 }
 
 // IsMap ..

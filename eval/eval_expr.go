@@ -78,14 +78,6 @@ func evalStringLiteral(expr ast.ExprSingle, ctx *object.Context) object.Item {
 	return bif.NewString(sl.Value)
 }
 
-func evalIdentifier(ident *ast.Identifier, ctx *object.Context) object.Item {
-	if val, ok := ctx.Get(ident.EQName.Value()); ok {
-		return val
-	}
-
-	return bif.NewError("identifier not found: " + ident.EQName.Value())
-}
-
 func evalUnaryExpr(expr ast.ExprSingle, ctx *object.Context) object.Item {
 	ue := expr.(*ast.UnaryExpr)
 

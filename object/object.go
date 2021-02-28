@@ -7,18 +7,13 @@ import (
 	"strings"
 
 	"github.com/zzossig/xpath/ast"
+	"golang.org/x/net/html"
 )
 
 // Item ..
 type Item interface {
 	Type() Type
 	Inspect() string
-}
-
-// Node ..
-type Node interface {
-	Item
-	node()
 }
 
 // predefined
@@ -236,7 +231,7 @@ type String struct {
 }
 
 func (s *String) Type() Type        { return StringType }
-func (s *String) Inspect() string   { return fmt.Sprintf("%s", s.value) }
+func (s *String) Inspect() string   { return s.value }
 func (s *String) SetValue(v string) { s.value = v }
 func (s *String) Value() string     { return s.value }
 func (s *String) HashKey() HashKey {
@@ -246,57 +241,66 @@ func (s *String) HashKey() HashKey {
 	return HashKey{Type: s.Type(), Value: h.Sum64()}
 }
 
-type DocNode struct {
-	Parent, FirstChild, LastChild *Node
-
-	NodeName ast.EQName
-	Children []*Node
-	Attr     []*Node
+// Node ..
+type Node struct {
+	tree *html.Node
 }
 
-func (dn *DocNode) node()           {}
-func (dn *DocNode) Type() Type      { return NodeType }
-func (dn *DocNode) Inspect() string { return dn.NodeName.Value() }
-
-type ElemNode struct {
-	Parent, FirstChild, LastChild, PrevSibling, NextSibling *Node
-
-	NodeName ast.EQName
-	Children []*Node
-	Attr     []*AttrNode
+func (n *Node) Type() Type {
+	switch n.tree.Type {
+	case html.TextNode:
+		return TextNodeType
+	case html.DocumentNode:
+		return DocumentNodeType
+	case html.ElementNode:
+		return ElementNodeType
+	case html.CommentNode:
+		return CommentNodeType
+	default:
+		return ErrorNodeType
+	}
 }
-
-func (en *ElemNode) node()           {}
-func (en *ElemNode) Type() Type      { return NodeType }
-func (en *ElemNode) Inspect() string { return en.NodeName.Value() }
-
-type AttrNode struct {
-	Parent, PrevSibling, NextSibling *Node
-
-	NodeName ast.EQName
-	Data     string
+func (n *Node) Inspect() string         { return n.tree.Data }
+func (n *Node) SetTree(tree *html.Node) { n.tree = tree }
+func (n *Node) Self() *Node {
+	if n.tree != nil {
+		return &Node{n.tree}
+	}
+	return nil
 }
-
-func (an *AttrNode) node()           {}
-func (an *AttrNode) Type() Type      { return NodeType }
-func (an *AttrNode) Inspect() string { return an.Data }
-
-type TextNode struct {
-	Parent, PrevSibling, NextSibling *Node
-
-	Content string
+func (n *Node) Parent() *Node {
+	if n.tree.Parent != nil {
+		return &Node{n.tree.Parent}
+	}
+	return nil
 }
-
-func (tn *TextNode) node()           {}
-func (tn *TextNode) Type() Type      { return NodeType }
-func (tn *TextNode) Inspect() string { return tn.Content }
-
-type CommentNode struct {
-	Parent, PrevSibling, NextSibling *Node
-
-	Content string
+func (n *Node) FirstChild() *Node {
+	if n.tree.FirstChild != nil {
+		return &Node{n.tree.FirstChild}
+	}
+	return nil
 }
-
-func (cn *CommentNode) node()           {}
-func (cn *CommentNode) Type() Type      { return NodeType }
-func (cn *CommentNode) Inspect() string { return cn.Content }
+func (n *Node) LastChild() *Node {
+	if n.tree.LastChild != nil {
+		return &Node{n.tree.LastChild}
+	}
+	return nil
+}
+func (n *Node) PrevSibling() *Node {
+	if n.tree.PrevSibling != nil {
+		return &Node{n.tree.PrevSibling}
+	}
+	return nil
+}
+func (n *Node) NextSibling() *Node {
+	if n.tree.NextSibling != nil {
+		return &Node{n.tree.NextSibling}
+	}
+	return nil
+}
+func (n *Node) Attr() []html.Attribute {
+	if len(n.tree.Attr) > 0 {
+		return n.tree.Attr
+	}
+	return nil
+}

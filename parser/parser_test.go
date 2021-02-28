@@ -1250,3 +1250,38 @@ func TestEQName(t *testing.T) {
 		}
 	}
 }
+
+func TestPathExpr(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected string
+	}{
+		// {
+		// 	"/company",
+		// 	"/company",
+		// },
+		// {
+		// 	"//company",
+		// 	"//company",
+		// },
+		// {
+		// 	"//company/office",
+		// 	"(//company / office)",
+		// },
+		{
+			"//company/office/department",
+			"((//company / office) / department)",
+		},
+	}
+
+	for _, tt := range tests {
+		l := lexer.New(tt.input)
+		p := New(l)
+		xpath := p.ParseXPath()
+
+		actual := xpath.String()
+		if actual != tt.expected {
+			t.Errorf("expected=%q, got=%q", tt.expected, actual)
+		}
+	}
+}

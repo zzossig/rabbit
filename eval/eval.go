@@ -28,8 +28,6 @@ func Eval(expr ast.ExprSingle, ctx *object.Context) object.Item {
 		return evalExpr(expr, ctx)
 	case *ast.Predicate:
 		return evalExpr(expr, ctx)
-	case *ast.Identifier:
-		return evalIdentifier(expr, ctx)
 	case *ast.InlineFunctionExpr:
 		return evalFunctionLiteral(expr, ctx)
 	case *ast.NamedFunctionRef:

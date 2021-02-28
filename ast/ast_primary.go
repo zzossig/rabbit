@@ -5,7 +5,6 @@ import (
 	"strings"
 
 	"github.com/zzossig/xpath/token"
-	"github.com/zzossig/xpath/util"
 )
 
 // PrimaryExpr ::= Literal | VarRef | ParenthesizedExpr | ContextItemExpr | FunctionCall | FunctionItemExpr | MapConstructor | ArrayConstructor | UnaryLookup
@@ -115,24 +114,6 @@ func (i *Identifier) exprSingle()  {}
 func (i *Identifier) primaryExpr() {}
 func (i *Identifier) String() string {
 	return i.EQName.Value()
-}
-
-// Prefix ::= NCName
-// PrefixedName ::= Prefix ':' LocalPart
-func (i *Identifier) Prefix() string {
-	if !util.IsPrefixedName(i.EQName.Value()) {
-		return ""
-	}
-	return strings.Split(i.EQName.Value(), ":")[0]
-}
-
-// LocalPart ::= NCName
-// PrefixedName ::= Prefix ':' LocalPart
-func (i *Identifier) LocalPart() string {
-	if !util.IsPrefixedName(i.EQName.Value()) {
-		return i.EQName.Value()
-	}
-	return strings.Split(i.EQName.Value(), ":")[1]
 }
 
 // VarRef ::= "$" VarName

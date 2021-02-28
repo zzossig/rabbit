@@ -12,7 +12,7 @@ func boolean(args ...object.Item) object.Item {
 		if len(arg.Items) == 0 {
 			return object.FALSE
 		}
-		if arg.Items[0].Type() == object.NodeType {
+		if IsNode(arg.Items[0]) {
 			return object.TRUE
 		}
 		if len(arg.Items) == 1 {
