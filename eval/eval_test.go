@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/zzossig/xpath/bif"
 	"github.com/zzossig/xpath/lexer"
 	"github.com/zzossig/xpath/object"
 	"github.com/zzossig/xpath/parser"
@@ -321,11 +322,34 @@ func TestQuantifiedExpr(t *testing.T) {
 	}
 }
 
+func TestPathExpr(t *testing.T) {
+	tests := []string{
+		"//div",
+	}
+
+	for _, tt := range tests {
+		seq := testEval(tt)
+		sequence := seq.(*object.Sequence)
+		for _, item := range sequence.Items {
+			fmt.Println(item)
+		}
+	}
+}
+
 func testEval(input string) object.Item {
 	l := lexer.New(input)
 	p := parser.New(l)
 	xpath := p.ParseXPath()
 	ctx := object.NewContext()
+
+	docFunc := bif.Builtins["fn:doc"]
+	str := &object.String{}
+	str.SetValue("text.txt")
+	docNode := docFunc(str)
+	if !bif.IsError(docNode) {
+		d := docNode.(*object.BaseNode)
+		ctx.Doc = object.Node(d)
+	}
 
 	return Eval(xpath, ctx)
 }

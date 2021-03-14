@@ -261,7 +261,24 @@ func IsNode(item object.Item) bool {
 	return item.Type() == object.TextNodeType ||
 		item.Type() == object.DocumentNodeType ||
 		item.Type() == object.ElementNodeType ||
-		item.Type() == object.CommentNodeType
+		item.Type() == object.CommentNodeType ||
+		item.Type() == object.AttributeNodeType
+}
+
+// IsNodeSeq ..
+func IsNodeSeq(item object.Item) bool {
+	seq, ok := item.(*object.Sequence)
+	if !ok {
+		return false
+	}
+
+	for _, i := range seq.Items {
+		if !IsNode(i) {
+			return false
+		}
+	}
+
+	return true
 }
 
 // IsMap ..
@@ -570,4 +587,90 @@ func IsGE(left, right object.Item) object.Item {
 		}
 	}
 	return NewError("cannot compare %s and %s", left.Type(), right.Type())
+}
+
+// IsContain ..
+func IsContain(src []object.Item, target object.Item) bool {
+	for _, item := range src {
+		if item == target {
+			return true
+		}
+	}
+	return false
+}
+
+// IsContainN ..
+func IsContainN(src []object.Node, target object.Node) bool {
+	for _, item := range src {
+		if item == target {
+			return true
+		}
+	}
+	return false
+}
+
+// WalkDescKind ..
+func WalkDescKind(nodes []object.Node, n object.Node, typeID byte) {
+	for c := n.FirstChild(); c != nil; c = c.NextSibling() {
+		switch typeID {
+		case 2:
+			if c.Type() == object.ElementNodeType {
+				nodes = append(nodes, c)
+			}
+		case 3:
+			if c.Type() == object.ElementNodeType {
+				c := c.(*object.BaseNode)
+				nodes = append(nodes, c.Attr()...)
+			}
+		case 7:
+			if c.Type() == object.CommentNodeType {
+				nodes = append(nodes, c)
+			}
+		case 8:
+			if c.Type() == object.TextNodeType {
+				nodes = append(nodes, c)
+			}
+		case 10:
+			nodes = append(nodes, c)
+			if c.Type() == object.ElementNodeType {
+				c := c.(*object.BaseNode)
+				nodes = append(nodes, c.Attr()...)
+			}
+		}
+
+		if c.FirstChild() != nil {
+			WalkDescKind(nodes, c, typeID)
+		}
+	}
+}
+
+// WalkDescElemName ..
+func WalkDescElemName(nodes []object.Node, n object.Node, name string) {
+	for c := n.FirstChild(); c != nil; c = c.NextSibling() {
+		if c.Type() == object.ElementNodeType && c.Tree().Data == name {
+			nodes = append(nodes, c)
+		}
+
+		if c.FirstChild() != nil {
+			WalkDescElemName(nodes, c, name)
+		}
+	}
+}
+
+// WalkDescAttrName ..
+func WalkDescAttrName(nodes []object.Node, n object.Node, name string) {
+	for c := n.FirstChild(); c != nil; c = c.NextSibling() {
+		if c.Type() == object.ElementNodeType {
+			c := c.(*object.BaseNode)
+			for _, attr := range c.Attr() {
+				if attr.Tree().Data == name {
+					nodes = append(nodes, c)
+				}
+			}
+		}
+
+		if c.FirstChild() != nil {
+			WalkDescAttrName(nodes, c, name)
+		}
+	}
 }

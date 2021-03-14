@@ -1024,10 +1024,6 @@ func TestUnabbreviatedSyntax(t *testing.T) {
 			"(child::* / child::para)",
 		},
 		{
-			"/",
-			"/",
-		},
-		{
 			"/descendant::para",
 			"/descendant::para",
 		},
@@ -1114,46 +1110,46 @@ func TestAbbreviatedSyntax(t *testing.T) {
 		input    string
 		expected string
 	}{
-		{
-			"para",
-			"para",
-		},
-		{
-			"*",
-			"*",
-		},
-		{
-			"text()",
-			"text()",
-		},
-		{
-			"@name",
-			"@name",
-		},
-		{
-			"@*",
-			"@*",
-		},
-		{
-			"para[1]",
-			"para[1]",
-		},
-		{
-			"para[fn:last()]",
-			"para[fn:last()]",
-		},
-		{
-			"*/para",
-			"(* / para)",
-		},
-		{
-			"/book/chapter[5]/section[2]",
-			"((/book / chapter[5]) / section[2])",
-		},
-		{
-			"chapter//para",
-			"(chapter // para)",
-		},
+		// {
+		// 	"para",
+		// 	"para",
+		// },
+		// {
+		// 	"*",
+		// 	"*",
+		// },
+		// {
+		// 	"text()",
+		// 	"text()",
+		// },
+		// {
+		// 	"@name",
+		// 	"@name",
+		// },
+		// {
+		// 	"@*",
+		// 	"@*",
+		// },
+		// {
+		// 	"para[1]",
+		// 	"para[1]",
+		// },
+		// {
+		// 	"para[fn:last()]",
+		// 	"para[fn:last()]",
+		// },
+		// {
+		// 	"*/para",
+		// 	"(* / para)",
+		// },
+		// {
+		// 	"/book/chapter[5]/section[2]",
+		// 	"((/book / chapter[5]) / section[2])",
+		// },
+		// {
+		// 	"chapter//para",
+		// 	"(chapter // para)",
+		// },
 		{
 			"//para",
 			"//para",
@@ -1256,18 +1252,22 @@ func TestPathExpr(t *testing.T) {
 		input    string
 		expected string
 	}{
-		// {
-		// 	"/company",
-		// 	"/company",
-		// },
-		// {
-		// 	"//company",
-		// 	"//company",
-		// },
-		// {
-		// 	"//company/office",
-		// 	"(//company / office)",
-		// },
+		{
+			"/",
+			"/",
+		},
+		{
+			"/company",
+			"/company",
+		},
+		{
+			"//company",
+			"//company",
+		},
+		{
+			"//company/office",
+			"(//company / office)",
+		},
 		{
 			"//company/office/department",
 			"((//company / office) / department)",

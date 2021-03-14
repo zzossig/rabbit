@@ -23,11 +23,12 @@ const (
 	FuncType  Type = "function"
 
 	// node
-	ErrorNodeType    Type = "0"
-	TextNodeType     Type = "1"
-	DocumentNodeType Type = "2"
-	ElementNodeType  Type = "3"
-	CommentNodeType  Type = "4"
+	ErrorNodeType     Type = "0"
+	TextNodeType      Type = "1"
+	DocumentNodeType  Type = "2"
+	ElementNodeType   Type = "3"
+	CommentNodeType   Type = "4"
+	AttributeNodeType Type = "7"
 
 	// atomic
 	DoubleType  Type = "xs:double"

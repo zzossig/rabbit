@@ -16,6 +16,19 @@ type Item interface {
 	Inspect() string
 }
 
+// Node ..
+type Node interface {
+	Item
+	Tree() *html.Node
+	SetTree(t *html.Node)
+	Self() Node
+	Parent() Node
+	FirstChild() Node
+	LastChild() Node
+	PrevSibling() Node
+	NextSibling() Node
+}
+
 // predefined
 var (
 	NIL   = &Nil{}
@@ -241,13 +254,13 @@ func (s *String) HashKey() HashKey {
 	return HashKey{Type: s.Type(), Value: h.Sum64()}
 }
 
-// Node ..
-type Node struct {
+// BaseNode ..
+type BaseNode struct {
 	tree *html.Node
 }
 
-func (n *Node) Type() Type {
-	switch n.tree.Type {
+func (bn *BaseNode) Type() Type {
+	switch bn.tree.Type {
 	case html.TextNode:
 		return TextNodeType
 	case html.DocumentNode:
@@ -260,47 +273,76 @@ func (n *Node) Type() Type {
 		return ErrorNodeType
 	}
 }
-func (n *Node) Inspect() string         { return n.tree.Data }
-func (n *Node) SetTree(tree *html.Node) { n.tree = tree }
-func (n *Node) Self() *Node {
-	if n.tree != nil {
-		return &Node{n.tree}
+func (bn *BaseNode) Inspect() string         { return bn.tree.Data }
+func (bn *BaseNode) Tree() *html.Node        { return bn.tree }
+func (bn *BaseNode) SetTree(tree *html.Node) { bn.tree = tree }
+func (bn *BaseNode) Self() Node {
+	if bn.tree != nil {
+		return &BaseNode{bn.tree}
 	}
 	return nil
 }
-func (n *Node) Parent() *Node {
-	if n.tree.Parent != nil {
-		return &Node{n.tree.Parent}
+func (bn *BaseNode) Parent() Node {
+	if bn.tree.Parent != nil {
+		return &BaseNode{bn.tree.Parent}
 	}
 	return nil
 }
-func (n *Node) FirstChild() *Node {
-	if n.tree.FirstChild != nil {
-		return &Node{n.tree.FirstChild}
+func (bn *BaseNode) FirstChild() Node {
+	if bn.tree.FirstChild != nil {
+		return &BaseNode{bn.tree.FirstChild}
 	}
 	return nil
 }
-func (n *Node) LastChild() *Node {
-	if n.tree.LastChild != nil {
-		return &Node{n.tree.LastChild}
+func (bn *BaseNode) LastChild() Node {
+	if bn.tree.LastChild != nil {
+		return &BaseNode{bn.tree.LastChild}
 	}
 	return nil
 }
-func (n *Node) PrevSibling() *Node {
-	if n.tree.PrevSibling != nil {
-		return &Node{n.tree.PrevSibling}
+func (bn *BaseNode) PrevSibling() Node {
+	if bn.tree.PrevSibling != nil {
+		return &BaseNode{bn.tree.PrevSibling}
 	}
 	return nil
 }
-func (n *Node) NextSibling() *Node {
-	if n.tree.NextSibling != nil {
-		return &Node{n.tree.NextSibling}
+func (bn *BaseNode) NextSibling() Node {
+	if bn.tree.NextSibling != nil {
+		return &BaseNode{bn.tree.NextSibling}
 	}
 	return nil
 }
-func (n *Node) Attr() []html.Attribute {
-	if len(n.tree.Attr) > 0 {
-		return n.tree.Attr
+func (bn *BaseNode) Attr() []Node {
+	if len(bn.tree.Attr) > 0 {
+		var nodes []Node
+		for _, a := range bn.tree.Attr {
+			nodes = append(nodes, &AttrNode{bn.tree, &a})
+		}
+		return nodes
+	}
+	return nil
+}
+
+// AttrNode ..
+type AttrNode struct {
+	parent *html.Node
+	attr   *html.Attribute
+}
+
+func (an *AttrNode) Type() Type                   { return AttributeNodeType }
+func (an *AttrNode) Inspect() string              { return an.attr.Val }
+func (an *AttrNode) Key() string                  { return an.attr.Key }
+func (an *AttrNode) SetAttr(attr *html.Attribute) { an.attr = attr }
+func (an *AttrNode) SetTree(p *html.Node)         { an.parent = p }
+func (an *AttrNode) Tree() *html.Node             { return nil }
+func (an *AttrNode) Self() Node                   { return nil }
+func (an *AttrNode) FirstChild() Node             { return nil }
+func (an *AttrNode) LastChild() Node              { return nil }
+func (an *AttrNode) PrevSibling() Node            { return nil }
+func (an *AttrNode) NextSibling() Node            { return nil }
+func (an *AttrNode) Parent() Node {
+	if an.parent != nil {
+		return &BaseNode{an.parent}
 	}
 	return nil
 }

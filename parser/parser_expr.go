@@ -48,33 +48,6 @@ func (p *Parser) parseExprSingle(precedence int) ast.ExprSingle {
 	return leftExp
 }
 
-func (p *Parser) parseIdentifier() ast.ExprSingle {
-	name := p.parseEQName()
-
-	if p.peekTokenIs(token.LPAREN) {
-		p.nextToken()
-
-		fc := &ast.FunctionCall{}
-		fc.ArgumentList = p.parseArgumentList()
-		fc.EQName = name
-
-		return fc
-	}
-
-	if p.peekTokenIs(token.HASH) {
-		p.nextToken()
-
-		i := &ast.Identifier{}
-		i.EQName = name
-
-		// TODO should check name is reserved-function0name
-
-		return p.parseNamedFunctionRef(i)
-	}
-
-	return p.parseAxisStep(&name)
-}
-
 func (p *Parser) parseIntegerLiteral() ast.ExprSingle {
 	value, err := strconv.ParseInt(p.curToken.Literal, 0, 64)
 	il := &ast.IntegerLiteral{Value: int(value)}
@@ -253,7 +226,7 @@ func (p *Parser) parseCurlyArrayExpr() ast.ExprSingle {
 	expr := &ast.CurlyArrayConstructor{}
 
 	if !p.expectPeek(token.LBRACE) {
-		return nil
+		return p.parseStepExpr()
 	}
 
 	expr.EnclosedExpr = p.parseEnclosedExpr()
@@ -288,7 +261,7 @@ func (p *Parser) parseMapExpr() ast.ExprSingle {
 	expr := &ast.MapConstructor{}
 
 	if !p.expectPeek(token.LBRACE) {
-		return nil
+		return p.parseStepExpr()
 	}
 	if p.peekTokenIs(token.RBRACE) {
 		p.nextToken()
@@ -385,7 +358,7 @@ func (p *Parser) parseIfExpr() ast.ExprSingle {
 	expr := &ast.IfExpr{}
 
 	if !p.expectPeek(token.LPAREN) {
-		return nil
+		return p.parseStepExpr()
 	}
 	p.nextToken()
 
@@ -417,7 +390,7 @@ func (p *Parser) parseForExpr() ast.ExprSingle {
 
 	for {
 		if !p.expectPeek(token.DOLLAR) {
-			return nil
+			return p.parseStepExpr()
 		}
 		p.nextToken()
 
@@ -453,7 +426,7 @@ func (p *Parser) parseLetExpr() ast.ExprSingle {
 
 	for {
 		if !p.expectPeek(token.DOLLAR) {
-			return nil
+			return p.parseStepExpr()
 		}
 		p.nextToken()
 
@@ -488,7 +461,7 @@ func (p *Parser) parseQuantifiedExpr() ast.ExprSingle {
 
 	for {
 		if !p.expectPeek(token.DOLLAR) {
-			return nil
+			return p.parseStepExpr()
 		}
 		p.nextToken()
 
@@ -640,7 +613,7 @@ func (p *Parser) parseInlineFunctionExpr() ast.ExprSingle {
 	expr := &ast.InlineFunctionExpr{}
 
 	if !p.expectPeek(token.LPAREN) {
-		return nil
+		return p.parseStepExpr()
 	}
 
 	if !p.peekTokenIs(token.RPAREN) {
@@ -669,18 +642,14 @@ func (p *Parser) parseInlineFunctionExpr() ast.ExprSingle {
 }
 
 func (p *Parser) parseNamedFunctionRef(left ast.ExprSingle) ast.ExprSingle {
-	expr := &ast.NamedFunctionRef{}
-	ident, ok := left.(*ast.Identifier)
-	if !ok {
-		return nil
-	}
-
-	expr.EQName = ident.EQName
+	ident := left.(*ast.Identifier)
+	expr := &ast.NamedFunctionRef{EQName: ident.EQName}
 
 	p.nextToken()
 	il := p.parseIntegerLiteral()
 	i, ok := il.(*ast.IntegerLiteral)
 	if !ok {
+		// TODO error
 		return nil
 	}
 
@@ -750,13 +719,12 @@ func (p *Parser) parsePathExpr() ast.ExprSingle {
 		return nil
 	}
 
-	precedence := p.curPrecedence()
 	p.nextToken()
 
 	if p.curTokenIs(token.AT) || p.curTokenIs(token.DDOT) {
 		pe.ExprSingle = p.parseAbbrevToken()
 	} else {
-		pe.ExprSingle = p.parseExprSingle(precedence)
+		pe.ExprSingle = p.parseStepExpr()
 	}
 
 	return pe
@@ -783,8 +751,29 @@ func (p *Parser) parseRelativePathExpr(left ast.ExprSingle) ast.ExprSingle {
 	return rpe
 }
 
-func (p *Parser) parseAxisStep(name *ast.EQName) ast.ExprSingle {
+func (p *Parser) parseStepExpr() ast.ExprSingle {
 	as := &ast.AxisStep{}
+	name := p.parseEQName()
+
+	if p.peekTokenIs(token.LPAREN) {
+		p.nextToken()
+
+		fc := &ast.FunctionCall{}
+		fc.ArgumentList = p.parseArgumentList()
+		fc.EQName = name
+
+		return fc
+	}
+
+	if p.peekTokenIs(token.HASH) {
+		p.nextToken()
+		i := &ast.Identifier{EQName: name}
+		return p.parseNamedFunctionRef(i)
+	}
+
+	if p.peekTokenIs(token.COLON) || p.peekTokenIs(token.ASTERISK) {
+		return p.parseWildcard24(&name)
+	}
 
 	if p.peekTokenIs(token.DCOLON) {
 		p.nextToken()
@@ -825,7 +814,7 @@ func (p *Parser) parseAxisStep(name *ast.EQName) ast.ExprSingle {
 	} else {
 		as.TypeID = 2
 		as.ForwardStep.TypeID = 2
-		as.AbbrevForwardStep.NodeTest = &ast.NameTest{EQName: *name, TypeID: 1}
+		as.AbbrevForwardStep.NodeTest = &ast.NameTest{EQName: name, TypeID: 1}
 	}
 
 	if p.peekTokenIs(token.LBRACKET) {
@@ -863,16 +852,39 @@ func (p *Parser) parseAbbrevToken() ast.ExprSingle {
 	return as
 }
 
-func (p *Parser) parseWildcard() ast.ExprSingle {
-	expr := &ast.Wildcard{}
+func (p *Parser) parseWildcard13() ast.ExprSingle {
+	w := &ast.Wildcard{}
 
 	if p.peekTokenIs(token.COLON) {
 		p.nextToken()
-		expr.NCName.SetValue(p.readNCName())
-		expr.TypeID = 3
+		p.nextToken()
+		w.NCName.SetValue(p.readNCName())
+		w.TypeID = 3
 	} else {
-		expr.TypeID = 1
+		w.TypeID = 1
 	}
 
-	return expr
+	return w
+}
+
+func (p *Parser) parseWildcard24(name *ast.EQName) ast.ExprSingle {
+	w := &ast.Wildcard{}
+
+	if p.peekTokenIs(token.COLON) {
+		p.nextToken()
+		if !p.peekTokenIs(token.ASTERISK) {
+			// TODO error
+			return nil
+		}
+		p.nextToken()
+
+		w.NCName.SetValue(name.Local())
+		w.TypeID = 2
+	} else if p.peekTokenIs(token.ASTERISK) {
+		p.nextToken()
+		w.BracedURILiteral.SetValue(name.BracedURILiteral.Value())
+		w.TypeID = 4
+	}
+
+	return w
 }

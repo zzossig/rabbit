@@ -129,9 +129,6 @@ func evalPredicate(it object.Item, pred *ast.Predicate, ctx *object.Context) obj
 		case *object.String:
 			builtin := bif.Builtins["fn:boolean"]
 			bl := builtin(ev)
-			if bif.IsError(bl) {
-				return bl
-			}
 
 			boolObj := bl.(*object.Boolean)
 			if boolObj.Value() {

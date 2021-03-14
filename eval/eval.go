@@ -78,6 +78,12 @@ func Eval(expr ast.ExprSingle, ctx *object.Context) object.Item {
 		return evalMapExpr(expr, ctx)
 	case *ast.UnaryLookup:
 		return evalUnaryLookup(expr, ctx)
+	case *ast.PathExpr:
+		return evalPathExpr(expr, ctx)
+	case *ast.RelativePathExpr:
+		return evalRelativePathExpr(expr, ctx)
+	case *ast.AxisStep:
+		return evalAxisStep(expr, ctx)
 	}
 
 	return object.NIL

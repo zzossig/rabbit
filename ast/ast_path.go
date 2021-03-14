@@ -91,32 +91,6 @@ func (as *AxisStep) String() string {
 	return sb.String()
 }
 
-// ForwardStep ::= (ForwardAxis NodeTest) | AbbrevForwardStep
-// TypeID ::=			 1											| 2
-type ForwardStep struct {
-	ForwardAxis
-	NodeTest
-	AbbrevForwardStep
-	TypeID byte
-}
-
-func (fs *ForwardStep) exprSingle() {}
-func (fs *ForwardStep) String() string {
-	var sb strings.Builder
-
-	switch fs.TypeID {
-	case 1:
-		sb.WriteString(fs.ForwardAxis.Value())
-		sb.WriteString(fs.NodeTest.String())
-	case 2:
-		sb.WriteString(fs.AbbrevForwardStep.String())
-	default:
-		sb.WriteString("")
-	}
-
-	return sb.String()
-}
-
 // ReverseStep ::= (ReverseAxis NodeTest) | AbbrevReverseStep
 // TypeID ::=			 1											| 2
 type ReverseStep struct {
@@ -143,41 +117,6 @@ func (rs *ReverseStep) String() string {
 	return sb.String()
 }
 
-// ForwardAxis ::= ("child" "::") | ("descendant" "::") | ("attribute" "::") | ("self" "::") | ("descendant-or-self" "::") | ("following-sibling" "::") | ("following" "::") | ("namespace" "::")
-type ForwardAxis struct {
-	value string
-}
-
-// Value is a getter for the value field
-func (fa *ForwardAxis) Value() string {
-	return fa.value
-}
-
-// SetValue is a setter for the value field
-func (fa *ForwardAxis) SetValue(str string) {
-	if util.IsForwardAxis(str) {
-		fa.value = str
-	} else {
-		// TODO error
-	}
-}
-
-// AbbrevForwardStep ::= "@"? NodeTest
-type AbbrevForwardStep struct {
-	Token token.Token
-	NodeTest
-}
-
-func (afs *AbbrevForwardStep) exprSingle() {}
-func (afs *AbbrevForwardStep) String() string {
-	var sb strings.Builder
-
-	sb.WriteString(afs.Token.Literal)
-	sb.WriteString(afs.NodeTest.String())
-
-	return sb.String()
-}
-
 // ReverseAxis ::= ("parent" "::") | ("ancestor" "::") | ("preceding-sibling" "::") | ("preceding" "::") | ("ancestor-or-self" "::")
 type ReverseAxis struct {
 	value string
@@ -197,6 +136,51 @@ func (ra *ReverseAxis) SetValue(str string) {
 	}
 }
 
+// ForwardStep ::= (ForwardAxis NodeTest) | AbbrevForwardStep
+// TypeID ::=			 1											| 2
+type ForwardStep struct {
+	ForwardAxis
+	NodeTest
+	AbbrevForwardStep
+	TypeID byte
+}
+
+func (fs *ForwardStep) exprSingle() {}
+func (fs *ForwardStep) String() string {
+	var sb strings.Builder
+
+	switch fs.TypeID {
+	case 1:
+		sb.WriteString(fs.ForwardAxis.Value())
+		sb.WriteString(fs.NodeTest.String())
+	case 2:
+		sb.WriteString(fs.AbbrevForwardStep.String())
+	default:
+		sb.WriteString("")
+	}
+
+	return sb.String()
+}
+
+// ForwardAxis ::= ("child" "::") | ("descendant" "::") | ("attribute" "::") | ("self" "::") | ("descendant-or-self" "::") | ("following-sibling" "::") | ("following" "::") | ("namespace" "::")
+type ForwardAxis struct {
+	value string
+}
+
+// Value is a getter for the value field
+func (fa *ForwardAxis) Value() string {
+	return fa.value
+}
+
+// SetValue is a setter for the value field
+func (fa *ForwardAxis) SetValue(str string) {
+	if util.IsForwardAxis(str) {
+		fa.value = str
+	} else {
+		// TODO error
+	}
+}
+
 // AbbrevReverseStep ::= ".."
 type AbbrevReverseStep struct {
 	Token token.Token
@@ -205,6 +189,22 @@ type AbbrevReverseStep struct {
 func (ars *AbbrevReverseStep) exprSingle() {}
 func (ars *AbbrevReverseStep) String() string {
 	return ars.Token.Literal
+}
+
+// AbbrevForwardStep ::= "@"? NodeTest
+type AbbrevForwardStep struct {
+	Token token.Token
+	NodeTest
+}
+
+func (afs *AbbrevForwardStep) exprSingle() {}
+func (afs *AbbrevForwardStep) String() string {
+	var sb strings.Builder
+
+	sb.WriteString(afs.Token.Literal)
+	sb.WriteString(afs.NodeTest.String())
+
+	return sb.String()
 }
 
 // NameTest ::= EQName | Wildcard

@@ -11,7 +11,7 @@ import (
 
 func doc(args ...object.Item) object.Item {
 	uri := args[0].(*object.String)
-	docNode := &object.Node{}
+	docNode := &object.BaseNode{}
 
 	if file, ferr := os.Open(uri.Value()); ferr == nil {
 		defer file.Close()
@@ -21,6 +21,7 @@ func doc(args ...object.Item) object.Item {
 		if err != nil {
 			return NewError(err.Error())
 		}
+		parsedHTML.Type = html.DocumentNode
 
 		docNode.SetTree(parsedHTML)
 		return docNode
@@ -34,6 +35,7 @@ func doc(args ...object.Item) object.Item {
 		if err != nil {
 			return NewError(err.Error())
 		}
+		parsedHTML.Type = html.DocumentNode
 
 		docNode.SetTree(parsedHTML)
 		return docNode

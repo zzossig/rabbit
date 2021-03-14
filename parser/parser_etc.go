@@ -692,6 +692,7 @@ func (p *Parser) parseAttribNameOrWildcard() ast.AttribNameOrWildcard {
 	return anow
 }
 
+// parseEQName can returns BracedURILiteral which is not an EQName
 func (p *Parser) parseEQName() ast.EQName {
 	eqn := ast.EQName{}
 	eqn.SetValue(p.readEQName())

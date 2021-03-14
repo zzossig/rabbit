@@ -16,7 +16,7 @@ func boolean(args ...object.Item) object.Item {
 			return object.TRUE
 		}
 		if len(arg.Items) == 1 {
-			// return boolean(ctx, arg.Items[0])
+			return boolean(arg.Items[0])
 		}
 	case *object.Boolean:
 		return arg
@@ -42,5 +42,5 @@ func boolean(args ...object.Item) object.Item {
 		return object.TRUE
 	}
 
-	return NewError("[err:FORG0006]")
+	return object.FALSE
 }

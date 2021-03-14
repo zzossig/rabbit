@@ -4,7 +4,18 @@ package object
 type Context struct {
 	store map[string]Item
 	outer *Context
+	Doc   Node
+	CNode []Node
 	CItem Item
+	CSize int
+	CPos  int
+	CAxis string
+}
+
+// NewContext ...
+func NewContext() *Context {
+	s := make(map[string]Item)
+	return &Context{store: s, outer: nil}
 }
 
 // NewEnclosedContext ...
@@ -12,12 +23,6 @@ func NewEnclosedContext(outer *Context) *Context {
 	ctx := NewContext()
 	ctx.outer = outer
 	return ctx
-}
-
-// NewContext ...
-func NewContext() *Context {
-	s := make(map[string]Item)
-	return &Context{store: s, outer: nil}
 }
 
 // Get ...

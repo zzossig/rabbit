@@ -149,11 +149,6 @@ func evalIfExpr(expr ast.ExprSingle, ctx *object.Context) object.Item {
 
 	testE := Eval(ie.TestExpr, ctx)
 	bl := builtin(testE)
-
-	if bif.IsError(bl) {
-		return bl
-	}
-
 	boolObj := bl.(*object.Boolean)
 
 	if boolObj.Value() {
@@ -267,9 +262,6 @@ func evalQuantifiedExpr(expr ast.ExprSingle, ctx *object.Context) object.Item {
 			if !ok {
 				builtin := bif.Builtins["fn:boolean"]
 				bl := builtin(e)
-				if bif.IsError(bl) {
-					return bl
-				}
 
 				boolObj := bl.(*object.Boolean)
 				if qe.Token.Type == token.EVERY && !boolObj.Value() {
@@ -294,9 +286,6 @@ func evalQuantifiedExpr(expr ast.ExprSingle, ctx *object.Context) object.Item {
 		if !ok {
 			builtin := bif.Builtins["fn:boolean"]
 			bl := builtin(e)
-			if bif.IsError(bl) {
-				return bl
-			}
 
 			boolObj := bl.(*object.Boolean)
 			if qe.Token.Type == token.EVERY && !boolObj.Value() {
@@ -432,13 +421,7 @@ func evalLogicalExpr(expr ast.ExprSingle, ctx *object.Context) object.Item {
 	}
 
 	l := builtin(left)
-	if bif.IsError(l) {
-		return l
-	}
 	r := builtin(right)
-	if bif.IsError(r) {
-		return r
-	}
 
 	leftBool := l.(*object.Boolean)
 	rightBool := r.(*object.Boolean)
