@@ -347,12 +347,37 @@ func TestDocNode(t *testing.T) {
 	if !bif.IsError(sequence.Items[0]) {
 		t.Errorf("// is not a valid xpath expression")
 	}
+
+	seq2 := testEval("/div")
+	sequence2 := seq2.(*object.Sequence)
+	if sequence2.Items != nil {
+		t.Errorf("doc node not have a div node of child")
+	}
 }
 
-// func TestPathExpr(t *testing.T) {
-// 	seq := testEval("/div")
-// 	sequence := seq.(*object.Sequence)
-// }
+func TestPathExpr(t *testing.T) {
+	seq := testEval("//title")
+	sequence := seq.(*object.Sequence)
+	if len(sequence.Items) != 1 {
+		t.Errorf("wrong number of items. got=%d, expected=1", len(sequence.Items))
+	}
+
+	seq2 := testEval("//title/text()")
+	sequence2 := seq2.(*object.Sequence)
+	node := sequence2.Items[0].(*object.BaseNode)
+	if node.Type() != object.TextNodeType {
+		t.Errorf("wrong node type. got=%s, expected=TextNodeType", node.Type())
+	}
+	if node.Tree().Data != "Quotes to Scrape" {
+		t.Errorf("wrong text value. got=%s, expected='Quotes to Scrape'", node.Tree().Data)
+	}
+
+	seq3 := testEval("//div")
+	sequence3 := seq3.(*object.Sequence)
+	if len(sequence3.Items) != 28 {
+		t.Errorf("wrong number of items. got=%d, expected=28", len(sequence3.Items))
+	}
+}
 
 func testEval(input string) object.Item {
 	l := lexer.New(input)
@@ -362,7 +387,7 @@ func testEval(input string) object.Item {
 
 	docFunc := bif.Builtins["fn:doc"]
 	str := &object.String{}
-	str.SetValue("testdata/go1.html")
+	str.SetValue("testdata/quotes-1.html")
 	docNode := docFunc(str)
 	if !bif.IsError(docNode) {
 		d := docNode.(*object.BaseNode)

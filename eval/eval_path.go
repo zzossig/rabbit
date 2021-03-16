@@ -82,7 +82,7 @@ func evalAxisStep(expr ast.ExprSingle, ctx *object.Context) object.Item {
 			if as.AbbrevForwardStep.Token.Type == token.AT {
 				ctx.CAxis = "attribute::"
 			}
-			if as.ForwardStep.NodeTest == nil {
+			if as.AbbrevForwardStep.NodeTest == nil {
 				if ctx.CItem.Type() == object.DocumentNodeType {
 					return ctx.Doc
 				} else {

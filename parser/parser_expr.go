@@ -852,7 +852,11 @@ func (p *Parser) parseStepExpr() ast.ExprSingle {
 
 		as.TypeID = 2
 		as.ForwardStep.TypeID = 2
-		as.AbbrevForwardStep.NodeTest = &ast.NameTest{EQName: name, TypeID: 1}
+		if name.TypeID == 0 {
+			as.AbbrevForwardStep.NodeTest = nil
+		} else {
+			as.AbbrevForwardStep.NodeTest = &ast.NameTest{EQName: name, TypeID: 1}
+		}
 	}
 
 	if p.peekTokenIs(token.LBRACKET) {
