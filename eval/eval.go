@@ -2,6 +2,7 @@ package eval
 
 import (
 	"github.com/zzossig/xpath/ast"
+	"github.com/zzossig/xpath/bif"
 	"github.com/zzossig/xpath/object"
 )
 
@@ -86,5 +87,5 @@ func Eval(expr ast.ExprSingle, ctx *object.Context) object.Item {
 		return evalAxisStep(expr, ctx)
 	}
 
-	return object.NIL
+	return bif.NewError("not a valid xpath expression")
 }

@@ -97,9 +97,7 @@ func evalPredicate(it object.Item, pred *ast.Predicate, ctx *object.Context) obj
 
 	switch it := it.(type) {
 	case *object.Sequence:
-		for _, item := range it.Items {
-			src = append(src, item)
-		}
+		src = append(src, it.Items...)
 	default:
 		src = append(src, it)
 	}
@@ -172,9 +170,7 @@ func evalLookup(it object.Item, lu *ast.Lookup, ctx *object.Context) object.Item
 				}
 			}
 		case 4:
-			for _, item := range it.Items {
-				seq.Items = append(seq.Items, item)
-			}
+			seq.Items = append(seq.Items, it.Items...)
 		}
 	case *object.Map:
 		switch lu.KeySpecifier.TypeID {
@@ -324,9 +320,7 @@ func evalSimpleMapExpr(expr ast.ExprSingle, ctx *object.Context) object.Item {
 	var cItems []object.Item
 	switch left := left.(type) {
 	case *object.Sequence:
-		for _, item := range left.Items {
-			cItems = append(cItems, item)
-		}
+		cItems = append(cItems, left.Items...)
 	default:
 		cItems = append(cItems, left)
 	}
@@ -410,9 +404,7 @@ func evalUnaryLookup(expr ast.ExprSingle, ctx *object.Context) object.Item {
 				seq.Items = append(seq.Items, it.Items[i.Value()-1])
 			}
 		case 4:
-			for _, item := range it.Items {
-				seq.Items = append(seq.Items, item)
-			}
+			seq.Items = append(seq.Items, it.Items...)
 		}
 	case *object.Map:
 		switch ul.KeySpecifier.TypeID {

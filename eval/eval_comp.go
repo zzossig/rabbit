@@ -102,7 +102,7 @@ func compNumberArray(op token.Token, left, right object.Item) object.Item {
 				return e
 			}
 			bl := e.(*object.Boolean)
-			if bl.Value() == true {
+			if bl.Value() {
 				return object.TRUE
 			}
 		}
@@ -114,7 +114,7 @@ func compNumberArray(op token.Token, left, right object.Item) object.Item {
 				return e
 			}
 			bl := e.(*object.Boolean)
-			if bl.Value() == true {
+			if bl.Value() {
 				return object.TRUE
 			}
 		}
@@ -126,7 +126,7 @@ func compNumberArray(op token.Token, left, right object.Item) object.Item {
 				return e
 			}
 			bl := e.(*object.Boolean)
-			if bl.Value() == true {
+			if bl.Value() {
 				return object.TRUE
 			}
 		}
@@ -138,7 +138,7 @@ func compNumberArray(op token.Token, left, right object.Item) object.Item {
 				return e
 			}
 			bl := e.(*object.Boolean)
-			if bl.Value() == true {
+			if bl.Value() {
 				return object.TRUE
 			}
 		}
@@ -150,7 +150,7 @@ func compNumberArray(op token.Token, left, right object.Item) object.Item {
 				return e
 			}
 			bl := e.(*object.Boolean)
-			if bl.Value() == true {
+			if bl.Value() {
 				return object.TRUE
 			}
 		}
@@ -162,7 +162,7 @@ func compNumberArray(op token.Token, left, right object.Item) object.Item {
 				return e
 			}
 			bl := e.(*object.Boolean)
-			if bl.Value() == true {
+			if bl.Value() {
 				return object.TRUE
 			}
 		}
@@ -183,7 +183,7 @@ func compNumberSeq(op token.Token, left, right object.Item) object.Item {
 				return e
 			}
 			bl := e.(*object.Boolean)
-			if bl.Value() == true {
+			if bl.Value() {
 				return object.TRUE
 			}
 		}
@@ -195,7 +195,7 @@ func compNumberSeq(op token.Token, left, right object.Item) object.Item {
 				return e
 			}
 			bl := e.(*object.Boolean)
-			if bl.Value() == true {
+			if bl.Value() {
 				return object.TRUE
 			}
 		}
@@ -207,7 +207,7 @@ func compNumberSeq(op token.Token, left, right object.Item) object.Item {
 				return e
 			}
 			bl := e.(*object.Boolean)
-			if bl.Value() == true {
+			if bl.Value() {
 				return object.TRUE
 			}
 		}
@@ -219,7 +219,7 @@ func compNumberSeq(op token.Token, left, right object.Item) object.Item {
 				return e
 			}
 			bl := e.(*object.Boolean)
-			if bl.Value() == true {
+			if bl.Value() {
 				return object.TRUE
 			}
 		}
@@ -231,7 +231,7 @@ func compNumberSeq(op token.Token, left, right object.Item) object.Item {
 				return e
 			}
 			bl := e.(*object.Boolean)
-			if bl.Value() == true {
+			if bl.Value() {
 				return object.TRUE
 			}
 		}
@@ -243,7 +243,7 @@ func compNumberSeq(op token.Token, left, right object.Item) object.Item {
 				return e
 			}
 			bl := e.(*object.Boolean)
-			if bl.Value() == true {
+			if bl.Value() {
 				return object.TRUE
 			}
 		}
@@ -450,7 +450,7 @@ func compArrayNumber(op token.Token, left, right object.Item) object.Item {
 				return e
 			}
 			bl := e.(*object.Boolean)
-			if bl.Value() == true {
+			if bl.Value() {
 				return object.TRUE
 			}
 		}
@@ -462,7 +462,7 @@ func compArrayNumber(op token.Token, left, right object.Item) object.Item {
 				return e
 			}
 			bl := e.(*object.Boolean)
-			if bl.Value() == true {
+			if bl.Value() {
 				return object.TRUE
 			}
 		}
@@ -474,7 +474,7 @@ func compArrayNumber(op token.Token, left, right object.Item) object.Item {
 				return e
 			}
 			bl := e.(*object.Boolean)
-			if bl.Value() == true {
+			if bl.Value() {
 				return object.TRUE
 			}
 		}
@@ -486,7 +486,7 @@ func compArrayNumber(op token.Token, left, right object.Item) object.Item {
 				return e
 			}
 			bl := e.(*object.Boolean)
-			if bl.Value() == true {
+			if bl.Value() {
 				return object.TRUE
 			}
 		}
@@ -498,7 +498,7 @@ func compArrayNumber(op token.Token, left, right object.Item) object.Item {
 				return e
 			}
 			bl := e.(*object.Boolean)
-			if bl.Value() == true {
+			if bl.Value() {
 				return object.TRUE
 			}
 		}
@@ -510,7 +510,7 @@ func compArrayNumber(op token.Token, left, right object.Item) object.Item {
 				return e
 			}
 			bl := e.(*object.Boolean)
-			if bl.Value() == true {
+			if bl.Value() {
 				return object.TRUE
 			}
 		}
@@ -609,7 +609,7 @@ func compArraySeq(op token.Token, left, right object.Item) object.Item {
 					return e
 				}
 				bl := e.(*object.Boolean)
-				if bl.Value() == true {
+				if bl.Value() {
 					return object.TRUE
 				}
 			}
@@ -623,7 +623,7 @@ func compArraySeq(op token.Token, left, right object.Item) object.Item {
 					return e
 				}
 				bl := e.(*object.Boolean)
-				if bl.Value() == true {
+				if bl.Value() {
 					return object.TRUE
 				}
 			}
@@ -637,7 +637,7 @@ func compArraySeq(op token.Token, left, right object.Item) object.Item {
 					return e
 				}
 				bl := e.(*object.Boolean)
-				if bl.Value() == true {
+				if bl.Value() {
 					return object.TRUE
 				}
 			}
@@ -651,7 +651,7 @@ func compArraySeq(op token.Token, left, right object.Item) object.Item {
 					return e
 				}
 				bl := e.(*object.Boolean)
-				if bl.Value() == true {
+				if bl.Value() {
 					return object.TRUE
 				}
 			}
@@ -665,7 +665,7 @@ func compArraySeq(op token.Token, left, right object.Item) object.Item {
 					return e
 				}
 				bl := e.(*object.Boolean)
-				if bl.Value() == true {
+				if bl.Value() {
 					return object.TRUE
 				}
 			}
@@ -679,7 +679,7 @@ func compArraySeq(op token.Token, left, right object.Item) object.Item {
 					return e
 				}
 				bl := e.(*object.Boolean)
-				if bl.Value() == true {
+				if bl.Value() {
 					return object.TRUE
 				}
 			}
@@ -703,7 +703,7 @@ func compArrayArray(op token.Token, left, right object.Item) object.Item {
 					return e
 				}
 				bl := e.(*object.Boolean)
-				if bl.Value() == true {
+				if bl.Value() {
 					return object.TRUE
 				}
 			}
@@ -717,7 +717,7 @@ func compArrayArray(op token.Token, left, right object.Item) object.Item {
 					return e
 				}
 				bl := e.(*object.Boolean)
-				if bl.Value() == true {
+				if bl.Value() {
 					return object.TRUE
 				}
 			}
@@ -731,7 +731,7 @@ func compArrayArray(op token.Token, left, right object.Item) object.Item {
 					return e
 				}
 				bl := e.(*object.Boolean)
-				if bl.Value() == true {
+				if bl.Value() {
 					return object.TRUE
 				}
 			}
@@ -745,7 +745,7 @@ func compArrayArray(op token.Token, left, right object.Item) object.Item {
 					return e
 				}
 				bl := e.(*object.Boolean)
-				if bl.Value() == true {
+				if bl.Value() {
 					return object.TRUE
 				}
 			}
@@ -759,7 +759,7 @@ func compArrayArray(op token.Token, left, right object.Item) object.Item {
 					return e
 				}
 				bl := e.(*object.Boolean)
-				if bl.Value() == true {
+				if bl.Value() {
 					return object.TRUE
 				}
 			}
@@ -773,7 +773,7 @@ func compArrayArray(op token.Token, left, right object.Item) object.Item {
 					return e
 				}
 				bl := e.(*object.Boolean)
-				if bl.Value() == true {
+				if bl.Value() {
 					return object.TRUE
 				}
 			}
@@ -795,7 +795,7 @@ func compSeqNumber(op token.Token, left, right object.Item) object.Item {
 				return e
 			}
 			bl := e.(*object.Boolean)
-			if bl.Value() == true {
+			if bl.Value() {
 				return object.TRUE
 			}
 		}
@@ -807,7 +807,7 @@ func compSeqNumber(op token.Token, left, right object.Item) object.Item {
 				return e
 			}
 			bl := e.(*object.Boolean)
-			if bl.Value() == true {
+			if bl.Value() {
 				return object.TRUE
 			}
 		}
@@ -819,7 +819,7 @@ func compSeqNumber(op token.Token, left, right object.Item) object.Item {
 				return e
 			}
 			bl := e.(*object.Boolean)
-			if bl.Value() == true {
+			if bl.Value() {
 				return object.TRUE
 			}
 		}
@@ -831,7 +831,7 @@ func compSeqNumber(op token.Token, left, right object.Item) object.Item {
 				return e
 			}
 			bl := e.(*object.Boolean)
-			if bl.Value() == true {
+			if bl.Value() {
 				return object.TRUE
 			}
 		}
@@ -843,7 +843,7 @@ func compSeqNumber(op token.Token, left, right object.Item) object.Item {
 				return e
 			}
 			bl := e.(*object.Boolean)
-			if bl.Value() == true {
+			if bl.Value() {
 				return object.TRUE
 			}
 		}
@@ -855,7 +855,7 @@ func compSeqNumber(op token.Token, left, right object.Item) object.Item {
 				return e
 			}
 			bl := e.(*object.Boolean)
-			if bl.Value() == true {
+			if bl.Value() {
 				return object.TRUE
 			}
 		}
@@ -954,7 +954,7 @@ func compSeqArray(op token.Token, left, right object.Item) object.Item {
 					return e
 				}
 				bl := e.(*object.Boolean)
-				if bl.Value() == true {
+				if bl.Value() {
 					return object.TRUE
 				}
 			}
@@ -968,7 +968,7 @@ func compSeqArray(op token.Token, left, right object.Item) object.Item {
 					return e
 				}
 				bl := e.(*object.Boolean)
-				if bl.Value() == true {
+				if bl.Value() {
 					return object.TRUE
 				}
 			}
@@ -982,7 +982,7 @@ func compSeqArray(op token.Token, left, right object.Item) object.Item {
 					return e
 				}
 				bl := e.(*object.Boolean)
-				if bl.Value() == true {
+				if bl.Value() {
 					return object.TRUE
 				}
 			}
@@ -996,7 +996,7 @@ func compSeqArray(op token.Token, left, right object.Item) object.Item {
 					return e
 				}
 				bl := e.(*object.Boolean)
-				if bl.Value() == true {
+				if bl.Value() {
 					return object.TRUE
 				}
 			}
@@ -1010,7 +1010,7 @@ func compSeqArray(op token.Token, left, right object.Item) object.Item {
 					return e
 				}
 				bl := e.(*object.Boolean)
-				if bl.Value() == true {
+				if bl.Value() {
 					return object.TRUE
 				}
 			}
@@ -1024,7 +1024,7 @@ func compSeqArray(op token.Token, left, right object.Item) object.Item {
 					return e
 				}
 				bl := e.(*object.Boolean)
-				if bl.Value() == true {
+				if bl.Value() {
 					return object.TRUE
 				}
 			}
@@ -1048,7 +1048,7 @@ func compSeqSeq(op token.Token, left, right object.Item) object.Item {
 					return e
 				}
 				bl := e.(*object.Boolean)
-				if bl.Value() == true {
+				if bl.Value() {
 					return object.TRUE
 				}
 			}
@@ -1062,7 +1062,7 @@ func compSeqSeq(op token.Token, left, right object.Item) object.Item {
 					return e
 				}
 				bl := e.(*object.Boolean)
-				if bl.Value() == true {
+				if bl.Value() {
 					return object.TRUE
 				}
 			}
@@ -1076,7 +1076,7 @@ func compSeqSeq(op token.Token, left, right object.Item) object.Item {
 					return e
 				}
 				bl := e.(*object.Boolean)
-				if bl.Value() == true {
+				if bl.Value() {
 					return object.TRUE
 				}
 			}
@@ -1090,7 +1090,7 @@ func compSeqSeq(op token.Token, left, right object.Item) object.Item {
 					return e
 				}
 				bl := e.(*object.Boolean)
-				if bl.Value() == true {
+				if bl.Value() {
 					return object.TRUE
 				}
 			}
@@ -1104,7 +1104,7 @@ func compSeqSeq(op token.Token, left, right object.Item) object.Item {
 					return e
 				}
 				bl := e.(*object.Boolean)
-				if bl.Value() == true {
+				if bl.Value() {
 					return object.TRUE
 				}
 			}
@@ -1118,7 +1118,7 @@ func compSeqSeq(op token.Token, left, right object.Item) object.Item {
 					return e
 				}
 				bl := e.(*object.Boolean)
-				if bl.Value() == true {
+				if bl.Value() {
 					return object.TRUE
 				}
 			}

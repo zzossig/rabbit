@@ -146,23 +146,10 @@ func (p *Parser) parseArrowFunctionSpecifier() ast.ArrowFunctionSpecifier {
 }
 
 func (p *Parser) parseNodeTest() ast.NodeTest {
-	if util.CheckKindTest(p.curToken.Literal) != 0 {
-		ktest := p.parseKindTest()
-		if tt, ok := ktest.(*ast.KindTest); ok {
-			if tt.TypeID != 0 {
-				return tt
-			}
-		}
+	if util.CheckKindTest(p.curToken.Literal) != 0 && p.peekTokenIs(token.LPAREN) {
+		return p.parseKindTest()
 	}
-
-	ntest := p.parseNameTest()
-	if tt, ok := ntest.(*ast.NameTest); ok {
-		if tt.TypeID != 0 {
-			return tt
-		}
-	}
-
-	return nil
+	return p.parseNameTest()
 }
 
 func (p *Parser) parseItemType() ast.NodeTest {
@@ -398,6 +385,7 @@ func (p *Parser) parseSchemaElementTest() ast.NodeTest {
 		// TODO error
 		return nil
 	}
+	p.nextToken()
 
 	set.ElementDeclaration = p.parseEQName()
 
@@ -416,6 +404,7 @@ func (p *Parser) parseSchemaAttributeTest() ast.NodeTest {
 		// TODO error
 		return nil
 	}
+	p.nextToken()
 
 	sat.AttributeDeclaration = p.parseEQName()
 

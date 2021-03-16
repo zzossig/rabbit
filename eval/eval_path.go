@@ -16,15 +16,11 @@ func evalPathExpr(expr ast.ExprSingle, ctx *object.Context) object.Item {
 	ctx.CNode = []object.Node{ctx.Doc}
 	ctx.CItem = ctx.Doc
 
-	if pe.Token.Type == token.SLASH && pe.ExprSingle == nil {
-		return ctx.Doc
-	}
-	if pe.ExprSingle == nil {
-		return bif.NewError("unexpected end of xpath statement")
-	}
-
 	if pe.Token.Type == token.DSLASH {
-		ctx.CAxis = "descendant-or-self::"
+		var nodes []object.Node
+		nodes = bif.WalkDescKind(nodes, ctx.Doc, 10)
+		ctx.CNode = append(ctx.CNode, nodes...)
+		ctx.CAxis = "child::"
 	} else {
 		ctx.CAxis = "child::"
 	}
@@ -41,7 +37,14 @@ func evalRelativePathExpr(expr ast.ExprSingle, ctx *object.Context) object.Item 
 	}
 
 	if rpe.Token.Type == token.DSLASH {
-		ctx.CAxis = "descendant-or-self::"
+		var nodes []object.Node
+		for _, c := range ctx.CNode {
+			nodes = append(nodes, c)
+			nodes = bif.WalkDescKind(nodes, c, 10)
+		}
+
+		ctx.CNode = nodes
+		ctx.CAxis = "child::"
 	} else {
 		ctx.CAxis = "child::"
 	}
@@ -52,103 +55,14 @@ func evalRelativePathExpr(expr ast.ExprSingle, ctx *object.Context) object.Item 
 func evalAxisStep(expr ast.ExprSingle, ctx *object.Context) object.Item {
 	as := expr.(*ast.AxisStep)
 
-	if _, ok := ctx.CItem.(*object.BaseNode); !ok {
-		if ctx.Doc == nil {
-			return bif.NewError("context node is undefined")
-		}
-		ctx.CItem = ctx.Doc
-		ctx.CNode = []object.Node{ctx.Doc}
-	}
-
-	var nodes []object.Node
 	switch as.TypeID {
 	case 1: // ReverseStep
+
 		switch as.ReverseStep.TypeID {
 		case 1:
-			switch as.ReverseAxis.Value() {
-			case "parent::":
-				for _, c := range ctx.CNode {
-					if c.Parent() != nil && !bif.IsContainN(nodes, c.Parent()) {
-						nodes = append(nodes, c.Parent())
-					}
-				}
-
-				ctx.CNode = nodes
-				ctx.CAxis = as.ReverseAxis.Value()
-				return evalNodeTest(as.ReverseStep.NodeTest, &as.PredicateList, ctx)
-			case "ancestor::":
-				for _, c := range ctx.CNode {
-					for p := c.Parent(); p != nil; p = p.Parent() {
-						if !bif.IsContainN(nodes, p) {
-							nodes = append(nodes, p)
-						}
-					}
-				}
-
-				ctx.CNode = nodes
-				ctx.CAxis = as.ReverseAxis.Value()
-				return evalNodeTest(as.ReverseStep.NodeTest, &as.PredicateList, ctx)
-			case "preceding-sibling::":
-				for _, c := range ctx.CNode {
-					for s := c.PrevSibling(); s != nil; s = s.PrevSibling() {
-						if !bif.IsContainN(nodes, s) {
-							nodes = append(nodes, s)
-						}
-					}
-				}
-
-				ctx.CNode = nodes
-				ctx.CAxis = as.ReverseAxis.Value()
-				return evalNodeTest(as.ReverseStep.NodeTest, &as.PredicateList, ctx)
-			case "preceding::":
-				for _, c := range ctx.CNode {
-					for {
-						s := c.PrevSibling()
-						if s == nil {
-							p := c.Parent()
-							if p == nil {
-								break
-							}
-							s = p.PrevSibling()
-							if s == nil {
-								break
-							}
-						}
-
-						if !bif.IsContainN(nodes, s) {
-							nodes = append(nodes, s)
-						}
-						bif.WalkDesc(nodes, s)
-					}
-				}
-
-				ctx.CNode = nodes
-				ctx.CAxis = as.ReverseAxis.Value()
-				return evalNodeTest(as.ReverseStep.NodeTest, &as.PredicateList, ctx)
-			case "ancestor-or-self::":
-				for _, c := range ctx.CNode {
-					nodes = append(nodes, c.Self())
-					for p := c.Parent(); p != nil; p = p.Parent() {
-						if !bif.IsContainN(nodes, p) {
-							nodes = append(nodes, p)
-						}
-					}
-				}
-
-				ctx.CNode = nodes
-				ctx.CAxis = as.ReverseAxis.Value()
-				return evalNodeTest(as.ReverseStep.NodeTest, &as.PredicateList, ctx)
-			default:
-				return bif.NewError("unexpected AxisStep expression")
-			}
+			ctx.CAxis = as.ReverseAxis.Value()
+			return evalNodeTest(as.ReverseStep.NodeTest, &as.PredicateList, ctx)
 		case 2:
-			for _, c := range ctx.CNode {
-				if c.Parent() != nil && !bif.IsContainN(nodes, c.Parent()) {
-					nodes = append(nodes, c.Parent())
-				}
-			}
-
-			ctx.CNode = nodes
 			ctx.CAxis = "parent::"
 			return evalNodeTest(as.ReverseStep.NodeTest, &as.PredicateList, ctx)
 		default:
@@ -157,108 +71,28 @@ func evalAxisStep(expr ast.ExprSingle, ctx *object.Context) object.Item {
 	case 2: // ForwardStep
 		switch as.ForwardStep.TypeID {
 		case 1:
-			switch as.ForwardAxis.Value() {
-			case "child::":
-				ctx.CNode = nodes
+			if as.ForwardAxis.Value() == "" {
+				ctx.CAxis = "child::"
+			} else {
 				ctx.CAxis = as.ForwardAxis.Value()
-				return evalNodeTest(as.ForwardStep.NodeTest, &as.PredicateList, ctx)
-			case "descendant::":
-				ctx.CNode = nodes
-				ctx.CAxis = as.ForwardAxis.Value()
-				return evalNodeTest(as.ForwardStep.NodeTest, &as.PredicateList, ctx)
-			case "attribute::":
-				for _, c := range ctx.CNode {
-					if c, ok := c.(*object.BaseNode); ok {
-						for _, a := range c.Attr() {
-							n := &object.AttrNode{}
-							n.SetAttr(&a)
-							n.SetTree(c.Tree())
-							nodes = append(nodes, n)
-						}
-					}
-				}
-
-				ctx.CNode = nodes
-				ctx.CAxis = as.ForwardAxis.Value()
-				return evalNodeTest(as.ForwardStep.NodeTest, &as.PredicateList, ctx)
-			case "self::":
-				for _, c := range ctx.CNode {
-					nodes = append(nodes, c.Self())
-				}
-
-				ctx.CNode = nodes
-				return evalNodeTest(as.ForwardStep.NodeTest, &as.PredicateList, ctx)
-			case "descendant-or-self::":
-				for _, c := range ctx.CNode {
-					nodes = append(nodes, c.Self())
-					bif.WalkDesc(nodes, c)
-				}
-
-				ctx.CNode = nodes
-				ctx.CAxis = as.ForwardAxis.Value()
-				return evalNodeTest(as.ForwardStep.NodeTest, &as.PredicateList, ctx)
-			case "following-sibling::":
-				for _, c := range ctx.CNode {
-					for s := c.NextSibling(); s != nil; s = s.NextSibling() {
-						if !bif.IsContainN(nodes, s) {
-							nodes = append(nodes, s)
-						}
-					}
-				}
-
-				ctx.CNode = nodes
-				ctx.CAxis = as.ForwardAxis.Value()
-				return evalNodeTest(as.ForwardStep.NodeTest, &as.PredicateList, ctx)
-			case "following::":
-				for _, c := range ctx.CNode {
-					for {
-						s := c.NextSibling()
-						if s == nil {
-							f := c.Parent()
-							if f == nil {
-								break
-							}
-							s = f.NextSibling()
-							if s == nil {
-								break
-							}
-						}
-
-						if !bif.IsContainN(nodes, s) {
-							nodes = append(nodes, s)
-						}
-						bif.WalkDesc(nodes, s)
-					}
-				}
-
-				ctx.CNode = nodes
-				ctx.CAxis = as.ForwardAxis.Value()
-				return evalNodeTest(as.ForwardStep.NodeTest, &as.PredicateList, ctx)
-			case "namespace::":
-				fallthrough
-			default:
-				return bif.NewError("not supported axis: %s", as.ForwardAxis.Value())
 			}
+
+			return evalNodeTest(as.ForwardStep.NodeTest, &as.PredicateList, ctx)
 		case 2:
 			if as.AbbrevForwardStep.Token.Type == token.AT {
-				for _, c := range ctx.CNode {
-					if c, ok := c.(*object.BaseNode); ok {
-						for _, a := range c.Attr() {
-							n := &object.AttrNode{}
-							n.SetAttr(&a)
-							n.SetTree(c.Tree())
-							nodes = append(nodes, n)
-						}
-					}
-				}
-
-				ctx.CNode = nodes
 				ctx.CAxis = "attribute::"
+			}
+			if as.ForwardStep.NodeTest == nil {
+				if ctx.CItem.Type() == object.DocumentNodeType {
+					return ctx.Doc
+				} else {
+					return bif.NewError("not a valid xpath expression")
+				}
 			}
 
 			return evalNodeTest(as.ForwardStep.AbbrevForwardStep.NodeTest, &as.PredicateList, ctx)
 		default:
-			return bif.NewError("unexpected AxisStep expression")
+			return bif.NewError("not supported axis: %s", as.ForwardAxis.Value())
 		}
 	default:
 		return bif.NewError("unexpected AxisStep expression")
@@ -407,36 +241,11 @@ func kindTestChild(t *ast.KindTest, ctx *object.Context) []object.Node {
 Loop:
 	for _, c := range ctx.CNode {
 		for n := c.FirstChild(); n != nil; n = n.NextSibling() {
-			switch t.TypeID {
-			case 1:
-				if c.Type() == object.DocumentNodeType {
-					nodes = append(nodes, c)
-					break Loop
-				}
-			case 2:
-				if n.Type() == object.ElementNodeType {
-					nodes = append(nodes, n)
-				}
-			case 3:
-				if n.Type() == object.ElementNodeType {
-					n := n.(*object.BaseNode)
-					nodes = append(nodes, n.Attr()...)
-				}
-			case 7:
-				if n.Type() == object.CommentNodeType {
-					nodes = append(nodes, n)
-				}
-			case 8:
-				if n.Type() == object.TextNodeType {
-					nodes = append(nodes, n)
-				}
-			case 10:
-				nodes = append(nodes, n)
-				if n.Type() == object.ElementNodeType {
-					n := n.(*object.BaseNode)
-					nodes = append(nodes, n.Attr()...)
-				}
+			if t.TypeID == 1 && c.Type() == object.DocumentNodeType {
+				nodes = append(nodes, c)
+				break Loop
 			}
+			nodes = bif.AppendKind(nodes, n, t.TypeID)
 		}
 	}
 
@@ -446,7 +255,7 @@ Loop:
 func kindTestDesc(t *ast.KindTest, ctx *object.Context) []object.Node {
 	var nodes []object.Node
 	for _, c := range ctx.CNode {
-		bif.WalkDescKind(nodes, c, t.TypeID)
+		nodes = bif.WalkDescKind(nodes, c, t.TypeID)
 	}
 	return nodes
 }
@@ -456,31 +265,66 @@ func kindTestAttr(t *ast.KindTest, ctx *object.Context) []object.Node {
 	for _, c := range ctx.CNode {
 		if c.Type() == object.ElementNodeType {
 			c := c.(*object.BaseNode)
-			nodes = append(nodes, c.Attr()...)
+			for _, a := range c.Attr() {
+				nodes = bif.AppendAttr(nodes, a)
+			}
 		}
 	}
 	return nodes
 }
 
 func kindTestSelf(t *ast.KindTest, ctx *object.Context) []object.Node {
-	return nil
+	var nodes []object.Node
+	for _, c := range ctx.CNode {
+		nodes = bif.AppendKind(nodes, c, t.TypeID)
+	}
+	return nodes
 }
 
 func kindTestDescOrSelf(t *ast.KindTest, ctx *object.Context) []object.Node {
 	var nodes []object.Node
 	for _, c := range ctx.CNode {
-		nodes = append(nodes, c)
-		bif.WalkDescKind(nodes, c, t.TypeID)
+		nodes = bif.AppendKind(nodes, c, t.TypeID)
+		nodes = bif.WalkDescKind(nodes, c, t.TypeID)
 	}
 	return nodes
 }
 
 func kindTestFS(t *ast.KindTest, ctx *object.Context) []object.Node {
-	return nil
+	var nodes []object.Node
+	for _, c := range ctx.CNode {
+		for s := c.NextSibling(); s != nil; s = s.NextSibling() {
+			if bif.IsKindMatch(s, t.TypeID) {
+				nodes = bif.AppendNode(nodes, s)
+			}
+		}
+	}
+	return nodes
 }
 
 func kindTestFollowing(t *ast.KindTest, ctx *object.Context) []object.Node {
-	return nil
+	var nodes []object.Node
+	for _, c := range ctx.CNode {
+		for {
+			s := c.NextSibling()
+			if s == nil {
+				f := c.Parent()
+				if f == nil {
+					break
+				}
+				s = f.NextSibling()
+				if s == nil {
+					break
+				}
+			}
+
+			if bif.IsKindMatch(s, t.TypeID) {
+				nodes = bif.AppendNode(nodes, s)
+			}
+			nodes = bif.WalkDescKind(nodes, s, t.TypeID)
+		}
+	}
+	return nodes
 }
 
 func kindTestNS(t *ast.KindTest, ctx *object.Context) []object.Node {
@@ -488,51 +332,270 @@ func kindTestNS(t *ast.KindTest, ctx *object.Context) []object.Node {
 }
 
 func kindTestParent(t *ast.KindTest, ctx *object.Context) []object.Node {
-	return nil
+	var nodes []object.Node
+	for _, c := range ctx.CNode {
+		if c.Parent() != nil && bif.IsKindMatch(c.Parent(), t.TypeID) {
+			nodes = bif.AppendNode(nodes, c.Parent())
+		}
+	}
+	return nodes
 }
 
 func kindTestAncestor(t *ast.KindTest, ctx *object.Context) []object.Node {
-	return nil
+	var nodes []object.Node
+	for _, c := range ctx.CNode {
+		for p := c.Parent(); p != nil; p = p.Parent() {
+			if bif.IsKindMatch(p, t.TypeID) {
+				nodes = bif.AppendNode(nodes, p)
+			}
+		}
+	}
+	return nodes
 }
 
 func kindTestPS(t *ast.KindTest, ctx *object.Context) []object.Node {
-	return nil
+	var nodes []object.Node
+	for _, c := range ctx.CNode {
+		for s := c.PrevSibling(); s != nil; s = s.PrevSibling() {
+			if bif.IsKindMatch(s, t.TypeID) {
+				nodes = bif.AppendNode(nodes, s)
+			}
+		}
+	}
+	return nodes
 }
 
 func kindTestPreceding(t *ast.KindTest, ctx *object.Context) []object.Node {
-	return nil
+	var nodes []object.Node
+	for _, c := range ctx.CNode {
+		for {
+			s := c.PrevSibling()
+			if s == nil {
+				p := c.Parent()
+				if p == nil {
+					break
+				}
+				s = p.PrevSibling()
+				if s == nil {
+					break
+				}
+			}
+
+			if bif.IsKindMatch(s, t.TypeID) {
+				nodes = bif.AppendNode(nodes, s)
+			}
+			nodes = bif.WalkDescKind(nodes, s, t.TypeID)
+		}
+	}
+	return nodes
 }
 
 func kindTestAncestorOrSelf(t *ast.KindTest, ctx *object.Context) []object.Node {
-	return nil
+	var nodes []object.Node
+	for _, c := range ctx.CNode {
+		if bif.IsKindMatch(c, t.TypeID) {
+			nodes = bif.AppendNode(nodes, c)
+		}
+		for p := c.Parent(); p != nil; p = p.Parent() {
+			if bif.IsKindMatch(p, t.TypeID) {
+				nodes = bif.AppendNode(nodes, p)
+			}
+		}
+	}
+	return nodes
 }
 
 func nameTestChild(t *ast.NameTest, ctx *object.Context) []object.Node {
-	return nil
+	var nodes []object.Node
+
+	switch t.TypeID {
+	case 1:
+		for _, c := range ctx.CNode {
+			for n := c.FirstChild(); n != nil; n = n.NextSibling() {
+				if n.Type() == object.ElementNodeType && t.EQName.Value() == n.Tree().Data {
+					nodes = append(nodes, n)
+				}
+			}
+		}
+	case 2:
+		switch t.Wildcard.TypeID {
+		case 1:
+			for _, c := range ctx.CNode {
+				for n := c.FirstChild(); n != nil; n = n.NextSibling() {
+					nodes = append(nodes, n)
+				}
+			}
+		}
+	}
+
+	return nodes
 }
 
 func nameTestDesc(t *ast.NameTest, ctx *object.Context) []object.Node {
-	return nil
+	var nodes []object.Node
+
+	for _, c := range ctx.CNode {
+		nodes = bif.WalkDescName(nodes, c, t)
+	}
+
+	return nodes
 }
 
 func nameTestAttr(t *ast.NameTest, ctx *object.Context) []object.Node {
-	return nil
+	var nodes []object.Node
+
+	switch t.TypeID {
+	case 1:
+		for _, c := range ctx.CNode {
+			if c.Type() == object.ElementNodeType {
+				c := c.(*object.BaseNode)
+				for _, a := range c.Attr() {
+					a := a.(*object.AttrNode)
+					if a.Key() == t.EQName.Value() {
+						nodes = bif.AppendAttr(nodes, a)
+					}
+				}
+			}
+		}
+	case 2:
+		switch t.Wildcard.TypeID {
+		case 1:
+			for _, c := range ctx.CNode {
+				if c.Type() == object.ElementNodeType {
+					c := c.(*object.BaseNode)
+					for _, a := range c.Attr() {
+						nodes = bif.AppendAttr(nodes, a)
+					}
+				}
+			}
+		}
+	}
+
+	return nodes
 }
 
 func nameTestSelf(t *ast.NameTest, ctx *object.Context) []object.Node {
-	return nil
+	var nodes []object.Node
+
+	switch t.TypeID {
+	case 1:
+		for _, c := range ctx.CNode {
+			if t.EQName.Value() == c.Tree().Data {
+				nodes = append(nodes, c)
+			}
+		}
+	case 2:
+		switch t.Wildcard.TypeID {
+		case 1:
+			nodes = append(nodes, ctx.CNode...)
+		}
+	}
+
+	return nodes
 }
 
 func nameTestDescOrSelf(t *ast.NameTest, ctx *object.Context) []object.Node {
-	return nil
+	var nodes []object.Node
+
+	for _, c := range ctx.CNode {
+		nodes = bif.WalkDescName(nodes, c, t)
+	}
+
+	switch t.TypeID {
+	case 1:
+		for _, c := range ctx.CNode {
+			if t.EQName.Value() == c.Tree().Data {
+				nodes = bif.AppendNode(nodes, c)
+			}
+		}
+	case 2:
+		switch t.Wildcard.TypeID {
+		case 1:
+			for _, c := range ctx.CNode {
+				nodes = bif.AppendNode(nodes, c)
+			}
+		}
+	}
+
+	return nodes
 }
 
 func nameTestFS(t *ast.NameTest, ctx *object.Context) []object.Node {
-	return nil
+	var nodes []object.Node
+
+	switch t.TypeID {
+	case 1:
+		for _, c := range ctx.CNode {
+			for s := c.NextSibling(); s != nil; s = s.NextSibling() {
+				if t.EQName.Value() == s.Tree().Data {
+					nodes = bif.AppendNode(nodes, s)
+				}
+			}
+		}
+	case 2:
+		switch t.Wildcard.TypeID {
+		case 1:
+			for _, c := range ctx.CNode {
+				for s := c.NextSibling(); s != nil; s = s.NextSibling() {
+					nodes = bif.AppendNode(nodes, s)
+				}
+			}
+		}
+	}
+
+	return nodes
 }
 
 func nameTestFollowing(t *ast.NameTest, ctx *object.Context) []object.Node {
-	return nil
+	var nodes []object.Node
+
+	switch t.TypeID {
+	case 1:
+		for _, c := range ctx.CNode {
+			for {
+				s := c.NextSibling()
+				if s == nil {
+					f := c.Parent()
+					if f == nil {
+						break
+					}
+					s = f.NextSibling()
+					if s == nil {
+						break
+					}
+				}
+
+				if t.EQName.Value() == s.Tree().Data {
+					nodes = bif.AppendNode(nodes, s)
+				}
+				nodes = bif.WalkDescName(nodes, s, t)
+			}
+		}
+	case 2:
+		switch t.Wildcard.TypeID {
+		case 1:
+			for _, c := range ctx.CNode {
+				for {
+					s := c.NextSibling()
+					if s == nil {
+						f := c.Parent()
+						if f == nil {
+							break
+						}
+						s = f.NextSibling()
+						if s == nil {
+							break
+						}
+					}
+
+					nodes = bif.AppendNode(nodes, s)
+					nodes = bif.WalkDescName(nodes, s, t)
+				}
+			}
+		}
+	}
+
+	return nodes
 }
 
 func nameTestNS(t *ast.NameTest, ctx *object.Context) []object.Node {
@@ -540,21 +603,159 @@ func nameTestNS(t *ast.NameTest, ctx *object.Context) []object.Node {
 }
 
 func nameTestParent(t *ast.NameTest, ctx *object.Context) []object.Node {
-	return nil
+	var nodes []object.Node
+
+	switch t.TypeID {
+	case 1:
+		for _, c := range ctx.CNode {
+			if c.Parent() != nil && t.EQName.Value() == c.Parent().Tree().Data {
+				nodes = bif.AppendNode(nodes, c.Parent())
+			}
+		}
+	case 2:
+		switch t.Wildcard.TypeID {
+		case 1:
+			for _, c := range ctx.CNode {
+				if c.Parent() != nil {
+					nodes = bif.AppendNode(nodes, c.Parent())
+				}
+			}
+		}
+	}
+
+	return nodes
 }
 
 func nameTestAncestor(t *ast.NameTest, ctx *object.Context) []object.Node {
-	return nil
+	var nodes []object.Node
+
+	switch t.TypeID {
+	case 1:
+		for _, c := range ctx.CNode {
+			for p := c.Parent(); p != nil; p = p.Parent() {
+				if t.EQName.Value() == p.Tree().Data {
+					nodes = bif.AppendNode(nodes, p)
+				}
+			}
+		}
+	case 2:
+		switch t.Wildcard.TypeID {
+		case 1:
+			for _, c := range ctx.CNode {
+				for p := c.Parent(); p != nil; p = p.Parent() {
+					nodes = bif.AppendNode(nodes, p)
+				}
+			}
+		}
+	}
+
+	return nodes
 }
 
 func nameTestPS(t *ast.NameTest, ctx *object.Context) []object.Node {
-	return nil
+	var nodes []object.Node
+
+	switch t.TypeID {
+	case 1:
+		for _, c := range ctx.CNode {
+			for s := c.PrevSibling(); s != nil; s = s.PrevSibling() {
+				if t.EQName.Value() == s.Tree().Data {
+					nodes = bif.AppendNode(nodes, s)
+				}
+			}
+		}
+	case 2:
+		switch t.Wildcard.TypeID {
+		case 1:
+			for _, c := range ctx.CNode {
+				for s := c.PrevSibling(); s != nil; s = s.PrevSibling() {
+					nodes = bif.AppendNode(nodes, s)
+				}
+			}
+		}
+	}
+
+	return nodes
 }
 
 func nameTestPreceding(t *ast.NameTest, ctx *object.Context) []object.Node {
-	return nil
+	var nodes []object.Node
+
+	switch t.TypeID {
+	case 1:
+		for _, c := range ctx.CNode {
+			for {
+				s := c.PrevSibling()
+				if s == nil {
+					p := c.Parent()
+					if p == nil {
+						break
+					}
+					s = p.PrevSibling()
+					if s == nil {
+						break
+					}
+				}
+
+				if t.EQName.Value() == s.Tree().Data {
+					nodes = bif.AppendNode(nodes, s)
+				}
+				nodes = bif.WalkDescKind(nodes, s, t.TypeID)
+			}
+		}
+	case 2:
+		switch t.Wildcard.TypeID {
+		case 1:
+			for _, c := range ctx.CNode {
+				for {
+					s := c.PrevSibling()
+					if s == nil {
+						p := c.Parent()
+						if p == nil {
+							break
+						}
+						s = p.PrevSibling()
+						if s == nil {
+							break
+						}
+					}
+
+					nodes = bif.AppendNode(nodes, s)
+					nodes = bif.WalkDescKind(nodes, s, t.TypeID)
+				}
+			}
+		}
+	}
+
+	return nodes
 }
 
 func nameTestAncestorOrSelf(t *ast.NameTest, ctx *object.Context) []object.Node {
-	return nil
+	var nodes []object.Node
+
+	switch t.TypeID {
+	case 1:
+		for _, c := range ctx.CNode {
+			if t.EQName.Value() == c.Tree().Data {
+				nodes = bif.AppendNode(nodes, c)
+			}
+			for p := c.Parent(); p != nil; p = p.Parent() {
+				if t.EQName.Value() == p.Tree().Data {
+					nodes = bif.AppendNode(nodes, p)
+				}
+			}
+		}
+	case 2:
+		switch t.Wildcard.TypeID {
+		case 1:
+			for _, c := range ctx.CNode {
+				nodes = bif.AppendNode(nodes, c)
+				for p := c.Parent(); p != nil; p = p.Parent() {
+					nodes = bif.AppendNode(nodes, p)
+				}
+			}
+		}
+	}
+
+	return nodes
 }

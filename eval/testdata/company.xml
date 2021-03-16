@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<tt:bookstore xmlns:tt="http://www.w3.org/TR/html4/">
+	<go>
+		<tt:bmm/>
+	</go>
+	<tt:book category="cooking" ID="zz">
+		<tt:title lang="en">Everyday Italian</tt:title>
+		<tt:author>Giada De Laurentiis</tt:author>
+		<tt:year>2005</tt:year>
+		<tt:price>30.00</tt:price>
+	</tt:book>
+	<book>
+		<title lang="en">Harry Potter</title>
+		<book>
+			godc
+			<book>
+				hterkj
+				<haha>
+					<year category="children" IDREF="aa">001</year>
+				</haha>
+			</book>
+		</book>
+		<year>
+			2005
+			<month>04
+				<haha>
+					zzzz
+				</haha>
+				<day>
+					19
+				</day>
+				<no>
+					ggg
+				</no>
+			</month>
+		</year>
+		<price>29.99</price>
+	</book>
+	<book category="web" IDREFS="bb cc dd">
+		<title lang="en">XQuery Kick Start</title>
+		<author>James McGovern</author>
+		<author>Per Bothner</author>
+		<author>Kurt Cagle</author>
+		<author>James Linn</author>
+		<author>Vaidyanathan Nagarajan</author>
+		<year>2003</year>
+		<price>49.99</price>
+	</book>
+	<!-- comment node -->
+	<book category="web" cover="paperback">
+		<title lang="en">Learning XML</title>
+		<author>Erik T. Ray</author>
+		<year>2003</year>
+		<price>39.95</price>
+	</book>
+	<?xml-stylesheet href = "tutorialspointstyle.css" type = "text/css"?>
+</tt:bookstore>

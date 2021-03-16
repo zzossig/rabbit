@@ -1110,46 +1110,46 @@ func TestAbbreviatedSyntax(t *testing.T) {
 		input    string
 		expected string
 	}{
-		// {
-		// 	"para",
-		// 	"para",
-		// },
-		// {
-		// 	"*",
-		// 	"*",
-		// },
-		// {
-		// 	"text()",
-		// 	"text()",
-		// },
-		// {
-		// 	"@name",
-		// 	"@name",
-		// },
-		// {
-		// 	"@*",
-		// 	"@*",
-		// },
-		// {
-		// 	"para[1]",
-		// 	"para[1]",
-		// },
-		// {
-		// 	"para[fn:last()]",
-		// 	"para[fn:last()]",
-		// },
-		// {
-		// 	"*/para",
-		// 	"(* / para)",
-		// },
-		// {
-		// 	"/book/chapter[5]/section[2]",
-		// 	"((/book / chapter[5]) / section[2])",
-		// },
-		// {
-		// 	"chapter//para",
-		// 	"(chapter // para)",
-		// },
+		{
+			"para",
+			"para",
+		},
+		{
+			"*",
+			"*",
+		},
+		{
+			"text()",
+			"text()",
+		},
+		{
+			"@name",
+			"@name",
+		},
+		{
+			"@*",
+			"@*",
+		},
+		{
+			"para[1]",
+			"para[1]",
+		},
+		{
+			"para[fn:last()]",
+			"para[fn:last()]",
+		},
+		{
+			"*/para",
+			"(* / para)",
+		},
+		{
+			"/book/chapter[5]/section[2]",
+			"((/book / chapter[5]) / section[2])",
+		},
+		{
+			"chapter//para",
+			"(chapter // para)",
+		},
 		{
 			"//para",
 			"//para",

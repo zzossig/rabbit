@@ -21,7 +21,6 @@ type Node interface {
 	Item
 	Tree() *html.Node
 	SetTree(t *html.Node)
-	Self() Node
 	Parent() Node
 	FirstChild() Node
 	LastChild() Node
@@ -276,12 +275,6 @@ func (bn *BaseNode) Type() Type {
 func (bn *BaseNode) Inspect() string         { return bn.tree.Data }
 func (bn *BaseNode) Tree() *html.Node        { return bn.tree }
 func (bn *BaseNode) SetTree(tree *html.Node) { bn.tree = tree }
-func (bn *BaseNode) Self() Node {
-	if bn.tree != nil {
-		return &BaseNode{bn.tree}
-	}
-	return nil
-}
 func (bn *BaseNode) Parent() Node {
 	if bn.tree.Parent != nil {
 		return &BaseNode{bn.tree.Parent}
@@ -332,6 +325,7 @@ type AttrNode struct {
 func (an *AttrNode) Type() Type                   { return AttributeNodeType }
 func (an *AttrNode) Inspect() string              { return an.attr.Val }
 func (an *AttrNode) Key() string                  { return an.attr.Key }
+func (an *AttrNode) Attr() *html.Attribute        { return an.attr }
 func (an *AttrNode) SetAttr(attr *html.Attribute) { an.attr = attr }
 func (an *AttrNode) SetTree(p *html.Node)         { an.parent = p }
 func (an *AttrNode) Tree() *html.Node             { return nil }

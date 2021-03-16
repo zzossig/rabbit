@@ -753,33 +753,67 @@ func (p *Parser) parseRelativePathExpr(left ast.ExprSingle) ast.ExprSingle {
 
 func (p *Parser) parseStepExpr() ast.ExprSingle {
 	as := &ast.AxisStep{}
-	name := p.parseEQName()
 
 	if p.peekTokenIs(token.LPAREN) {
-		p.nextToken()
+		if util.CheckKindTest(p.curToken.Literal) == 0 {
+			name := p.parseEQName()
+			p.nextToken()
 
-		fc := &ast.FunctionCall{}
-		fc.ArgumentList = p.parseArgumentList()
-		fc.EQName = name
+			fc := &ast.FunctionCall{}
+			fc.ArgumentList = p.parseArgumentList()
+			fc.EQName = name
 
-		return fc
+			return fc
+		} else {
+			as.TypeID = 2
+			as.ForwardStep.TypeID = 1
+			as.ForwardStep.NodeTest = p.parseKindTest()
+		}
 	}
 
 	if p.peekTokenIs(token.HASH) {
+		name := p.parseEQName()
 		p.nextToken()
+
 		i := &ast.Identifier{EQName: name}
 		return p.parseNamedFunctionRef(i)
 	}
 
-	if p.peekTokenIs(token.COLON) || p.peekTokenIs(token.ASTERISK) {
-		return p.parseWildcard24(&name)
+	if p.peekTokenIs(token.COLON) {
+		name := p.parseEQName()
+
+		if p.peekTokenIs(token.LPAREN) {
+			p.nextToken()
+
+			fc := &ast.FunctionCall{}
+			fc.ArgumentList = p.parseArgumentList()
+			fc.EQName = name
+
+			return fc
+		}
+
+		if p.peekTokenIs(token.HASH) {
+			p.nextToken()
+
+			i := &ast.Identifier{EQName: name}
+			return p.parseNamedFunctionRef(i)
+		}
+
+		as.TypeID = 2
+		as.ForwardStep.TypeID = 2
+		as.AbbrevForwardStep.NodeTest = &ast.NameTest{EQName: name, TypeID: 1}
+	}
+
+	if p.curTokenIs(token.ASTERISK) {
+		return p.parseWildcard()
 	}
 
 	if p.peekTokenIs(token.DCOLON) {
+		name := p.curToken.Literal
 		p.nextToken()
 
 		var sb strings.Builder
-		sb.WriteString(name.Value())
+		sb.WriteString(name)
 		sb.WriteString(p.curToken.Literal)
 		axis := sb.String()
 
@@ -811,7 +845,11 @@ func (p *Parser) parseStepExpr() ast.ExprSingle {
 			// TODO error unknown axis
 			return nil
 		}
-	} else {
+	}
+
+	if as.TypeID == 0 {
+		name := p.parseEQName()
+
 		as.TypeID = 2
 		as.ForwardStep.TypeID = 2
 		as.AbbrevForwardStep.NodeTest = &ast.NameTest{EQName: name, TypeID: 1}
@@ -852,39 +890,8 @@ func (p *Parser) parseAbbrevToken() ast.ExprSingle {
 	return as
 }
 
-func (p *Parser) parseWildcard13() ast.ExprSingle {
+func (p *Parser) parseWildcard() ast.ExprSingle {
 	w := &ast.Wildcard{}
-
-	if p.peekTokenIs(token.COLON) {
-		p.nextToken()
-		p.nextToken()
-		w.NCName.SetValue(p.readNCName())
-		w.TypeID = 3
-	} else {
-		w.TypeID = 1
-	}
-
-	return w
-}
-
-func (p *Parser) parseWildcard24(name *ast.EQName) ast.ExprSingle {
-	w := &ast.Wildcard{}
-
-	if p.peekTokenIs(token.COLON) {
-		p.nextToken()
-		if !p.peekTokenIs(token.ASTERISK) {
-			// TODO error
-			return nil
-		}
-		p.nextToken()
-
-		w.NCName.SetValue(name.Local())
-		w.TypeID = 2
-	} else if p.peekTokenIs(token.ASTERISK) {
-		p.nextToken()
-		w.BracedURILiteral.SetValue(name.BracedURILiteral.Value())
-		w.TypeID = 4
-	}
-
+	w.TypeID = 1
 	return w
 }

@@ -322,19 +322,37 @@ func TestQuantifiedExpr(t *testing.T) {
 	}
 }
 
-func TestPathExpr(t *testing.T) {
+func TestDocNode(t *testing.T) {
 	tests := []string{
-		"//div",
+		"/",
+		"/document-node()",
+		"//document-node()",
 	}
 
 	for _, tt := range tests {
 		seq := testEval(tt)
 		sequence := seq.(*object.Sequence)
-		for _, item := range sequence.Items {
-			fmt.Println(item)
+
+		if len(sequence.Items) != 1 {
+			t.Errorf("wrong number of seq items. got=%d, expected=1", len(sequence.Items))
+		}
+
+		if sequence.Items[0].Type() != object.DocumentNodeType {
+			t.Errorf("node is not a document type. got=%s", sequence.Items[0].Type())
 		}
 	}
+
+	seq := testEval("//")
+	sequence := seq.(*object.Sequence)
+	if !bif.IsError(sequence.Items[0]) {
+		t.Errorf("// is not a valid xpath expression")
+	}
 }
+
+// func TestPathExpr(t *testing.T) {
+// 	seq := testEval("/div")
+// 	sequence := seq.(*object.Sequence)
+// }
 
 func testEval(input string) object.Item {
 	l := lexer.New(input)
@@ -344,7 +362,7 @@ func testEval(input string) object.Item {
 
 	docFunc := bif.Builtins["fn:doc"]
 	str := &object.String{}
-	str.SetValue("text.txt")
+	str.SetValue("testdata/go1.html")
 	docNode := docFunc(str)
 	if !bif.IsError(docNode) {
 		d := docNode.(*object.BaseNode)

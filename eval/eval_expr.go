@@ -104,45 +104,6 @@ func evalUnaryExpr(expr ast.ExprSingle, ctx *object.Context) object.Item {
 	return builtin(right)
 }
 
-func evalPrefixInt(op token.Token, right object.Item, ctx *object.Context) object.Item {
-	rightVal := right.(*object.Integer).Value()
-
-	switch op.Type {
-	case token.PLUS:
-		return bif.NewInteger(rightVal)
-	case token.MINUS:
-		return bif.NewInteger(-1 * rightVal)
-	default:
-		return bif.NewError("The operator '%s' is not defined for operand of type %s\n", op.Literal, right.Type())
-	}
-}
-
-func evalPrefixDecimal(op token.Token, right object.Item, ctx *object.Context) object.Item {
-	rightVal := right.(*object.Decimal).Value()
-
-	switch op.Type {
-	case token.PLUS:
-		return bif.NewDecimal(rightVal)
-	case token.MINUS:
-		return bif.NewDecimal(-1 * rightVal)
-	default:
-		return bif.NewError("The operator '%s' is not defined for operand of type %s\n", op.Literal, right.Type())
-	}
-}
-
-func evalPrefixDouble(op token.Token, right object.Item, ctx *object.Context) object.Item {
-	rightVal := right.(*object.Decimal).Value()
-
-	switch op.Type {
-	case token.PLUS:
-		return bif.NewDouble(rightVal)
-	case token.MINUS:
-		return bif.NewDouble(-1 * rightVal)
-	default:
-		return bif.NewError("The operator '%s' is not defined for operand of type %s\n", op.Literal, right.Type())
-	}
-}
-
 func evalIfExpr(expr ast.ExprSingle, ctx *object.Context) object.Item {
 	ie := expr.(*ast.IfExpr)
 	builtin := bif.Builtins["fn:boolean"]
@@ -391,7 +352,7 @@ func evalRangeExpr(expr ast.ExprSingle, ctx *object.Context) object.Item {
 	}
 
 	right, ok := r.(*object.Integer)
-	if right.Type() != object.IntegerType {
+	if !ok {
 		return bif.NewError("wrong argument type: %s", right.Type())
 	}
 

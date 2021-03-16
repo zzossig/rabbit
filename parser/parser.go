@@ -125,7 +125,7 @@ func New(l *lexer.Lexer) *Parser {
 	p.prefixParseFns[token.MINUS] = p.parseUnaryExpr
 	p.prefixParseFns[token.ARRAY] = p.parseCurlyArrayExpr
 	p.prefixParseFns[token.LBRACKET] = p.parseSquareArrayExpr
-	p.prefixParseFns[token.ASTERISK] = p.parseWildcard13
+	p.prefixParseFns[token.ASTERISK] = p.parseWildcard
 	p.prefixParseFns[token.IF] = p.parseIfExpr
 	p.prefixParseFns[token.FOR] = p.parseForExpr
 	p.prefixParseFns[token.LET] = p.parseLetExpr

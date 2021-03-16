@@ -3,6 +3,7 @@ package bif
 import (
 	"fmt"
 
+	"github.com/zzossig/xpath/ast"
 	"github.com/zzossig/xpath/object"
 )
 
@@ -589,6 +590,35 @@ func IsGE(left, right object.Item) object.Item {
 	return NewError("cannot compare %s and %s", left.Type(), right.Type())
 }
 
+// IsKindMatch ..
+func IsKindMatch(n object.Node, typeID byte) bool {
+	switch typeID {
+	case 1:
+		if n.Type() == object.DocumentNodeType {
+			return true
+		}
+	case 2:
+		if n.Type() == object.ElementNodeType {
+			return true
+		}
+	case 3:
+		if n.Type() == object.AttributeNodeType {
+			return true
+		}
+	case 7:
+		if n.Type() == object.CommentNodeType {
+			return true
+		}
+	case 8:
+		if n.Type() == object.TextNodeType {
+			return true
+		}
+	case 10:
+		return true
+	}
+	return false
+}
+
 // IsContain ..
 func IsContain(src []object.Item, target object.Item) bool {
 	for _, item := range src {
@@ -609,68 +639,102 @@ func IsContainN(src []object.Node, target object.Node) bool {
 	return false
 }
 
+// IsContainA ..
+func IsContainA(src []object.Node, target object.Node) bool {
+	for _, item := range src {
+		if item.Type() == object.AttributeNodeType && target.Type() == object.AttributeNodeType {
+			item := item.(*object.AttrNode)
+			target := target.(*object.AttrNode)
+			if item.Attr() == target.Attr() {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+// AppendNode ..
+func AppendNode(src []object.Node, target object.Node) []object.Node {
+	if !IsContainN(src, target) {
+		src = append(src, target)
+	}
+	return src
+}
+
+// AppendAttr ..
+func AppendAttr(src []object.Node, target object.Node) []object.Node {
+	if !IsContainA(src, target) {
+		src = append(src, target)
+	}
+	return src
+}
+
+// AppendKind ..
+func AppendKind(src []object.Node, target object.Node, typeID byte) []object.Node {
+	switch typeID {
+	case 2:
+		if target.Type() == object.ElementNodeType {
+			src = AppendNode(src, target)
+		}
+	case 3:
+		if target.Type() == object.ElementNodeType {
+			target := target.(*object.BaseNode)
+			for _, a := range target.Attr() {
+				src = AppendAttr(src, a)
+			}
+		}
+	case 7:
+		if target.Type() == object.CommentNodeType {
+			src = AppendNode(src, target)
+		}
+	case 8:
+		if target.Type() == object.TextNodeType {
+			src = AppendNode(src, target)
+		}
+	case 10:
+		src = AppendNode(src, target)
+		if target.Type() == object.ElementNodeType {
+			target := target.(*object.BaseNode)
+			for _, a := range target.Attr() {
+				src = AppendAttr(src, a)
+			}
+		}
+	}
+	return src
+}
+
 // WalkDescKind ..
-func WalkDescKind(nodes []object.Node, n object.Node, typeID byte) {
+func WalkDescKind(nodes []object.Node, n object.Node, typeID byte) []object.Node {
 	for c := n.FirstChild(); c != nil; c = c.NextSibling() {
-		switch typeID {
-		case 2:
-			if c.Type() == object.ElementNodeType {
-				nodes = append(nodes, c)
-			}
-		case 3:
-			if c.Type() == object.ElementNodeType {
-				c := c.(*object.BaseNode)
-				nodes = append(nodes, c.Attr()...)
-			}
-		case 7:
-			if c.Type() == object.CommentNodeType {
-				nodes = append(nodes, c)
-			}
-		case 8:
-			if c.Type() == object.TextNodeType {
-				nodes = append(nodes, c)
-			}
-		case 10:
-			nodes = append(nodes, c)
-			if c.Type() == object.ElementNodeType {
-				c := c.(*object.BaseNode)
-				nodes = append(nodes, c.Attr()...)
-			}
-		}
-
+		nodes = AppendKind(nodes, c, typeID)
 		if c.FirstChild() != nil {
-			WalkDescKind(nodes, c, typeID)
+			nodes = WalkDescKind(nodes, c, typeID)
 		}
 	}
+	return nodes
 }
 
-// WalkDescElemName ..
-func WalkDescElemName(nodes []object.Node, n object.Node, name string) {
-	for c := n.FirstChild(); c != nil; c = c.NextSibling() {
-		if c.Type() == object.ElementNodeType && c.Tree().Data == name {
-			nodes = append(nodes, c)
-		}
-
-		if c.FirstChild() != nil {
-			WalkDescElemName(nodes, c, name)
-		}
-	}
-}
-
-// WalkDescAttrName ..
-func WalkDescAttrName(nodes []object.Node, n object.Node, name string) {
+// WalkDescName ..
+func WalkDescName(nodes []object.Node, n object.Node, t *ast.NameTest) []object.Node {
 	for c := n.FirstChild(); c != nil; c = c.NextSibling() {
 		if c.Type() == object.ElementNodeType {
-			c := c.(*object.BaseNode)
-			for _, attr := range c.Attr() {
-				if attr.Tree().Data == name {
-					nodes = append(nodes, c)
+			switch t.TypeID {
+			case 1:
+				if c.Tree().Data == t.EQName.Value() {
+					nodes = AppendNode(nodes, c)
+				}
+			case 2:
+				switch t.Wildcard.TypeID {
+				case 1:
+					nodes = AppendNode(nodes, c)
 				}
 			}
+
 		}
 
 		if c.FirstChild() != nil {
-			WalkDescAttrName(nodes, c, name)
+			nodes = WalkDescName(nodes, c, t)
 		}
 	}
+	return nodes
 }
