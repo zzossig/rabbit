@@ -105,31 +105,31 @@ func evalNodeTest(test ast.NodeTest, plist *ast.PredicateList, ctx *object.Conte
 	if t, ok := test.(*ast.KindTest); ok {
 		switch ctx.CAxis {
 		case "child::":
-			nodes = kindTestChild(t, ctx)
+			nodes = kindTestChild(t, plist, ctx)
 		case "descendant::":
-			nodes = kindTestDesc(t, ctx)
+			nodes = kindTestDesc(t, plist, ctx)
 		case "attribute::":
-			nodes = kindTestAttr(t, ctx)
+			nodes = kindTestAttr(t, plist, ctx)
 		case "self::":
-			nodes = kindTestSelf(t, ctx)
+			nodes = kindTestSelf(t, plist, ctx)
 		case "descendant-or-self::":
-			nodes = kindTestDescOrSelf(t, ctx)
+			nodes = kindTestDescOrSelf(t, plist, ctx)
 		case "following-sibling::":
-			nodes = kindTestFS(t, ctx)
+			nodes = kindTestFS(t, plist, ctx)
 		case "following::":
-			nodes = kindTestFollowing(t, ctx)
+			nodes = kindTestFollowing(t, plist, ctx)
 		case "namespace::":
-			nodes = kindTestNS(t, ctx)
+			nodes = kindTestNS(t, plist, ctx)
 		case "parent::":
-			nodes = kindTestParent(t, ctx)
+			nodes = kindTestParent(t, plist, ctx)
 		case "ancestor::":
-			nodes = kindTestAncestor(t, ctx)
+			nodes = kindTestAncestor(t, plist, ctx)
 		case "preceding-sibling::":
-			nodes = kindTestPS(t, ctx)
+			nodes = kindTestPS(t, plist, ctx)
 		case "preceding::":
-			nodes = kindTestPreceding(t, ctx)
+			nodes = kindTestPreceding(t, plist, ctx)
 		case "ancestor-or-self::":
-			nodes = kindTestAncestorOrSelf(t, ctx)
+			nodes = kindTestAncestorOrSelf(t, plist, ctx)
 		default:
 			return bif.NewError("not supported axis: %s", ctx.CAxis)
 		}
@@ -138,31 +138,31 @@ func evalNodeTest(test ast.NodeTest, plist *ast.PredicateList, ctx *object.Conte
 	if t, ok := test.(*ast.NameTest); ok {
 		switch ctx.CAxis {
 		case "child::":
-			nodes = nameTestChild(t, ctx)
+			nodes = nameTestChild(t, plist, ctx)
 		case "descendant::":
-			nodes = nameTestDesc(t, ctx)
+			nodes = nameTestDesc(t, plist, ctx)
 		case "attribute::":
-			nodes = nameTestAttr(t, ctx)
+			nodes = nameTestAttr(t, plist, ctx)
 		case "self::":
-			nodes = nameTestSelf(t, ctx)
+			nodes = nameTestSelf(t, plist, ctx)
 		case "descendant-or-self::":
-			nodes = nameTestDescOrSelf(t, ctx)
+			nodes = nameTestDescOrSelf(t, plist, ctx)
 		case "following-sibling::":
-			nodes = nameTestFS(t, ctx)
+			nodes = nameTestFS(t, plist, ctx)
 		case "following::":
-			nodes = nameTestFollowing(t, ctx)
+			nodes = nameTestFollowing(t, plist, ctx)
 		case "namespace::":
-			nodes = nameTestNS(t, ctx)
+			nodes = nameTestNS(t, plist, ctx)
 		case "parent::":
-			nodes = nameTestParent(t, ctx)
+			nodes = nameTestParent(t, plist, ctx)
 		case "ancestor::":
-			nodes = nameTestAncestor(t, ctx)
+			nodes = nameTestAncestor(t, plist, ctx)
 		case "preceding-sibling::":
-			nodes = nameTestPS(t, ctx)
+			nodes = nameTestPS(t, plist, ctx)
 		case "preceding::":
-			nodes = nameTestPreceding(t, ctx)
+			nodes = nameTestPreceding(t, plist, ctx)
 		case "ancestor-or-self::":
-			nodes = nameTestAncestorOrSelf(t, ctx)
+			nodes = nameTestAncestorOrSelf(t, plist, ctx)
 		default:
 			return bif.NewError("not supported axis: %s", ctx.CAxis)
 		}
@@ -172,17 +172,8 @@ func evalNodeTest(test ast.NodeTest, plist *ast.PredicateList, ctx *object.Conte
 	ctx.CSize = len(nodes)
 
 	seq := &object.Sequence{}
-	for i, node := range nodes {
-		ctx.CPos = i + 1
-		ctx.CItem = node
-
-		if len(plist.PL) > 0 {
-			if evalPredicateList(node, plist, ctx) {
-				seq.Items = append(seq.Items, node)
-			}
-		} else {
-			seq.Items = append(seq.Items, node)
-		}
+	for _, node := range nodes {
+		seq.Items = append(seq.Items, node)
 	}
 
 	return seq
@@ -191,16 +182,24 @@ func evalNodeTest(test ast.NodeTest, plist *ast.PredicateList, ctx *object.Conte
 func evalPredicateList(node object.Node, plist *ast.PredicateList, ctx *object.Context) bool {
 	for _, p := range plist.PL {
 		p := Eval(&p.Expr, ctx)
+		seq := p.(*object.Sequence)
 
-		switch p := p.(type) {
-		case *object.Boolean:
-			return p.Value()
-		case *object.Integer:
-			if ctx.CPos == p.Value() {
-				return true
+		if len(seq.Items) == 1 {
+			switch item := seq.Items[0].(type) {
+			case *object.Boolean:
+				return item.Value()
+			case *object.Integer:
+				if ctx.CPos == item.Value() {
+					return true
+				}
+			default:
+				builtin := bif.Builtins["fn:boolean"]
+				bl := builtin(p)
+				boolObj := bl.(*object.Boolean)
+				return boolObj.Value()
 			}
-		case *object.Sequence:
-			for _, item := range p.Items {
+		} else {
+			for _, item := range seq.Items {
 				switch item := item.(type) {
 				case *object.Integer:
 					if ctx.CPos == item.Value() {
@@ -224,11 +223,6 @@ func evalPredicateList(node object.Node, plist *ast.PredicateList, ctx *object.C
 					}
 				}
 			}
-		default:
-			builtin := bif.Builtins["fn:boolean"]
-			bl := builtin(p)
-			boolObj := bl.(*object.Boolean)
-			return boolObj.Value()
 		}
 	}
 
@@ -263,7 +257,7 @@ func evalWildcard(expr ast.ExprSingle, ctx *object.Context) object.Item {
 	return seq
 }
 
-func kindTestChild(t *ast.KindTest, ctx *object.Context) []object.Node {
+func kindTestChild(t *ast.KindTest, plist *ast.PredicateList, ctx *object.Context) []object.Node {
 	var nodes []object.Node
 
 Loop:
@@ -280,7 +274,7 @@ Loop:
 	return nodes
 }
 
-func kindTestDesc(t *ast.KindTest, ctx *object.Context) []object.Node {
+func kindTestDesc(t *ast.KindTest, plist *ast.PredicateList, ctx *object.Context) []object.Node {
 	var nodes []object.Node
 	for _, c := range ctx.CNode {
 		nodes = bif.WalkDescKind(nodes, c, t.TypeID)
@@ -288,7 +282,7 @@ func kindTestDesc(t *ast.KindTest, ctx *object.Context) []object.Node {
 	return nodes
 }
 
-func kindTestAttr(t *ast.KindTest, ctx *object.Context) []object.Node {
+func kindTestAttr(t *ast.KindTest, plist *ast.PredicateList, ctx *object.Context) []object.Node {
 	var nodes []object.Node
 	for _, c := range ctx.CNode {
 		if c.Type() == object.ElementNodeType {
@@ -301,7 +295,7 @@ func kindTestAttr(t *ast.KindTest, ctx *object.Context) []object.Node {
 	return nodes
 }
 
-func kindTestSelf(t *ast.KindTest, ctx *object.Context) []object.Node {
+func kindTestSelf(t *ast.KindTest, plist *ast.PredicateList, ctx *object.Context) []object.Node {
 	var nodes []object.Node
 	for _, c := range ctx.CNode {
 		nodes = bif.AppendKind(nodes, c, t.TypeID)
@@ -309,7 +303,7 @@ func kindTestSelf(t *ast.KindTest, ctx *object.Context) []object.Node {
 	return nodes
 }
 
-func kindTestDescOrSelf(t *ast.KindTest, ctx *object.Context) []object.Node {
+func kindTestDescOrSelf(t *ast.KindTest, plist *ast.PredicateList, ctx *object.Context) []object.Node {
 	var nodes []object.Node
 	for _, c := range ctx.CNode {
 		nodes = bif.AppendKind(nodes, c, t.TypeID)
@@ -318,7 +312,7 @@ func kindTestDescOrSelf(t *ast.KindTest, ctx *object.Context) []object.Node {
 	return nodes
 }
 
-func kindTestFS(t *ast.KindTest, ctx *object.Context) []object.Node {
+func kindTestFS(t *ast.KindTest, plist *ast.PredicateList, ctx *object.Context) []object.Node {
 	var nodes []object.Node
 	for _, c := range ctx.CNode {
 		for s := c.NextSibling(); s != nil; s = s.NextSibling() {
@@ -330,7 +324,7 @@ func kindTestFS(t *ast.KindTest, ctx *object.Context) []object.Node {
 	return nodes
 }
 
-func kindTestFollowing(t *ast.KindTest, ctx *object.Context) []object.Node {
+func kindTestFollowing(t *ast.KindTest, plist *ast.PredicateList, ctx *object.Context) []object.Node {
 	var nodes []object.Node
 	for _, c := range ctx.CNode {
 		for {
@@ -355,11 +349,11 @@ func kindTestFollowing(t *ast.KindTest, ctx *object.Context) []object.Node {
 	return nodes
 }
 
-func kindTestNS(t *ast.KindTest, ctx *object.Context) []object.Node {
+func kindTestNS(t *ast.KindTest, plist *ast.PredicateList, ctx *object.Context) []object.Node {
 	return nil
 }
 
-func kindTestParent(t *ast.KindTest, ctx *object.Context) []object.Node {
+func kindTestParent(t *ast.KindTest, plist *ast.PredicateList, ctx *object.Context) []object.Node {
 	var nodes []object.Node
 	for _, c := range ctx.CNode {
 		if c.Parent() != nil && bif.IsKindMatch(c.Parent(), t.TypeID) {
@@ -369,7 +363,7 @@ func kindTestParent(t *ast.KindTest, ctx *object.Context) []object.Node {
 	return nodes
 }
 
-func kindTestAncestor(t *ast.KindTest, ctx *object.Context) []object.Node {
+func kindTestAncestor(t *ast.KindTest, plist *ast.PredicateList, ctx *object.Context) []object.Node {
 	var nodes []object.Node
 	for _, c := range ctx.CNode {
 		for p := c.Parent(); p != nil; p = p.Parent() {
@@ -381,7 +375,7 @@ func kindTestAncestor(t *ast.KindTest, ctx *object.Context) []object.Node {
 	return nodes
 }
 
-func kindTestPS(t *ast.KindTest, ctx *object.Context) []object.Node {
+func kindTestPS(t *ast.KindTest, plist *ast.PredicateList, ctx *object.Context) []object.Node {
 	var nodes []object.Node
 	for _, c := range ctx.CNode {
 		for s := c.PrevSibling(); s != nil; s = s.PrevSibling() {
@@ -393,7 +387,7 @@ func kindTestPS(t *ast.KindTest, ctx *object.Context) []object.Node {
 	return nodes
 }
 
-func kindTestPreceding(t *ast.KindTest, ctx *object.Context) []object.Node {
+func kindTestPreceding(t *ast.KindTest, plist *ast.PredicateList, ctx *object.Context) []object.Node {
 	var nodes []object.Node
 	for _, c := range ctx.CNode {
 		for {
@@ -418,7 +412,7 @@ func kindTestPreceding(t *ast.KindTest, ctx *object.Context) []object.Node {
 	return nodes
 }
 
-func kindTestAncestorOrSelf(t *ast.KindTest, ctx *object.Context) []object.Node {
+func kindTestAncestorOrSelf(t *ast.KindTest, plist *ast.PredicateList, ctx *object.Context) []object.Node {
 	var nodes []object.Node
 	for _, c := range ctx.CNode {
 		if bif.IsKindMatch(c, t.TypeID) {
@@ -433,15 +427,26 @@ func kindTestAncestorOrSelf(t *ast.KindTest, ctx *object.Context) []object.Node 
 	return nodes
 }
 
-func nameTestChild(t *ast.NameTest, ctx *object.Context) []object.Node {
+func nameTestChild(t *ast.NameTest, plist *ast.PredicateList, ctx *object.Context) []object.Node {
 	var nodes []object.Node
 
 	switch t.TypeID {
 	case 1:
 		for _, c := range ctx.CNode {
+			i := 0
 			for n := c.FirstChild(); n != nil; n = n.NextSibling() {
 				if n.Type() == object.ElementNodeType && t.EQName.Value() == n.Tree().Data {
-					nodes = append(nodes, n)
+					i++
+					ctx.CPos = i
+					ctx.CItem = n
+
+					if len(plist.PL) > 0 {
+						if evalPredicateList(n, plist, ctx) {
+							nodes = append(nodes, n)
+						}
+					} else {
+						nodes = append(nodes, n)
+					}
 				}
 			}
 		}
@@ -459,7 +464,7 @@ func nameTestChild(t *ast.NameTest, ctx *object.Context) []object.Node {
 	return nodes
 }
 
-func nameTestDesc(t *ast.NameTest, ctx *object.Context) []object.Node {
+func nameTestDesc(t *ast.NameTest, plist *ast.PredicateList, ctx *object.Context) []object.Node {
 	var nodes []object.Node
 
 	for _, c := range ctx.CNode {
@@ -469,7 +474,7 @@ func nameTestDesc(t *ast.NameTest, ctx *object.Context) []object.Node {
 	return nodes
 }
 
-func nameTestAttr(t *ast.NameTest, ctx *object.Context) []object.Node {
+func nameTestAttr(t *ast.NameTest, plist *ast.PredicateList, ctx *object.Context) []object.Node {
 	var nodes []object.Node
 
 	switch t.TypeID {
@@ -502,7 +507,7 @@ func nameTestAttr(t *ast.NameTest, ctx *object.Context) []object.Node {
 	return nodes
 }
 
-func nameTestSelf(t *ast.NameTest, ctx *object.Context) []object.Node {
+func nameTestSelf(t *ast.NameTest, plist *ast.PredicateList, ctx *object.Context) []object.Node {
 	var nodes []object.Node
 
 	switch t.TypeID {
@@ -522,7 +527,7 @@ func nameTestSelf(t *ast.NameTest, ctx *object.Context) []object.Node {
 	return nodes
 }
 
-func nameTestDescOrSelf(t *ast.NameTest, ctx *object.Context) []object.Node {
+func nameTestDescOrSelf(t *ast.NameTest, plist *ast.PredicateList, ctx *object.Context) []object.Node {
 	var nodes []object.Node
 
 	for _, c := range ctx.CNode {
@@ -548,7 +553,7 @@ func nameTestDescOrSelf(t *ast.NameTest, ctx *object.Context) []object.Node {
 	return nodes
 }
 
-func nameTestFS(t *ast.NameTest, ctx *object.Context) []object.Node {
+func nameTestFS(t *ast.NameTest, plist *ast.PredicateList, ctx *object.Context) []object.Node {
 	var nodes []object.Node
 
 	switch t.TypeID {
@@ -574,7 +579,7 @@ func nameTestFS(t *ast.NameTest, ctx *object.Context) []object.Node {
 	return nodes
 }
 
-func nameTestFollowing(t *ast.NameTest, ctx *object.Context) []object.Node {
+func nameTestFollowing(t *ast.NameTest, plist *ast.PredicateList, ctx *object.Context) []object.Node {
 	var nodes []object.Node
 
 	switch t.TypeID {
@@ -628,11 +633,11 @@ func nameTestFollowing(t *ast.NameTest, ctx *object.Context) []object.Node {
 	return nodes
 }
 
-func nameTestNS(t *ast.NameTest, ctx *object.Context) []object.Node {
+func nameTestNS(t *ast.NameTest, plist *ast.PredicateList, ctx *object.Context) []object.Node {
 	return nil
 }
 
-func nameTestParent(t *ast.NameTest, ctx *object.Context) []object.Node {
+func nameTestParent(t *ast.NameTest, plist *ast.PredicateList, ctx *object.Context) []object.Node {
 	var nodes []object.Node
 
 	switch t.TypeID {
@@ -656,7 +661,7 @@ func nameTestParent(t *ast.NameTest, ctx *object.Context) []object.Node {
 	return nodes
 }
 
-func nameTestAncestor(t *ast.NameTest, ctx *object.Context) []object.Node {
+func nameTestAncestor(t *ast.NameTest, plist *ast.PredicateList, ctx *object.Context) []object.Node {
 	var nodes []object.Node
 
 	switch t.TypeID {
@@ -682,7 +687,7 @@ func nameTestAncestor(t *ast.NameTest, ctx *object.Context) []object.Node {
 	return nodes
 }
 
-func nameTestPS(t *ast.NameTest, ctx *object.Context) []object.Node {
+func nameTestPS(t *ast.NameTest, plist *ast.PredicateList, ctx *object.Context) []object.Node {
 	var nodes []object.Node
 
 	switch t.TypeID {
@@ -708,7 +713,7 @@ func nameTestPS(t *ast.NameTest, ctx *object.Context) []object.Node {
 	return nodes
 }
 
-func nameTestPreceding(t *ast.NameTest, ctx *object.Context) []object.Node {
+func nameTestPreceding(t *ast.NameTest, plist *ast.PredicateList, ctx *object.Context) []object.Node {
 	var nodes []object.Node
 
 	switch t.TypeID {
@@ -762,7 +767,7 @@ func nameTestPreceding(t *ast.NameTest, ctx *object.Context) []object.Node {
 	return nodes
 }
 
-func nameTestAncestorOrSelf(t *ast.NameTest, ctx *object.Context) []object.Node {
+func nameTestAncestorOrSelf(t *ast.NameTest, plist *ast.PredicateList, ctx *object.Context) []object.Node {
 	var nodes []object.Node
 
 	switch t.TypeID {

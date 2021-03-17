@@ -607,6 +607,42 @@ func TestPathExpr(t *testing.T) {
 }
 
 func TestPathPredicateExpr(t *testing.T) {
+	// seq := testEvalXML("//book[0]")
+	// sequence := seq.(*object.Sequence)
+	// if sequence.Items != nil {
+	// 	t.Errorf("result must be a nil")
+	// }
+
+	// seq2 := testEvalXML("//book[1]")
+	// sequence2 := seq2.(*object.Sequence)
+	// if len(sequence2.Items) != 3 {
+	// 	t.Errorf("wrong number of items. got=%d, expected=3", len(sequence2.Items))
+	// }
+
+	// seq3 := testEvalXML("//book[2]")
+	// sequence3 := seq3.(*object.Sequence)
+	// if len(sequence3.Items) != 1 {
+	// 	t.Errorf("wrong number of items. got=%d, expected=1", len(sequence3.Items))
+	// }
+
+	// seq4 := testEvalXML("//book[2]/@category")
+	// sequence4 := seq4.(*object.Sequence)
+	// if len(sequence4.Items) != 1 {
+	// 	t.Errorf("wrong number of items. got=%d, expected=1", len(sequence4.Items))
+	// }
+	// node4, ok := sequence4.Items[0].(*object.AttrNode)
+	// if !ok {
+	// 	t.Errorf("node type must be an attribute node")
+	// }
+	// if node4.Inspect() != "web" {
+	// 	t.Errorf("wrong attribute value. got=%s, expected='web'", node4.Inspect())
+	// }
+
+	seq5 := testEvalXML("//book[@category='web']")
+	sequence5 := seq5.(*object.Sequence)
+	if len(sequence5.Items) != 2 {
+		t.Errorf("wrong number of items. got=%d, expected=2", len(sequence5.Items))
+	}
 }
 
 func testEval(input string) object.Item {
