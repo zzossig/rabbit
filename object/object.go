@@ -309,7 +309,7 @@ func (bn *BaseNode) Attr() []Node {
 	if len(bn.tree.Attr) > 0 {
 		var nodes []Node
 		for _, a := range bn.tree.Attr {
-			nodes = append(nodes, &AttrNode{bn.tree, &a})
+			nodes = append(nodes, &AttrNode{bn.tree, a})
 		}
 		return nodes
 	}
@@ -319,21 +319,21 @@ func (bn *BaseNode) Attr() []Node {
 // AttrNode ..
 type AttrNode struct {
 	parent *html.Node
-	attr   *html.Attribute
+	attr   html.Attribute
 }
 
-func (an *AttrNode) Type() Type                   { return AttributeNodeType }
-func (an *AttrNode) Inspect() string              { return an.attr.Val }
-func (an *AttrNode) Key() string                  { return an.attr.Key }
-func (an *AttrNode) Attr() *html.Attribute        { return an.attr }
-func (an *AttrNode) SetAttr(attr *html.Attribute) { an.attr = attr }
-func (an *AttrNode) SetTree(p *html.Node)         { an.parent = p }
-func (an *AttrNode) Tree() *html.Node             { return nil }
-func (an *AttrNode) Self() Node                   { return nil }
-func (an *AttrNode) FirstChild() Node             { return nil }
-func (an *AttrNode) LastChild() Node              { return nil }
-func (an *AttrNode) PrevSibling() Node            { return nil }
-func (an *AttrNode) NextSibling() Node            { return nil }
+func (an *AttrNode) Type() Type                  { return AttributeNodeType }
+func (an *AttrNode) Inspect() string             { return an.attr.Val }
+func (an *AttrNode) Key() string                 { return an.attr.Key }
+func (an *AttrNode) Attr() html.Attribute        { return an.attr }
+func (an *AttrNode) SetAttr(attr html.Attribute) { an.attr = attr }
+func (an *AttrNode) SetTree(p *html.Node)        { an.parent = p }
+func (an *AttrNode) Tree() *html.Node            { return an.parent }
+func (an *AttrNode) Self() Node                  { return nil }
+func (an *AttrNode) FirstChild() Node            { return nil }
+func (an *AttrNode) LastChild() Node             { return nil }
+func (an *AttrNode) PrevSibling() Node           { return nil }
+func (an *AttrNode) NextSibling() Node           { return nil }
 func (an *AttrNode) Parent() Node {
 	if an.parent != nil {
 		return &BaseNode{an.parent}

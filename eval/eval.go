@@ -85,6 +85,8 @@ func Eval(expr ast.ExprSingle, ctx *object.Context) object.Item {
 		return evalRelativePathExpr(expr, ctx)
 	case *ast.AxisStep:
 		return evalAxisStep(expr, ctx)
+	case *ast.Wildcard:
+		return evalWildcard(expr, ctx)
 	}
 
 	return bif.NewError("not a valid xpath expression")

@@ -235,6 +235,34 @@ func evalPredicateList(node object.Node, plist *ast.PredicateList, ctx *object.C
 	return false
 }
 
+func evalWildcard(expr ast.ExprSingle, ctx *object.Context) object.Item {
+	w := expr.(*ast.Wildcard)
+
+	var nodes []object.Node
+	switch w.TypeID {
+	case 1:
+		for _, c := range ctx.CNode {
+			if c.Type() == object.ElementNodeType {
+				nodes = bif.AppendNode(nodes, c)
+			}
+		}
+	}
+
+	ctx.CNode = nodes
+	ctx.CSize = len(nodes)
+
+	seq := &object.Sequence{}
+	for _, n := range nodes {
+		for c := n.FirstChild(); c != nil; c = c.NextSibling() {
+			if c.Type() == object.ElementNodeType {
+				seq.Items = append(seq.Items, c)
+			}
+		}
+	}
+
+	return seq
+}
+
 func kindTestChild(t *ast.KindTest, ctx *object.Context) []object.Node {
 	var nodes []object.Node
 
@@ -266,7 +294,7 @@ func kindTestAttr(t *ast.KindTest, ctx *object.Context) []object.Node {
 		if c.Type() == object.ElementNodeType {
 			c := c.(*object.BaseNode)
 			for _, a := range c.Attr() {
-				nodes = bif.AppendAttr(nodes, a)
+				nodes = bif.AppendNode(nodes, a)
 			}
 		}
 	}
@@ -452,7 +480,7 @@ func nameTestAttr(t *ast.NameTest, ctx *object.Context) []object.Node {
 				for _, a := range c.Attr() {
 					a := a.(*object.AttrNode)
 					if a.Key() == t.EQName.Value() {
-						nodes = bif.AppendAttr(nodes, a)
+						nodes = bif.AppendNode(nodes, a)
 					}
 				}
 			}
@@ -464,7 +492,7 @@ func nameTestAttr(t *ast.NameTest, ctx *object.Context) []object.Node {
 				if c.Type() == object.ElementNodeType {
 					c := c.(*object.BaseNode)
 					for _, a := range c.Attr() {
-						nodes = bif.AppendAttr(nodes, a)
+						nodes = bif.AppendNode(nodes, a)
 					}
 				}
 			}
@@ -555,15 +583,16 @@ func nameTestFollowing(t *ast.NameTest, ctx *object.Context) []object.Node {
 			for {
 				s := c.NextSibling()
 				if s == nil {
-					f := c.Parent()
-					if f == nil {
+					p := c.Parent()
+					if p == nil {
 						break
 					}
-					s = f.NextSibling()
+					s = p.NextSibling()
 					if s == nil {
 						break
 					}
 				}
+				c = s
 
 				if t.EQName.Value() == s.Tree().Data {
 					nodes = bif.AppendNode(nodes, s)
@@ -578,15 +607,16 @@ func nameTestFollowing(t *ast.NameTest, ctx *object.Context) []object.Node {
 				for {
 					s := c.NextSibling()
 					if s == nil {
-						f := c.Parent()
-						if f == nil {
+						p := c.Parent()
+						if p == nil {
 							break
 						}
-						s = f.NextSibling()
+						s = p.NextSibling()
 						if s == nil {
 							break
 						}
 					}
+					c = s
 
 					nodes = bif.AppendNode(nodes, s)
 					nodes = bif.WalkDescName(nodes, s, t)
@@ -696,11 +726,12 @@ func nameTestPreceding(t *ast.NameTest, ctx *object.Context) []object.Node {
 						break
 					}
 				}
+				c = s
 
 				if t.EQName.Value() == s.Tree().Data {
 					nodes = bif.AppendNode(nodes, s)
 				}
-				nodes = bif.WalkDescKind(nodes, s, t.TypeID)
+				nodes = bif.WalkDescName(nodes, s, t)
 			}
 		}
 	case 2:
@@ -719,9 +750,10 @@ func nameTestPreceding(t *ast.NameTest, ctx *object.Context) []object.Node {
 							break
 						}
 					}
+					c = s
 
 					nodes = bif.AppendNode(nodes, s)
-					nodes = bif.WalkDescKind(nodes, s, t.TypeID)
+					nodes = bif.WalkDescName(nodes, s, t)
 				}
 			}
 		}

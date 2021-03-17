@@ -632,20 +632,24 @@ func IsContain(src []object.Item, target object.Item) bool {
 // IsContainN ..
 func IsContainN(src []object.Node, target object.Node) bool {
 	for _, item := range src {
-		if item == target {
-			return true
-		}
-	}
-	return false
-}
+		if item, ok := item.(*object.BaseNode); ok {
+			if item.Type() != target.Type() {
+				return false
+			}
 
-// IsContainA ..
-func IsContainA(src []object.Node, target object.Node) bool {
-	for _, item := range src {
-		if item.Type() == object.AttributeNodeType && target.Type() == object.AttributeNodeType {
-			item := item.(*object.AttrNode)
+			target := target.(*object.BaseNode)
+			if item.Tree() == target.Tree() {
+				return true
+			}
+		}
+
+		if item, ok := item.(*object.AttrNode); ok {
+			if item.Type() != target.Type() {
+				return false
+			}
+
 			target := target.(*object.AttrNode)
-			if item.Attr() == target.Attr() {
+			if item.Tree() == target.Tree() && item.Key() == target.Key() {
 				return true
 			}
 		}
@@ -656,14 +660,6 @@ func IsContainA(src []object.Node, target object.Node) bool {
 // AppendNode ..
 func AppendNode(src []object.Node, target object.Node) []object.Node {
 	if !IsContainN(src, target) {
-		src = append(src, target)
-	}
-	return src
-}
-
-// AppendAttr ..
-func AppendAttr(src []object.Node, target object.Node) []object.Node {
-	if !IsContainA(src, target) {
 		src = append(src, target)
 	}
 	return src
@@ -680,7 +676,7 @@ func AppendKind(src []object.Node, target object.Node, typeID byte) []object.Nod
 		if target.Type() == object.ElementNodeType {
 			target := target.(*object.BaseNode)
 			for _, a := range target.Attr() {
-				src = AppendAttr(src, a)
+				src = AppendNode(src, a)
 			}
 		}
 	case 7:
@@ -696,7 +692,7 @@ func AppendKind(src []object.Node, target object.Node, typeID byte) []object.Nod
 		if target.Type() == object.ElementNodeType {
 			target := target.(*object.BaseNode)
 			for _, a := range target.Attr() {
-				src = AppendAttr(src, a)
+				src = AppendNode(src, a)
 			}
 		}
 	}

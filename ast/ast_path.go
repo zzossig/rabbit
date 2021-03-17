@@ -152,7 +152,9 @@ func (fs *ForwardStep) String() string {
 	switch fs.TypeID {
 	case 1:
 		sb.WriteString(fs.ForwardAxis.Value())
-		sb.WriteString(fs.NodeTest.String())
+		if fs.NodeTest != nil {
+			sb.WriteString(fs.NodeTest.String())
+		}
 	case 2:
 		sb.WriteString(fs.AbbrevForwardStep.String())
 	default:
@@ -202,7 +204,9 @@ func (afs *AbbrevForwardStep) String() string {
 	var sb strings.Builder
 
 	sb.WriteString(afs.Token.Literal)
-	sb.WriteString(afs.NodeTest.String())
+	if afs.NodeTest != nil {
+		sb.WriteString(afs.NodeTest.String())
+	}
 
 	return sb.String()
 }

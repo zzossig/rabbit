@@ -9,11 +9,11 @@
 		<tt:year>2005</tt:year>
 		<tt:price>30.00</tt:price>
 	</tt:book>
-	<book>
+	<book category="1">
 		<title lang="en">Harry Potter</title>
-		<book>
+		<book category="2">
 			godc
-			<book>
+			<book category="3">
 				hterkj
 				<haha>
 					<year category="children" IDREF="aa">001</year>
