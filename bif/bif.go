@@ -314,6 +314,55 @@ func IsBoolean(item object.Item) bool {
 	return item.Type() == object.BooleanType
 }
 
+// IsPrecede ..
+func IsPrecede(n1, n2 object.Node, src *object.BaseNode) object.Item {
+	for c := src.FirstChild(); c != nil; c = c.NextSibling() {
+		c := c.(*object.BaseNode)
+
+		if n2.Type() != object.AttributeNodeType && n2.Tree() == c.Tree() {
+			return object.FALSE
+		}
+		if n1.Type() != object.AttributeNodeType && n1.Tree() == c.Tree() {
+			return object.TRUE
+		}
+
+		if n1.Type() == object.AttributeNodeType && n2.Type() == object.AttributeNodeType {
+			n1 := n1.(*object.AttrNode)
+			n2 := n2.(*object.AttrNode)
+			for _, a := range src.Attr() {
+				a := a.(*object.AttrNode)
+				if n1.Tree() == a.Tree() && n1.Key() == a.Key() {
+					return object.TRUE
+				}
+				if n2.Tree() == a.Tree() && n2.Key() == a.Key() {
+					return object.FALSE
+				}
+			}
+		} else if n1.Type() == object.AttributeNodeType {
+			n1 := n1.(*object.AttrNode)
+			for _, a := range src.Attr() {
+				a := a.(*object.AttrNode)
+				if n1.Tree() == a.Tree() && n1.Key() == a.Key() {
+					return object.TRUE
+				}
+			}
+		} else if n2.Type() == object.AttributeNodeType {
+			n2 := n2.(*object.AttrNode)
+			for _, a := range src.Attr() {
+				a := a.(*object.AttrNode)
+				if n2.Tree() == a.Tree() && n2.Key() == a.Key() {
+					return object.FALSE
+				}
+			}
+		}
+
+		if c.FirstChild() != nil {
+			return IsPrecede(n1, n2, c)
+		}
+	}
+	return object.NIL
+}
+
 // IsEQ ..
 func IsEQ(left, right object.Item) object.Item {
 	if leftVal, ok := left.(*object.Integer); ok {
@@ -324,8 +373,6 @@ func IsEQ(left, right object.Item) object.Item {
 			return NewBoolean(float64(leftVal.Value()) == rightVal.Value())
 		case *object.Double:
 			return NewBoolean(float64(leftVal.Value()) == rightVal.Value())
-		default:
-			return NewError("cannot convert %s to number", right.Type())
 		}
 	} else if leftVal, ok := left.(*object.Decimal); ok {
 		switch rightVal := right.(type) {
@@ -335,8 +382,6 @@ func IsEQ(left, right object.Item) object.Item {
 			return NewBoolean(leftVal.Value() == rightVal.Value())
 		case *object.Double:
 			return NewBoolean(leftVal.Value() == rightVal.Value())
-		default:
-			return NewError("cannot convert %s to number", right.Type())
 		}
 	} else if leftVal, ok := left.(*object.Double); ok {
 		switch rightVal := right.(type) {
@@ -346,18 +391,36 @@ func IsEQ(left, right object.Item) object.Item {
 			return NewBoolean(leftVal.Value() == rightVal.Value())
 		case *object.Double:
 			return NewBoolean(leftVal.Value() == rightVal.Value())
-		default:
-			return NewError("cannot convert %s to number", right.Type())
 		}
 	} else if leftVal, ok := left.(*object.String); ok {
 		switch rightVal := right.(type) {
 		case *object.String:
 			return NewBoolean(leftVal.Value() == rightVal.Value())
-		default:
-			return NewError("cannot compare %s and %s", left.Type(), right.Type())
+		case *object.BaseNode:
+			return NewBoolean(leftVal.Value() == rightVal.Text())
+		case *object.AttrNode:
+			return NewBoolean(leftVal.Value() == rightVal.Text())
+		}
+	} else if leftVal, ok := left.(*object.BaseNode); ok {
+		switch rightVal := right.(type) {
+		case *object.BaseNode:
+			return NewBoolean(leftVal.Text() == rightVal.Text())
+		case *object.AttrNode:
+			return object.FALSE
+		case *object.String:
+			return NewBoolean(leftVal.Text() == rightVal.Value())
+		}
+	} else if leftVal, ok := left.(*object.AttrNode); ok {
+		switch rightVal := right.(type) {
+		case *object.AttrNode:
+			return NewBoolean(leftVal.Text() == rightVal.Text())
+		case *object.BaseNode:
+			return object.FALSE
+		case *object.String:
+			return NewBoolean(leftVal.Text() == rightVal.Value())
 		}
 	}
-	return NewError("cannot compare %s and %s", left.Type(), right.Type())
+	return NewError("cannot compare types: %s, %s", left.Type(), right.Type())
 }
 
 // IsNE ..
@@ -370,8 +433,6 @@ func IsNE(left, right object.Item) object.Item {
 			return NewBoolean(float64(leftVal.Value()) != rightVal.Value())
 		case *object.Double:
 			return NewBoolean(float64(leftVal.Value()) != rightVal.Value())
-		default:
-			return NewError("cannot convert %s to number", right.Type())
 		}
 	} else if leftVal, ok := left.(*object.Decimal); ok {
 		switch rightVal := right.(type) {
@@ -381,8 +442,6 @@ func IsNE(left, right object.Item) object.Item {
 			return NewBoolean(leftVal.Value() != rightVal.Value())
 		case *object.Double:
 			return NewBoolean(leftVal.Value() != rightVal.Value())
-		default:
-			return NewError("cannot convert %s to number", right.Type())
 		}
 	} else if leftVal, ok := left.(*object.Double); ok {
 		switch rightVal := right.(type) {
@@ -392,18 +451,36 @@ func IsNE(left, right object.Item) object.Item {
 			return NewBoolean(leftVal.Value() != rightVal.Value())
 		case *object.Double:
 			return NewBoolean(leftVal.Value() != rightVal.Value())
-		default:
-			return NewError("cannot convert %s to number", right.Type())
 		}
 	} else if leftVal, ok := left.(*object.String); ok {
 		switch rightVal := right.(type) {
 		case *object.String:
 			return NewBoolean(leftVal.Value() != rightVal.Value())
-		default:
-			return NewError("cannot compare %s and %s", left.Type(), right.Type())
+		case *object.BaseNode:
+			return NewBoolean(leftVal.Value() != rightVal.Text())
+		case *object.AttrNode:
+			return NewBoolean(leftVal.Value() != rightVal.Text())
+		}
+	} else if leftVal, ok := left.(*object.BaseNode); ok {
+		switch rightVal := right.(type) {
+		case *object.BaseNode:
+			return NewBoolean(leftVal.Text() != rightVal.Text())
+		case *object.AttrNode:
+			return object.TRUE
+		case *object.String:
+			return NewBoolean(leftVal.Text() != rightVal.Value())
+		}
+	} else if leftVal, ok := left.(*object.AttrNode); ok {
+		switch rightVal := right.(type) {
+		case *object.AttrNode:
+			return NewBoolean(leftVal.Text() != rightVal.Text())
+		case *object.BaseNode:
+			return object.TRUE
+		case *object.String:
+			return NewBoolean(leftVal.Text() != rightVal.Value())
 		}
 	}
-	return NewError("cannot compare %s and %s", left.Type(), right.Type())
+	return NewError("cannot compare types: %s, %s", left.Type(), right.Type())
 }
 
 // IsLT ..
@@ -416,8 +493,6 @@ func IsLT(left, right object.Item) object.Item {
 			return NewBoolean(float64(leftVal.Value()) < rightVal.Value())
 		case *object.Double:
 			return NewBoolean(float64(leftVal.Value()) < rightVal.Value())
-		default:
-			return NewError("cannot convert %s to number", right.Type())
 		}
 	} else if leftVal, ok := left.(*object.Decimal); ok {
 		switch rightVal := right.(type) {
@@ -427,8 +502,6 @@ func IsLT(left, right object.Item) object.Item {
 			return NewBoolean(leftVal.Value() < rightVal.Value())
 		case *object.Double:
 			return NewBoolean(leftVal.Value() < rightVal.Value())
-		default:
-			return NewError("cannot convert %s to number", right.Type())
 		}
 	} else if leftVal, ok := left.(*object.Double); ok {
 		switch rightVal := right.(type) {
@@ -438,18 +511,36 @@ func IsLT(left, right object.Item) object.Item {
 			return NewBoolean(leftVal.Value() < rightVal.Value())
 		case *object.Double:
 			return NewBoolean(leftVal.Value() < rightVal.Value())
-		default:
-			return NewError("cannot convert %s to number", right.Type())
 		}
 	} else if leftVal, ok := left.(*object.String); ok {
 		switch rightVal := right.(type) {
 		case *object.String:
 			return NewBoolean(leftVal.Value() < rightVal.Value())
-		default:
-			return NewError("cannot compare %s and %s", left.Type(), right.Type())
+		case *object.BaseNode:
+			return NewBoolean(leftVal.Value() < rightVal.Text())
+		case *object.AttrNode:
+			return NewBoolean(leftVal.Value() < rightVal.Text())
+		}
+	} else if leftVal, ok := left.(*object.BaseNode); ok {
+		switch rightVal := right.(type) {
+		case *object.BaseNode:
+			return NewBoolean(leftVal.Text() < rightVal.Text())
+		case *object.AttrNode:
+			return NewBoolean(leftVal.Text() < rightVal.Text())
+		case *object.String:
+			return NewBoolean(leftVal.Text() < rightVal.Value())
+		}
+	} else if leftVal, ok := left.(*object.AttrNode); ok {
+		switch rightVal := right.(type) {
+		case *object.AttrNode:
+			return NewBoolean(leftVal.Text() < rightVal.Text())
+		case *object.BaseNode:
+			return NewBoolean(leftVal.Text() < rightVal.Text())
+		case *object.String:
+			return NewBoolean(leftVal.Text() < rightVal.Value())
 		}
 	}
-	return NewError("cannot compare %s and %s", left.Type(), right.Type())
+	return NewError("cannot compare types: %s, %s", left.Type(), right.Type())
 }
 
 // IsLE ..
@@ -462,8 +553,6 @@ func IsLE(left, right object.Item) object.Item {
 			return NewBoolean(float64(leftVal.Value()) <= rightVal.Value())
 		case *object.Double:
 			return NewBoolean(float64(leftVal.Value()) <= rightVal.Value())
-		default:
-			return NewError("cannot convert %s to number", right.Type())
 		}
 	} else if leftVal, ok := left.(*object.Decimal); ok {
 		switch rightVal := right.(type) {
@@ -473,8 +562,6 @@ func IsLE(left, right object.Item) object.Item {
 			return NewBoolean(leftVal.Value() <= rightVal.Value())
 		case *object.Double:
 			return NewBoolean(leftVal.Value() <= rightVal.Value())
-		default:
-			return NewError("cannot convert %s to number", right.Type())
 		}
 	} else if leftVal, ok := left.(*object.Double); ok {
 		switch rightVal := right.(type) {
@@ -484,18 +571,36 @@ func IsLE(left, right object.Item) object.Item {
 			return NewBoolean(leftVal.Value() <= rightVal.Value())
 		case *object.Double:
 			return NewBoolean(leftVal.Value() <= rightVal.Value())
-		default:
-			return NewError("cannot convert %s to number", right.Type())
 		}
 	} else if leftVal, ok := left.(*object.String); ok {
 		switch rightVal := right.(type) {
 		case *object.String:
 			return NewBoolean(leftVal.Value() <= rightVal.Value())
-		default:
-			return NewError("cannot compare %s and %s", left.Type(), right.Type())
+		case *object.BaseNode:
+			return NewBoolean(leftVal.Value() <= rightVal.Text())
+		case *object.AttrNode:
+			return NewBoolean(leftVal.Value() <= rightVal.Text())
+		}
+	} else if leftVal, ok := left.(*object.BaseNode); ok {
+		switch rightVal := right.(type) {
+		case *object.BaseNode:
+			return NewBoolean(leftVal.Text() <= rightVal.Text())
+		case *object.AttrNode:
+			return NewBoolean(leftVal.Text() <= rightVal.Text())
+		case *object.String:
+			return NewBoolean(leftVal.Text() <= rightVal.Value())
+		}
+	} else if leftVal, ok := left.(*object.AttrNode); ok {
+		switch rightVal := right.(type) {
+		case *object.AttrNode:
+			return NewBoolean(leftVal.Text() <= rightVal.Text())
+		case *object.BaseNode:
+			return NewBoolean(leftVal.Text() <= rightVal.Text())
+		case *object.String:
+			return NewBoolean(leftVal.Text() <= rightVal.Value())
 		}
 	}
-	return NewError("cannot compare %s and %s", left.Type(), right.Type())
+	return NewError("cannot compare types: %s, %s", left.Type(), right.Type())
 }
 
 // IsGT ..
@@ -508,8 +613,6 @@ func IsGT(left, right object.Item) object.Item {
 			return NewBoolean(float64(leftVal.Value()) > rightVal.Value())
 		case *object.Double:
 			return NewBoolean(float64(leftVal.Value()) > rightVal.Value())
-		default:
-			return NewError("cannot convert %s to number", right.Type())
 		}
 	} else if leftVal, ok := left.(*object.Decimal); ok {
 		switch rightVal := right.(type) {
@@ -519,8 +622,6 @@ func IsGT(left, right object.Item) object.Item {
 			return NewBoolean(leftVal.Value() > rightVal.Value())
 		case *object.Double:
 			return NewBoolean(leftVal.Value() > rightVal.Value())
-		default:
-			return NewError("cannot convert %s to number", right.Type())
 		}
 	} else if leftVal, ok := left.(*object.Double); ok {
 		switch rightVal := right.(type) {
@@ -530,18 +631,36 @@ func IsGT(left, right object.Item) object.Item {
 			return NewBoolean(leftVal.Value() > rightVal.Value())
 		case *object.Double:
 			return NewBoolean(leftVal.Value() > rightVal.Value())
-		default:
-			return NewError("cannot convert %s to number", right.Type())
 		}
 	} else if leftVal, ok := left.(*object.String); ok {
 		switch rightVal := right.(type) {
 		case *object.String:
 			return NewBoolean(leftVal.Value() > rightVal.Value())
-		default:
-			return NewError("cannot compare %s and %s", left.Type(), right.Type())
+		case *object.BaseNode:
+			return NewBoolean(leftVal.Value() > rightVal.Text())
+		case *object.AttrNode:
+			return NewBoolean(leftVal.Value() > rightVal.Text())
+		}
+	} else if leftVal, ok := left.(*object.BaseNode); ok {
+		switch rightVal := right.(type) {
+		case *object.BaseNode:
+			return NewBoolean(leftVal.Text() > rightVal.Text())
+		case *object.AttrNode:
+			return NewBoolean(leftVal.Text() > rightVal.Text())
+		case *object.String:
+			return NewBoolean(leftVal.Text() > rightVal.Value())
+		}
+	} else if leftVal, ok := left.(*object.AttrNode); ok {
+		switch rightVal := right.(type) {
+		case *object.AttrNode:
+			return NewBoolean(leftVal.Text() > rightVal.Text())
+		case *object.BaseNode:
+			return NewBoolean(leftVal.Text() > rightVal.Text())
+		case *object.String:
+			return NewBoolean(leftVal.Text() > rightVal.Value())
 		}
 	}
-	return NewError("cannot compare %s and %s", left.Type(), right.Type())
+	return NewError("cannot compare types: %s, %s", left.Type(), right.Type())
 }
 
 // IsGE ..
@@ -554,8 +673,6 @@ func IsGE(left, right object.Item) object.Item {
 			return NewBoolean(float64(leftVal.Value()) >= rightVal.Value())
 		case *object.Double:
 			return NewBoolean(float64(leftVal.Value()) >= rightVal.Value())
-		default:
-			return NewError("cannot convert %s to number", right.Type())
 		}
 	} else if leftVal, ok := left.(*object.Decimal); ok {
 		switch rightVal := right.(type) {
@@ -565,8 +682,6 @@ func IsGE(left, right object.Item) object.Item {
 			return NewBoolean(leftVal.Value() >= rightVal.Value())
 		case *object.Double:
 			return NewBoolean(leftVal.Value() >= rightVal.Value())
-		default:
-			return NewError("cannot convert %s to number", right.Type())
 		}
 	} else if leftVal, ok := left.(*object.Double); ok {
 		switch rightVal := right.(type) {
@@ -576,18 +691,36 @@ func IsGE(left, right object.Item) object.Item {
 			return NewBoolean(leftVal.Value() >= rightVal.Value())
 		case *object.Double:
 			return NewBoolean(leftVal.Value() >= rightVal.Value())
-		default:
-			return NewError("cannot convert %s to number", right.Type())
 		}
 	} else if leftVal, ok := left.(*object.String); ok {
 		switch rightVal := right.(type) {
 		case *object.String:
 			return NewBoolean(leftVal.Value() >= rightVal.Value())
-		default:
-			return NewError("cannot compare %s and %s", left.Type(), right.Type())
+		case *object.BaseNode:
+			return NewBoolean(leftVal.Value() >= rightVal.Text())
+		case *object.AttrNode:
+			return NewBoolean(leftVal.Value() >= rightVal.Text())
+		}
+	} else if leftVal, ok := left.(*object.BaseNode); ok {
+		switch rightVal := right.(type) {
+		case *object.BaseNode:
+			return NewBoolean(leftVal.Text() >= rightVal.Text())
+		case *object.AttrNode:
+			return NewBoolean(leftVal.Text() >= rightVal.Text())
+		case *object.String:
+			return NewBoolean(leftVal.Text() >= rightVal.Value())
+		}
+	} else if leftVal, ok := left.(*object.AttrNode); ok {
+		switch rightVal := right.(type) {
+		case *object.AttrNode:
+			return NewBoolean(leftVal.Text() >= rightVal.Text())
+		case *object.BaseNode:
+			return NewBoolean(leftVal.Text() >= rightVal.Text())
+		case *object.String:
+			return NewBoolean(leftVal.Text() >= rightVal.Value())
 		}
 	}
-	return NewError("cannot compare %s and %s", left.Type(), right.Type())
+	return NewError("cannot compare types: %s, %s", left.Type(), right.Type())
 }
 
 // IsKindMatch ..

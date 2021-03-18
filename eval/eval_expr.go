@@ -398,9 +398,124 @@ func evalLogicalExpr(expr ast.ExprSingle, ctx *object.Context) object.Item {
 }
 
 func evalUnionExpr(expr ast.ExprSingle, ctx *object.Context) object.Item {
-	return nil
+	ue := expr.(*ast.UnionExpr)
+
+	l := Eval(ue.LeftExpr, ctx)
+	r := Eval(ue.RightExpr, ctx)
+
+	if l.Type() != object.SequenceType || r.Type() != object.SequenceType {
+		return bif.NewError("not allowed types in UnionExpr: %s, %s", l.Type(), r.Type())
+	}
+
+	lseq := l.(*object.Sequence)
+	rseq := r.(*object.Sequence)
+
+	var nodes []object.Node
+
+	for _, item := range lseq.Items {
+		if item, ok := item.(*object.BaseNode); ok {
+			nodes = bif.AppendNode(nodes, item)
+			continue
+		}
+		if item, ok := item.(*object.AttrNode); ok {
+			nodes = bif.AppendNode(nodes, item)
+			continue
+		}
+		return bif.NewError("not allowed type in UnionExpr: %s", item.Type())
+	}
+
+	for _, item := range rseq.Items {
+		if item, ok := item.(*object.BaseNode); ok {
+			nodes = bif.AppendNode(nodes, item)
+			continue
+		}
+		if item, ok := item.(*object.AttrNode); ok {
+			nodes = bif.AppendNode(nodes, item)
+			continue
+		}
+		return bif.NewError("not allowed type in UnionExpr: %s", item.Type())
+	}
+
+	seq := &object.Sequence{}
+	for _, node := range nodes {
+		seq.Items = append(seq.Items, node)
+	}
+
+	return seq
 }
 
 func evalIntersectExceptExpr(expr ast.ExprSingle, ctx *object.Context) object.Item {
-	return nil
+	iee := expr.(*ast.IntersectExceptExpr)
+
+	l := Eval(iee.LeftExpr, ctx)
+	r := Eval(iee.RightExpr, ctx)
+
+	if l.Type() != object.SequenceType || r.Type() != object.SequenceType {
+		return bif.NewError("not allowed types in IntersectExceptExpr: %s, %s", l.Type(), r.Type())
+	}
+
+	lseq := l.(*object.Sequence)
+	rseq := r.(*object.Sequence)
+
+	var nodes []object.Node
+	var inodes []object.Node
+	var enodes []object.Node
+
+	for _, item := range lseq.Items {
+		if item, ok := item.(*object.BaseNode); ok {
+			nodes = bif.AppendNode(nodes, item)
+			continue
+		}
+		if item, ok := item.(*object.AttrNode); ok {
+			nodes = bif.AppendNode(nodes, item)
+			continue
+		}
+		return bif.NewError("not allowed type in IntersectExceptExpr: %s", item.Type())
+	}
+
+	for _, item := range rseq.Items {
+		if item, ok := item.(*object.BaseNode); ok {
+			if bif.IsContainN(nodes, item) {
+				inodes = append(inodes, item)
+			}
+			continue
+		}
+		if item, ok := item.(*object.AttrNode); ok {
+			if bif.IsContainN(nodes, item) {
+				inodes = append(inodes, item)
+			}
+			continue
+		}
+		return bif.NewError("not allowed type in IntersectExceptExpr: %s", item.Type())
+	}
+
+	seq := &object.Sequence{}
+
+	if iee.Token.Type == token.INTERSECT {
+		for _, node := range inodes {
+			seq.Items = append(seq.Items, node)
+		}
+		return seq
+	}
+
+	for _, n := range nodes {
+		if n, ok := n.(*object.BaseNode); ok {
+			if !bif.IsContainN(inodes, n) {
+				enodes = append(enodes, n)
+			}
+			continue
+		}
+		if n, ok := n.(*object.AttrNode); ok {
+			if !bif.IsContainN(inodes, n) {
+				enodes = append(enodes, n)
+			}
+			continue
+		}
+	}
+
+	for _, node := range enodes {
+		seq.Items = append(seq.Items, node)
+	}
+
+	return seq
 }

@@ -26,6 +26,7 @@ type Node interface {
 	LastChild() Node
 	PrevSibling() Node
 	NextSibling() Node
+	Text() string
 }
 
 // predefined
@@ -315,6 +316,14 @@ func (bn *BaseNode) Attr() []Node {
 	}
 	return nil
 }
+func (bn *BaseNode) Text() string {
+	for c := bn.FirstChild(); c != nil; c = bn.NextSibling() {
+		if c.Type() == TextNodeType {
+			return c.Tree().Data
+		}
+	}
+	return ""
+}
 
 // AttrNode ..
 type AttrNode struct {
@@ -340,3 +349,4 @@ func (an *AttrNode) Parent() Node {
 	}
 	return nil
 }
+func (an *AttrNode) Text() string { return an.attr.Val }

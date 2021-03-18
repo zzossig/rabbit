@@ -42,7 +42,7 @@ func evalComparisonExpr(expr ast.ExprSingle, ctx *object.Context) object.Item {
 	case bif.IsSeq(left) && bif.IsArray(right):
 		return compSeqArray(op, left, right)
 	case bif.IsSeq(left) && bif.IsSeq(right):
-		return compSeqSeq(op, left, right)
+		return compSeqSeq(op, left, right, ctx)
 	case bif.IsBoolean(left) && bif.IsBoolean(right):
 		return compBool(op, left, right)
 	}
@@ -51,22 +51,22 @@ func evalComparisonExpr(expr ast.ExprSingle, ctx *object.Context) object.Item {
 }
 
 func compNumberNumber(op token.Token, left, right object.Item) object.Item {
-	if op.Type == token.EQ || op.Type == token.EQV {
+	switch op.Type {
+	case token.EQ, token.EQV:
 		builtin := bif.Builtins["op:numeric-equal"]
 		return builtin(left, right)
-	} else if op.Type == token.NE || op.Type == token.NEV {
+	case token.NE, token.NEV:
 		builtin := bif.Builtins["op:numeric-equal"]
 		b := builtin(left, right)
 		boolean := b.(*object.Boolean)
-
 		return bif.NewBoolean(!boolean.Value())
-	} else if op.Type == token.LT || op.Type == token.LTV {
+	case token.LT, token.LTV:
 		builtin := bif.Builtins["op:numeric-less-than"]
 		return builtin(left, right)
-	} else if op.Type == token.GT || op.Type == token.GTV {
+	case token.GT, token.GTV:
 		builtin := bif.Builtins["op:numeric-greater-than"]
 		return builtin(left, right)
-	} else if op.Type == token.LE || op.Type == token.LEV {
+	case token.LE, token.LEV:
 		builtin := bif.Builtins["op:numeric-less-than"]
 		b := builtin(left, right)
 		boolean := b.(*object.Boolean)
@@ -75,8 +75,9 @@ func compNumberNumber(op token.Token, left, right object.Item) object.Item {
 			builtin = bif.Builtins["op:numeric-equal"]
 			return builtin(left, right)
 		}
+
 		return boolean
-	} else if op.Type == token.GE || op.Type == token.GEV {
+	case token.GE, token.GEV:
 		builtin := bif.Builtins["op:numeric-greater-than"]
 		b := builtin(left, right)
 		boolean := b.(*object.Boolean)
@@ -85,17 +86,18 @@ func compNumberNumber(op token.Token, left, right object.Item) object.Item {
 			builtin = bif.Builtins["op:numeric-equal"]
 			return builtin(left, right)
 		}
+
 		return boolean
+	default:
+		return bif.NewError("The operator '%s' is not defined for operands of type %s and %s\n", op.Literal, left.Type(), right.Type())
 	}
-
-	return object.NIL
 }
 
 func compNumberArray(op token.Token, left, right object.Item) object.Item {
 	rightVal := right.(*object.Array)
 
 	switch op.Type {
-	case token.EQ:
+	case token.EQ, token.EQV:
 		for _, item := range rightVal.Items {
 			e := bif.IsEQ(left, item)
 			if bif.IsError(e) {
@@ -107,7 +109,7 @@ func compNumberArray(op token.Token, left, right object.Item) object.Item {
 			}
 		}
 		return object.FALSE
-	case token.NE:
+	case token.NE, token.NEV:
 		for _, item := range rightVal.Items {
 			e := bif.IsNE(left, item)
 			if bif.IsError(e) {
@@ -119,7 +121,7 @@ func compNumberArray(op token.Token, left, right object.Item) object.Item {
 			}
 		}
 		return object.FALSE
-	case token.LT:
+	case token.LT, token.LTV:
 		for _, item := range rightVal.Items {
 			e := bif.IsLT(left, item)
 			if bif.IsError(e) {
@@ -131,7 +133,7 @@ func compNumberArray(op token.Token, left, right object.Item) object.Item {
 			}
 		}
 		return object.FALSE
-	case token.LE:
+	case token.LE, token.LEV:
 		for _, item := range rightVal.Items {
 			e := bif.IsLE(left, item)
 			if bif.IsError(e) {
@@ -143,7 +145,7 @@ func compNumberArray(op token.Token, left, right object.Item) object.Item {
 			}
 		}
 		return object.FALSE
-	case token.GT:
+	case token.GT, token.GTV:
 		for _, item := range rightVal.Items {
 			e := bif.IsGT(left, item)
 			if bif.IsError(e) {
@@ -155,7 +157,7 @@ func compNumberArray(op token.Token, left, right object.Item) object.Item {
 			}
 		}
 		return object.FALSE
-	case token.GE:
+	case token.GE, token.GEV:
 		for _, item := range rightVal.Items {
 			e := bif.IsGE(left, item)
 			if bif.IsError(e) {
@@ -176,7 +178,7 @@ func compNumberSeq(op token.Token, left, right object.Item) object.Item {
 	rightVal := right.(*object.Sequence)
 
 	switch op.Type {
-	case token.EQ:
+	case token.EQ, token.EQV:
 		for _, item := range rightVal.Items {
 			e := bif.IsEQ(left, item)
 			if bif.IsError(e) {
@@ -188,7 +190,7 @@ func compNumberSeq(op token.Token, left, right object.Item) object.Item {
 			}
 		}
 		return object.FALSE
-	case token.NE:
+	case token.NE, token.NEV:
 		for _, item := range rightVal.Items {
 			e := bif.IsNE(left, item)
 			if bif.IsError(e) {
@@ -200,7 +202,7 @@ func compNumberSeq(op token.Token, left, right object.Item) object.Item {
 			}
 		}
 		return object.FALSE
-	case token.LT:
+	case token.LT, token.LTV:
 		for _, item := range rightVal.Items {
 			e := bif.IsLT(left, item)
 			if bif.IsError(e) {
@@ -212,7 +214,7 @@ func compNumberSeq(op token.Token, left, right object.Item) object.Item {
 			}
 		}
 		return object.FALSE
-	case token.LE:
+	case token.LE, token.LEV:
 		for _, item := range rightVal.Items {
 			e := bif.IsLE(left, item)
 			if bif.IsError(e) {
@@ -224,7 +226,7 @@ func compNumberSeq(op token.Token, left, right object.Item) object.Item {
 			}
 		}
 		return object.FALSE
-	case token.GT:
+	case token.GT, token.GTV:
 		for _, item := range rightVal.Items {
 			e := bif.IsGT(left, item)
 			if bif.IsError(e) {
@@ -236,7 +238,7 @@ func compNumberSeq(op token.Token, left, right object.Item) object.Item {
 			}
 		}
 		return object.FALSE
-	case token.GE:
+	case token.GE, token.GEV:
 		for _, item := range rightVal.Items {
 			e := bif.IsGE(left, item)
 			if bif.IsError(e) {
@@ -258,29 +260,17 @@ func compStringString(op token.Token, left, right object.Item) object.Item {
 	rightVal := right.(*object.String).Value()
 
 	switch op.Type {
-	case token.EQ:
+	case token.EQ, token.EQV:
 		return bif.NewBoolean(leftVal == rightVal)
-	case token.NE:
+	case token.NE, token.NEV:
 		return bif.NewBoolean(leftVal != rightVal)
-	case token.LT:
+	case token.LT, token.LTV:
 		return bif.NewBoolean(leftVal < rightVal)
-	case token.LE:
+	case token.LE, token.LEV:
 		return bif.NewBoolean(leftVal <= rightVal)
-	case token.GT:
+	case token.GT, token.GTV:
 		return bif.NewBoolean(leftVal > rightVal)
-	case token.GE:
-		return bif.NewBoolean(leftVal >= rightVal)
-	case token.EQV:
-		return bif.NewBoolean(leftVal == rightVal)
-	case token.NEV:
-		return bif.NewBoolean(leftVal != rightVal)
-	case token.LTV:
-		return bif.NewBoolean(leftVal < rightVal)
-	case token.LEV:
-		return bif.NewBoolean(leftVal <= rightVal)
-	case token.GTV:
-		return bif.NewBoolean(leftVal > rightVal)
-	case token.GEV:
+	case token.GE, token.GEV:
 		return bif.NewBoolean(leftVal >= rightVal)
 	default:
 		return bif.NewError("The operator '%s' is not defined for operands of type %s and %s\n", op.Literal, left.Type(), right.Type())
@@ -292,7 +282,7 @@ func compStringArray(op token.Token, left, right object.Item) object.Item {
 	rightVal := right.(*object.Array)
 
 	switch op.Type {
-	case token.EQ:
+	case token.EQ, token.EQV:
 		for _, item := range rightVal.Items {
 			e, ok := item.(*object.String)
 			if !ok {
@@ -303,7 +293,7 @@ func compStringArray(op token.Token, left, right object.Item) object.Item {
 			}
 		}
 		return object.FALSE
-	case token.NE:
+	case token.NE, token.NEV:
 		for _, item := range rightVal.Items {
 			e, ok := item.(*object.String)
 			if !ok {
@@ -314,7 +304,7 @@ func compStringArray(op token.Token, left, right object.Item) object.Item {
 			}
 		}
 		return object.FALSE
-	case token.LT:
+	case token.LT, token.LTV:
 		for _, item := range rightVal.Items {
 			e, ok := item.(*object.String)
 			if !ok {
@@ -325,7 +315,7 @@ func compStringArray(op token.Token, left, right object.Item) object.Item {
 			}
 		}
 		return object.FALSE
-	case token.LE:
+	case token.LE, token.LEV:
 		for _, item := range rightVal.Items {
 			e, ok := item.(*object.String)
 			if !ok {
@@ -336,7 +326,7 @@ func compStringArray(op token.Token, left, right object.Item) object.Item {
 			}
 		}
 		return object.FALSE
-	case token.GT:
+	case token.GT, token.GTV:
 		for _, item := range rightVal.Items {
 			e, ok := item.(*object.String)
 			if !ok {
@@ -347,7 +337,7 @@ func compStringArray(op token.Token, left, right object.Item) object.Item {
 			}
 		}
 		return object.FALSE
-	case token.GE:
+	case token.GE, token.GEV:
 		for _, item := range rightVal.Items {
 			e, ok := item.(*object.String)
 			if !ok {
@@ -368,70 +358,124 @@ func compStringSeq(op token.Token, left, right object.Item) object.Item {
 	rightVal := right.(*object.Sequence)
 
 	switch op.Type {
-	case token.EQ:
+	case token.EQ, token.EQV:
 		for _, item := range rightVal.Items {
-			e, ok := item.(*object.String)
-			if !ok {
-				return bif.NewError("Types %s and %s are not comparable.", leftVal.Type(), item.Type())
+			if e, ok := item.(*object.String); ok {
+				if leftVal.Value() == e.Value() {
+					return object.TRUE
+				}
+				continue
 			}
-			if leftVal.Value() == e.Value() {
-				return object.TRUE
+			if e, ok := item.(*object.BaseNode); ok {
+				if leftVal.Value() == e.Text() {
+					return object.TRUE
+				}
+				continue
 			}
+			if e, ok := item.(*object.AttrNode); ok {
+				if leftVal.Value() == e.Text() {
+					return object.TRUE
+				}
+				continue
+			}
+
+			return bif.NewError("Types %s and %s are not comparable.", leftVal.Type(), item.Type())
 		}
 		return object.FALSE
-	case token.NE:
+	case token.NE, token.NEV:
 		for _, item := range rightVal.Items {
-			e, ok := item.(*object.String)
-			if !ok {
-				return bif.NewError("Types %s and %s are not comparable.", leftVal.Type(), item.Type())
+			if e, ok := item.(*object.String); ok {
+				if leftVal.Value() != e.Value() {
+					return object.TRUE
+				}
+				continue
 			}
-			if leftVal.Value() != e.Value() {
-				return object.TRUE
+			if e, ok := item.(*object.BaseNode); ok {
+				if leftVal.Value() != e.Text() {
+					return object.TRUE
+				}
+				continue
 			}
+			if e, ok := item.(*object.AttrNode); ok {
+				if leftVal.Value() != e.Text() {
+					return object.TRUE
+				}
+				continue
+			}
+
+			return bif.NewError("Types %s and %s are not comparable.", leftVal.Type(), item.Type())
 		}
 		return object.FALSE
-	case token.LT:
+	case token.LT, token.LTV:
 		for _, item := range rightVal.Items {
-			e, ok := item.(*object.String)
-			if !ok {
-				return bif.NewError("Types %s and %s are not comparable.", leftVal.Type(), item.Type())
+			if e, ok := item.(*object.String); ok {
+				if leftVal.Value() < e.Value() {
+					return object.TRUE
+				}
+				continue
 			}
-			if leftVal.Value() < e.Value() {
+			if _, ok := item.(*object.BaseNode); ok {
 				return object.TRUE
 			}
+			if _, ok := item.(*object.AttrNode); ok {
+				return object.TRUE
+			}
+
+			return bif.NewError("Types %s and %s are not comparable.", leftVal.Type(), item.Type())
 		}
 		return object.FALSE
-	case token.LE:
+	case token.LE, token.LEV:
 		for _, item := range rightVal.Items {
-			e, ok := item.(*object.String)
-			if !ok {
-				return bif.NewError("Types %s and %s are not comparable.", leftVal.Type(), item.Type())
+			if e, ok := item.(*object.String); ok {
+				if leftVal.Value() <= e.Value() {
+					return object.TRUE
+				}
+				continue
 			}
-			if leftVal.Value() <= e.Value() {
+			if _, ok := item.(*object.BaseNode); ok {
 				return object.TRUE
 			}
+			if _, ok := item.(*object.AttrNode); ok {
+				return object.TRUE
+			}
+
+			return bif.NewError("Types %s and %s are not comparable.", leftVal.Type(), item.Type())
 		}
 		return object.FALSE
-	case token.GT:
+	case token.GT, token.GTV:
 		for _, item := range rightVal.Items {
-			e, ok := item.(*object.String)
-			if !ok {
-				return bif.NewError("Types %s and %s are not comparable.", leftVal.Type(), item.Type())
+			if e, ok := item.(*object.String); ok {
+				if leftVal.Value() > e.Value() {
+					return object.TRUE
+				}
+				continue
 			}
-			if leftVal.Value() > e.Value() {
+			if _, ok := item.(*object.BaseNode); ok {
 				return object.TRUE
 			}
+			if _, ok := item.(*object.AttrNode); ok {
+				return object.TRUE
+			}
+
+			return bif.NewError("Types %s and %s are not comparable.", leftVal.Type(), item.Type())
 		}
 		return object.FALSE
-	case token.GE:
+	case token.GE, token.GEV:
 		for _, item := range rightVal.Items {
-			e, ok := item.(*object.String)
-			if !ok {
-				return bif.NewError("Types %s and %s are not comparable.", leftVal.Type(), item.Type())
+			if e, ok := item.(*object.String); ok {
+				if leftVal.Value() >= e.Value() {
+					return object.TRUE
+				}
+				continue
 			}
-			if leftVal.Value() >= e.Value() {
+			if _, ok := item.(*object.BaseNode); ok {
 				return object.TRUE
 			}
+			if _, ok := item.(*object.AttrNode); ok {
+				return object.TRUE
+			}
+
+			return bif.NewError("Types %s and %s are not comparable.", leftVal.Type(), item.Type())
 		}
 		return object.FALSE
 	default:
@@ -443,7 +487,7 @@ func compArrayNumber(op token.Token, left, right object.Item) object.Item {
 	leftVal := left.(*object.Array)
 
 	switch op.Type {
-	case token.EQ:
+	case token.EQ, token.EQV:
 		for _, item := range leftVal.Items {
 			e := bif.IsEQ(item, right)
 			if bif.IsError(e) {
@@ -455,7 +499,7 @@ func compArrayNumber(op token.Token, left, right object.Item) object.Item {
 			}
 		}
 		return object.FALSE
-	case token.NE:
+	case token.NE, token.NEV:
 		for _, item := range leftVal.Items {
 			e := bif.IsNE(item, right)
 			if bif.IsError(e) {
@@ -467,7 +511,7 @@ func compArrayNumber(op token.Token, left, right object.Item) object.Item {
 			}
 		}
 		return object.FALSE
-	case token.LT:
+	case token.LT, token.LTV:
 		for _, item := range leftVal.Items {
 			e := bif.IsLT(item, right)
 			if bif.IsError(e) {
@@ -479,7 +523,7 @@ func compArrayNumber(op token.Token, left, right object.Item) object.Item {
 			}
 		}
 		return object.FALSE
-	case token.LE:
+	case token.LE, token.LEV:
 		for _, item := range leftVal.Items {
 			e := bif.IsLE(item, right)
 			if bif.IsError(e) {
@@ -491,7 +535,7 @@ func compArrayNumber(op token.Token, left, right object.Item) object.Item {
 			}
 		}
 		return object.FALSE
-	case token.GT:
+	case token.GT, token.GTV:
 		for _, item := range leftVal.Items {
 			e := bif.IsGT(item, right)
 			if bif.IsError(e) {
@@ -503,7 +547,7 @@ func compArrayNumber(op token.Token, left, right object.Item) object.Item {
 			}
 		}
 		return object.FALSE
-	case token.GE:
+	case token.GE, token.GEV:
 		for _, item := range leftVal.Items {
 			e := bif.IsGE(item, right)
 			if bif.IsError(e) {
@@ -525,7 +569,7 @@ func compArrayString(op token.Token, left, right object.Item) object.Item {
 	rightVal := right.(*object.String)
 
 	switch op.Type {
-	case token.EQ:
+	case token.EQ, token.EQV:
 		for _, item := range leftVal.Items {
 			e, ok := item.(*object.String)
 			if !ok {
@@ -536,7 +580,7 @@ func compArrayString(op token.Token, left, right object.Item) object.Item {
 			}
 		}
 		return object.FALSE
-	case token.NE:
+	case token.NE, token.NEV:
 		for _, item := range leftVal.Items {
 			e, ok := item.(*object.String)
 			if !ok {
@@ -547,7 +591,7 @@ func compArrayString(op token.Token, left, right object.Item) object.Item {
 			}
 		}
 		return object.FALSE
-	case token.LT:
+	case token.LT, token.LTV:
 		for _, item := range leftVal.Items {
 			e, ok := item.(*object.String)
 			if !ok {
@@ -558,7 +602,7 @@ func compArrayString(op token.Token, left, right object.Item) object.Item {
 			}
 		}
 		return object.FALSE
-	case token.LE:
+	case token.LE, token.LEV:
 		for _, item := range leftVal.Items {
 			e, ok := item.(*object.String)
 			if !ok {
@@ -569,7 +613,7 @@ func compArrayString(op token.Token, left, right object.Item) object.Item {
 			}
 		}
 		return object.FALSE
-	case token.GT:
+	case token.GT, token.GTV:
 		for _, item := range leftVal.Items {
 			e, ok := item.(*object.String)
 			if !ok {
@@ -580,7 +624,7 @@ func compArrayString(op token.Token, left, right object.Item) object.Item {
 			}
 		}
 		return object.FALSE
-	case token.GE:
+	case token.GE, token.GEV:
 		for _, item := range leftVal.Items {
 			e, ok := item.(*object.String)
 			if !ok {
@@ -601,7 +645,7 @@ func compArraySeq(op token.Token, left, right object.Item) object.Item {
 	rightVal := right.(*object.Sequence)
 
 	switch op.Type {
-	case token.EQ:
+	case token.EQ, token.EQV:
 		for _, li := range leftVal.Items {
 			for _, ri := range rightVal.Items {
 				e := bif.IsEQ(li, ri)
@@ -615,7 +659,7 @@ func compArraySeq(op token.Token, left, right object.Item) object.Item {
 			}
 		}
 		return object.FALSE
-	case token.NE:
+	case token.NE, token.NEV:
 		for _, li := range leftVal.Items {
 			for _, ri := range rightVal.Items {
 				e := bif.IsNE(li, ri)
@@ -629,7 +673,7 @@ func compArraySeq(op token.Token, left, right object.Item) object.Item {
 			}
 		}
 		return object.FALSE
-	case token.LT:
+	case token.LT, token.LTV:
 		for _, li := range leftVal.Items {
 			for _, ri := range rightVal.Items {
 				e := bif.IsLT(li, ri)
@@ -643,7 +687,7 @@ func compArraySeq(op token.Token, left, right object.Item) object.Item {
 			}
 		}
 		return object.FALSE
-	case token.LE:
+	case token.LE, token.LEV:
 		for _, li := range leftVal.Items {
 			for _, ri := range rightVal.Items {
 				e := bif.IsLE(li, ri)
@@ -657,7 +701,7 @@ func compArraySeq(op token.Token, left, right object.Item) object.Item {
 			}
 		}
 		return object.FALSE
-	case token.GT:
+	case token.GT, token.GTV:
 		for _, li := range leftVal.Items {
 			for _, ri := range rightVal.Items {
 				e := bif.IsGT(li, ri)
@@ -671,7 +715,7 @@ func compArraySeq(op token.Token, left, right object.Item) object.Item {
 			}
 		}
 		return object.FALSE
-	case token.GE:
+	case token.GE, token.GEV:
 		for _, li := range leftVal.Items {
 			for _, ri := range rightVal.Items {
 				e := bif.IsGE(li, ri)
@@ -695,7 +739,7 @@ func compArrayArray(op token.Token, left, right object.Item) object.Item {
 	rightVal := right.(*object.Array)
 
 	switch op.Type {
-	case token.EQ:
+	case token.EQ, token.EQV:
 		for _, li := range leftVal.Items {
 			for _, ri := range rightVal.Items {
 				e := bif.IsEQ(li, ri)
@@ -709,7 +753,7 @@ func compArrayArray(op token.Token, left, right object.Item) object.Item {
 			}
 		}
 		return object.FALSE
-	case token.NE:
+	case token.NE, token.NEV:
 		for _, li := range leftVal.Items {
 			for _, ri := range rightVal.Items {
 				e := bif.IsNE(li, ri)
@@ -723,7 +767,7 @@ func compArrayArray(op token.Token, left, right object.Item) object.Item {
 			}
 		}
 		return object.FALSE
-	case token.LT:
+	case token.LT, token.LTV:
 		for _, li := range leftVal.Items {
 			for _, ri := range rightVal.Items {
 				e := bif.IsLT(li, ri)
@@ -737,7 +781,7 @@ func compArrayArray(op token.Token, left, right object.Item) object.Item {
 			}
 		}
 		return object.FALSE
-	case token.LE:
+	case token.LE, token.LEV:
 		for _, li := range leftVal.Items {
 			for _, ri := range rightVal.Items {
 				e := bif.IsLE(li, ri)
@@ -751,7 +795,7 @@ func compArrayArray(op token.Token, left, right object.Item) object.Item {
 			}
 		}
 		return object.FALSE
-	case token.GT:
+	case token.GT, token.GTV:
 		for _, li := range leftVal.Items {
 			for _, ri := range rightVal.Items {
 				e := bif.IsGT(li, ri)
@@ -765,7 +809,7 @@ func compArrayArray(op token.Token, left, right object.Item) object.Item {
 			}
 		}
 		return object.FALSE
-	case token.GE:
+	case token.GE, token.GEV:
 		for _, li := range leftVal.Items {
 			for _, ri := range rightVal.Items {
 				e := bif.IsGE(li, ri)
@@ -788,7 +832,7 @@ func compSeqNumber(op token.Token, left, right object.Item) object.Item {
 	leftVal := left.(*object.Sequence)
 
 	switch op.Type {
-	case token.EQ:
+	case token.EQ, token.EQV:
 		for _, item := range leftVal.Items {
 			e := bif.IsEQ(item, right)
 			if bif.IsError(e) {
@@ -800,7 +844,7 @@ func compSeqNumber(op token.Token, left, right object.Item) object.Item {
 			}
 		}
 		return object.FALSE
-	case token.NE:
+	case token.NE, token.NEV:
 		for _, item := range leftVal.Items {
 			e := bif.IsNE(item, right)
 			if bif.IsError(e) {
@@ -812,7 +856,7 @@ func compSeqNumber(op token.Token, left, right object.Item) object.Item {
 			}
 		}
 		return object.FALSE
-	case token.LT:
+	case token.LT, token.LTV:
 		for _, item := range leftVal.Items {
 			e := bif.IsLT(item, right)
 			if bif.IsError(e) {
@@ -824,7 +868,7 @@ func compSeqNumber(op token.Token, left, right object.Item) object.Item {
 			}
 		}
 		return object.FALSE
-	case token.LE:
+	case token.LE, token.LEV:
 		for _, item := range leftVal.Items {
 			e := bif.IsLE(item, right)
 			if bif.IsError(e) {
@@ -836,7 +880,7 @@ func compSeqNumber(op token.Token, left, right object.Item) object.Item {
 			}
 		}
 		return object.FALSE
-	case token.GT:
+	case token.GT, token.GTV:
 		for _, item := range leftVal.Items {
 			e := bif.IsGT(item, right)
 			if bif.IsError(e) {
@@ -848,7 +892,7 @@ func compSeqNumber(op token.Token, left, right object.Item) object.Item {
 			}
 		}
 		return object.FALSE
-	case token.GE:
+	case token.GE, token.GEV:
 		for _, item := range leftVal.Items {
 			e := bif.IsGE(item, right)
 			if bif.IsError(e) {
@@ -870,70 +914,124 @@ func compSeqString(op token.Token, left, right object.Item) object.Item {
 	rightVal := right.(*object.String)
 
 	switch op.Type {
-	case token.EQ:
+	case token.EQ, token.EQV:
 		for _, item := range leftVal.Items {
-			e, ok := item.(*object.String)
-			if !ok {
-				return bif.NewError("Types %s and %s are not comparable.", leftVal.Type(), item.Type())
+			if e, ok := item.(*object.String); ok {
+				if e.Value() == rightVal.Value() {
+					return object.TRUE
+				}
+				continue
 			}
-			if e.Value() == rightVal.Value() {
-				return object.TRUE
+			if e, ok := item.(*object.BaseNode); ok {
+				if e.Text() == rightVal.Value() {
+					return object.TRUE
+				}
+				continue
 			}
+			if e, ok := item.(*object.AttrNode); ok {
+				if e.Text() == rightVal.Value() {
+					return object.TRUE
+				}
+				continue
+			}
+
+			return bif.NewError("Types %s and %s are not comparable.", leftVal.Type(), item.Type())
 		}
 		return object.FALSE
-	case token.NE:
+	case token.NE, token.NEV:
 		for _, item := range leftVal.Items {
-			e, ok := item.(*object.String)
-			if !ok {
-				return bif.NewError("Types %s and %s are not comparable.", leftVal.Type(), item.Type())
+			if e, ok := item.(*object.String); ok {
+				if e.Value() != rightVal.Value() {
+					return object.TRUE
+				}
+				continue
 			}
-			if e.Value() != rightVal.Value() {
-				return object.TRUE
+			if e, ok := item.(*object.BaseNode); ok {
+				if e.Text() != rightVal.Value() {
+					return object.TRUE
+				}
+				continue
 			}
+			if e, ok := item.(*object.AttrNode); ok {
+				if e.Text() != rightVal.Value() {
+					return object.TRUE
+				}
+				continue
+			}
+
+			return bif.NewError("Types %s and %s are not comparable.", leftVal.Type(), item.Type())
 		}
 		return object.FALSE
-	case token.LT:
+	case token.LT, token.LTV:
 		for _, item := range leftVal.Items {
-			e, ok := item.(*object.String)
-			if !ok {
-				return bif.NewError("Types %s and %s are not comparable.", leftVal.Type(), item.Type())
+			if e, ok := item.(*object.String); ok {
+				if e.Value() < rightVal.Value() {
+					return object.TRUE
+				}
+				continue
 			}
-			if e.Value() < rightVal.Value() {
+			if _, ok := item.(*object.BaseNode); ok {
 				return object.TRUE
 			}
+			if _, ok := item.(*object.AttrNode); ok {
+				return object.TRUE
+			}
+
+			return bif.NewError("Types %s and %s are not comparable.", leftVal.Type(), item.Type())
 		}
 		return object.FALSE
-	case token.LE:
+	case token.LE, token.LEV:
 		for _, item := range leftVal.Items {
-			e, ok := item.(*object.String)
-			if !ok {
-				return bif.NewError("Types %s and %s are not comparable.", leftVal.Type(), item.Type())
+			if e, ok := item.(*object.String); ok {
+				if e.Value() <= rightVal.Value() {
+					return object.TRUE
+				}
+				continue
 			}
-			if e.Value() <= rightVal.Value() {
+			if _, ok := item.(*object.BaseNode); ok {
 				return object.TRUE
 			}
+			if _, ok := item.(*object.AttrNode); ok {
+				return object.TRUE
+			}
+
+			return bif.NewError("Types %s and %s are not comparable.", leftVal.Type(), item.Type())
 		}
 		return object.FALSE
-	case token.GT:
+	case token.GT, token.GTV:
 		for _, item := range leftVal.Items {
-			e, ok := item.(*object.String)
-			if !ok {
-				return bif.NewError("Types %s and %s are not comparable.", leftVal.Type(), item.Type())
+			if e, ok := item.(*object.String); ok {
+				if e.Value() > rightVal.Value() {
+					return object.TRUE
+				}
+				continue
 			}
-			if e.Value() > rightVal.Value() {
+			if _, ok := item.(*object.BaseNode); ok {
 				return object.TRUE
 			}
+			if _, ok := item.(*object.AttrNode); ok {
+				return object.TRUE
+			}
+
+			return bif.NewError("Types %s and %s are not comparable.", leftVal.Type(), item.Type())
 		}
 		return object.FALSE
-	case token.GE:
+	case token.GE, token.GEV:
 		for _, item := range leftVal.Items {
-			e, ok := item.(*object.String)
-			if !ok {
-				return bif.NewError("Types %s and %s are not comparable.", leftVal.Type(), item.Type())
+			if e, ok := item.(*object.String); ok {
+				if e.Value() >= rightVal.Value() {
+					return object.TRUE
+				}
+				continue
 			}
-			if e.Value() >= rightVal.Value() {
+			if _, ok := item.(*object.BaseNode); ok {
 				return object.TRUE
 			}
+			if _, ok := item.(*object.AttrNode); ok {
+				return object.TRUE
+			}
+
+			return bif.NewError("Types %s and %s are not comparable.", leftVal.Type(), item.Type())
 		}
 		return object.FALSE
 	default:
@@ -946,7 +1044,7 @@ func compSeqArray(op token.Token, left, right object.Item) object.Item {
 	rightVal := right.(*object.Array)
 
 	switch op.Type {
-	case token.EQ:
+	case token.EQ, token.EQV:
 		for _, li := range leftVal.Items {
 			for _, ri := range rightVal.Items {
 				e := bif.IsEQ(li, ri)
@@ -960,7 +1058,7 @@ func compSeqArray(op token.Token, left, right object.Item) object.Item {
 			}
 		}
 		return object.FALSE
-	case token.NE:
+	case token.NE, token.NEV:
 		for _, li := range leftVal.Items {
 			for _, ri := range rightVal.Items {
 				e := bif.IsNE(li, ri)
@@ -974,7 +1072,7 @@ func compSeqArray(op token.Token, left, right object.Item) object.Item {
 			}
 		}
 		return object.FALSE
-	case token.LT:
+	case token.LT, token.LTV:
 		for _, li := range leftVal.Items {
 			for _, ri := range rightVal.Items {
 				e := bif.IsLT(li, ri)
@@ -988,7 +1086,7 @@ func compSeqArray(op token.Token, left, right object.Item) object.Item {
 			}
 		}
 		return object.FALSE
-	case token.LE:
+	case token.LE, token.LEV:
 		for _, li := range leftVal.Items {
 			for _, ri := range rightVal.Items {
 				e := bif.IsLE(li, ri)
@@ -1002,7 +1100,7 @@ func compSeqArray(op token.Token, left, right object.Item) object.Item {
 			}
 		}
 		return object.FALSE
-	case token.GT:
+	case token.GT, token.GTV:
 		for _, li := range leftVal.Items {
 			for _, ri := range rightVal.Items {
 				e := bif.IsGT(li, ri)
@@ -1016,7 +1114,7 @@ func compSeqArray(op token.Token, left, right object.Item) object.Item {
 			}
 		}
 		return object.FALSE
-	case token.GE:
+	case token.GE, token.GEV:
 		for _, li := range leftVal.Items {
 			for _, ri := range rightVal.Items {
 				e := bif.IsGE(li, ri)
@@ -1035,12 +1133,12 @@ func compSeqArray(op token.Token, left, right object.Item) object.Item {
 	}
 }
 
-func compSeqSeq(op token.Token, left, right object.Item) object.Item {
+func compSeqSeq(op token.Token, left, right object.Item, ctx *object.Context) object.Item {
 	leftVal := left.(*object.Sequence)
 	rightVal := right.(*object.Sequence)
 
 	switch op.Type {
-	case token.EQ:
+	case token.EQ, token.EQV:
 		for _, li := range leftVal.Items {
 			for _, ri := range rightVal.Items {
 				e := bif.IsEQ(li, ri)
@@ -1054,7 +1152,7 @@ func compSeqSeq(op token.Token, left, right object.Item) object.Item {
 			}
 		}
 		return object.FALSE
-	case token.NE:
+	case token.NE, token.NEV:
 		for _, li := range leftVal.Items {
 			for _, ri := range rightVal.Items {
 				e := bif.IsNE(li, ri)
@@ -1068,7 +1166,7 @@ func compSeqSeq(op token.Token, left, right object.Item) object.Item {
 			}
 		}
 		return object.FALSE
-	case token.LT:
+	case token.LT, token.LTV:
 		for _, li := range leftVal.Items {
 			for _, ri := range rightVal.Items {
 				e := bif.IsLT(li, ri)
@@ -1082,7 +1180,7 @@ func compSeqSeq(op token.Token, left, right object.Item) object.Item {
 			}
 		}
 		return object.FALSE
-	case token.LE:
+	case token.LE, token.LEV:
 		for _, li := range leftVal.Items {
 			for _, ri := range rightVal.Items {
 				e := bif.IsLE(li, ri)
@@ -1096,7 +1194,7 @@ func compSeqSeq(op token.Token, left, right object.Item) object.Item {
 			}
 		}
 		return object.FALSE
-	case token.GT:
+	case token.GT, token.GTV:
 		for _, li := range leftVal.Items {
 			for _, ri := range rightVal.Items {
 				e := bif.IsGT(li, ri)
@@ -1110,7 +1208,7 @@ func compSeqSeq(op token.Token, left, right object.Item) object.Item {
 			}
 		}
 		return object.FALSE
-	case token.GE:
+	case token.GE, token.GEV:
 		for _, li := range leftVal.Items {
 			for _, ri := range rightVal.Items {
 				e := bif.IsGE(li, ri)
@@ -1123,6 +1221,65 @@ func compSeqSeq(op token.Token, left, right object.Item) object.Item {
 				}
 			}
 		}
+		return object.FALSE
+	case token.IS, token.DGT, token.DLT:
+		if len(leftVal.Items) != 1 {
+			return bif.NewError("wrong number of items. got=%d, expected=1", len(leftVal.Items))
+		}
+		if len(rightVal.Items) != 1 {
+			return bif.NewError("wrong number of items. got=%d, expected=1", len(rightVal.Items))
+		}
+		if !bif.IsNode(leftVal.Items[0]) || !bif.IsNode(rightVal.Items[0]) {
+			return bif.NewError("node types expected. got=%s, %s", leftVal.Items[0].Type(), rightVal.Items[0].Type())
+		}
+
+		doc := ctx.Doc.(*object.BaseNode)
+		if leftItem, ok := leftVal.Items[0].(*object.BaseNode); ok {
+			switch rightItem := rightVal.Items[0].(type) {
+			case *object.BaseNode:
+				switch op.Type {
+				case token.IS:
+					return bif.NewBoolean(leftItem.Tree() == rightItem.Tree())
+				case token.DGT:
+					return bif.IsPrecede(rightItem, leftItem, doc)
+				case token.DLT:
+					return bif.IsPrecede(leftItem, rightItem, doc)
+				}
+			case *object.AttrNode:
+				switch op.Type {
+				case token.IS:
+					return object.FALSE
+				case token.DGT:
+					return bif.IsPrecede(rightItem, leftItem, doc)
+				case token.DLT:
+					return bif.IsPrecede(leftItem, rightItem, doc)
+				}
+			}
+		}
+
+		if leftItem, ok := leftVal.Items[0].(*object.AttrNode); ok {
+			switch rightItem := rightVal.Items[0].(type) {
+			case *object.BaseNode:
+				switch op.Type {
+				case token.IS:
+					return object.FALSE
+				case token.DGT:
+					return bif.IsPrecede(rightItem, leftItem, doc)
+				case token.DLT:
+					return bif.IsPrecede(leftItem, rightItem, doc)
+				}
+			case *object.AttrNode:
+				switch op.Type {
+				case token.IS:
+					return bif.NewBoolean(leftItem.Tree() == rightItem.Tree() && leftItem.Key() == rightItem.Key())
+				case token.DGT:
+					return bif.IsPrecede(rightItem, leftItem, doc)
+				case token.DLT:
+					return bif.IsPrecede(leftItem, rightItem, doc)
+				}
+			}
+		}
+
 		return object.FALSE
 	default:
 		return bif.NewError("The operator '%s' is not defined for operands of type %s and %s\n", op.Literal, left.Type(), right.Type())
@@ -1132,47 +1289,35 @@ func compSeqSeq(op token.Token, left, right object.Item) object.Item {
 func compBool(op token.Token, left, right object.Item) object.Item {
 	leftVal, ok := left.(*object.Boolean)
 	if !ok {
-		return bif.NewError("[XPTY0004] Types %s and %s are not comparable.", left.Type(), right.Type())
+		return bif.NewError("cannot compare Types: %s, %s", left.Type(), right.Type())
 	}
 
 	rightVal, ok := right.(*object.Boolean)
 	if !ok {
-		return bif.NewError("[XPTY0004] Types %s and %s are not comparable.", left.Type(), right.Type())
+		return bif.NewError("cannot compare Types: %s, %s", left.Type(), right.Type())
 	}
 
 	switch op.Type {
-	case token.EQ:
-		fallthrough
-	case token.EQV:
+	case token.EQ, token.EQV:
 		return bif.NewBoolean(leftVal.Value() == rightVal.Value())
-	case token.NE:
-		fallthrough
-	case token.NEV:
+	case token.NE, token.NEV:
 		return bif.NewBoolean(leftVal.Value() != rightVal.Value())
-	case token.GT:
-		fallthrough
-	case token.GTV:
+	case token.GT, token.GTV:
 		if leftVal.Value() && !rightVal.Value() {
 			return object.TRUE
 		}
 		return object.FALSE
-	case token.GE:
-		fallthrough
-	case token.GEV:
+	case token.GE, token.GEV:
 		if !leftVal.Value() && rightVal.Value() {
 			return object.FALSE
 		}
 		return object.TRUE
-	case token.LT:
-		fallthrough
-	case token.LTV:
+	case token.LT, token.LTV:
 		if !leftVal.Value() && rightVal.Value() {
 			return object.TRUE
 		}
 		return object.FALSE
-	case token.LE:
-		fallthrough
-	case token.LEV:
+	case token.LE, token.LEV:
 		if leftVal.Value() && !rightVal.Value() {
 			return object.FALSE
 		}
