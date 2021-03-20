@@ -804,10 +804,6 @@ func (p *Parser) parseStepExpr() ast.ExprSingle {
 		as.AbbrevForwardStep.NodeTest = &ast.NameTest{EQName: name, TypeID: 1}
 	}
 
-	if p.curTokenIs(token.ASTERISK) {
-		return p.parseWildcard()
-	}
-
 	if p.peekTokenIs(token.DCOLON) {
 		name := p.curToken.Literal
 		p.nextToken()
@@ -848,14 +844,22 @@ func (p *Parser) parseStepExpr() ast.ExprSingle {
 	}
 
 	if as.TypeID == 0 {
-		name := p.parseEQName()
+		if p.curTokenIs(token.ASTERISK) {
+			w := ast.Wildcard{TypeID: 1}
 
-		as.TypeID = 2
-		as.ForwardStep.TypeID = 2
-		if name.TypeID == 0 {
-			as.AbbrevForwardStep.NodeTest = nil
+			as.TypeID = 2
+			as.ForwardStep.TypeID = 2
+			as.AbbrevForwardStep.NodeTest = &ast.NameTest{Wildcard: w, TypeID: 2}
 		} else {
-			as.AbbrevForwardStep.NodeTest = &ast.NameTest{EQName: name, TypeID: 1}
+			name := p.parseEQName()
+
+			as.TypeID = 2
+			as.ForwardStep.TypeID = 2
+			if name.TypeID == 0 {
+				as.AbbrevForwardStep.NodeTest = nil
+			} else {
+				as.AbbrevForwardStep.NodeTest = &ast.NameTest{EQName: name, TypeID: 1}
+			}
 		}
 	}
 
@@ -892,10 +896,4 @@ func (p *Parser) parseAbbrevToken() ast.ExprSingle {
 	}
 
 	return as
-}
-
-func (p *Parser) parseWildcard() ast.ExprSingle {
-	w := &ast.Wildcard{}
-	w.TypeID = 1
-	return w
 }

@@ -28,6 +28,8 @@ const (
 	DocumentNodeType  Type = "2"
 	ElementNodeType   Type = "3"
 	CommentNodeType   Type = "4"
+	DoctypeNodeType   Type = "5"
+	RawNodeType       Type = "6"
 	AttributeNodeType Type = "7"
 
 	// atomic

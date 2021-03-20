@@ -3,7 +3,6 @@ package bif
 import (
 	"fmt"
 
-	"github.com/zzossig/xpath/ast"
 	"github.com/zzossig/xpath/object"
 )
 
@@ -830,40 +829,4 @@ func AppendKind(src []object.Node, target object.Node, typeID byte) []object.Nod
 		}
 	}
 	return src
-}
-
-// WalkDescKind ..
-func WalkDescKind(nodes []object.Node, n object.Node, typeID byte) []object.Node {
-	for c := n.FirstChild(); c != nil; c = c.NextSibling() {
-		nodes = AppendKind(nodes, c, typeID)
-		if c.FirstChild() != nil {
-			nodes = WalkDescKind(nodes, c, typeID)
-		}
-	}
-	return nodes
-}
-
-// WalkDescName ..
-func WalkDescName(nodes []object.Node, n object.Node, t *ast.NameTest) []object.Node {
-	for c := n.FirstChild(); c != nil; c = c.NextSibling() {
-		if c.Type() == object.ElementNodeType {
-			switch t.TypeID {
-			case 1:
-				if c.Tree().Data == t.EQName.Value() {
-					nodes = AppendNode(nodes, c)
-				}
-			case 2:
-				switch t.Wildcard.TypeID {
-				case 1:
-					nodes = AppendNode(nodes, c)
-				}
-			}
-
-		}
-
-		if c.FirstChild() != nil {
-			nodes = WalkDescName(nodes, c, t)
-		}
-	}
-	return nodes
 }

@@ -269,8 +269,10 @@ func (bn *BaseNode) Type() Type {
 		return ElementNodeType
 	case html.CommentNode:
 		return CommentNodeType
+	case html.DoctypeNode:
+		return DoctypeNodeType
 	default:
-		return ErrorNodeType
+		return RawNodeType
 	}
 }
 func (bn *BaseNode) Inspect() string         { return bn.tree.Data }
@@ -350,3 +352,19 @@ func (an *AttrNode) Parent() Node {
 	return nil
 }
 func (an *AttrNode) Text() string { return an.attr.Val }
+
+// ErrNode ..
+type ErrNode struct {
+	Message string
+}
+
+func (en *ErrNode) Type() Type           { return ErrorNodeType }
+func (en *ErrNode) Inspect() string      { return en.Message }
+func (en *ErrNode) Tree() *html.Node     { return nil }
+func (en *ErrNode) SetTree(t *html.Node) {}
+func (en *ErrNode) Parent() Node         { return nil }
+func (en *ErrNode) FirstChild() Node     { return nil }
+func (en *ErrNode) LastChild() Node      { return nil }
+func (en *ErrNode) PrevSibling() Node    { return nil }
+func (en *ErrNode) NextSibling() Node    { return nil }
+func (en *ErrNode) Text() string         { return en.Message }
