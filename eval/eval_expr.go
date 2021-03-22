@@ -400,40 +400,98 @@ func evalLogicalExpr(expr ast.ExprSingle, ctx *object.Context) object.Item {
 func evalUnionExpr(expr ast.ExprSingle, ctx *object.Context) object.Item {
 	ue := expr.(*ast.UnionExpr)
 
-	l := Eval(ue.LeftExpr, ctx)
-	r := Eval(ue.RightExpr, ctx)
-
-	if l.Type() != object.SequenceType || r.Type() != object.SequenceType {
-		return bif.NewError("not allowed types in UnionExpr: %s, %s", l.Type(), r.Type())
-	}
-
-	lseq := l.(*object.Sequence)
-	rseq := r.(*object.Sequence)
+	left := Eval(ue.LeftExpr, ctx)
+	right := Eval(ue.RightExpr, ctx)
 
 	var nodes []object.Node
 
-	for _, item := range lseq.Items {
-		if item, ok := item.(*object.BaseNode); ok {
-			nodes = bif.AppendNode(nodes, item)
-			continue
-		}
-		if item, ok := item.(*object.AttrNode); ok {
-			nodes = bif.AppendNode(nodes, item)
-			continue
-		}
-		return bif.NewError("not allowed type in UnionExpr: %s", item.Type())
-	}
+	switch {
+	case bif.IsSeq(left) && bif.IsSeq(right):
+		lseq := left.(*object.Sequence)
+		rseq := right.(*object.Sequence)
 
-	for _, item := range rseq.Items {
-		if item, ok := item.(*object.BaseNode); ok {
-			nodes = bif.AppendNode(nodes, item)
-			continue
+		for _, item := range lseq.Items {
+			if item, ok := item.(*object.BaseNode); ok {
+				nodes = bif.AppendNode(nodes, item)
+				continue
+			}
+			if item, ok := item.(*object.AttrNode); ok {
+				nodes = bif.AppendNode(nodes, item)
+				continue
+			}
+			return bif.NewError("not allowed type in UnionExpr: %s", item.Type())
 		}
-		if item, ok := item.(*object.AttrNode); ok {
-			nodes = bif.AppendNode(nodes, item)
-			continue
+
+		for _, item := range rseq.Items {
+			if item, ok := item.(*object.BaseNode); ok {
+				nodes = bif.AppendNode(nodes, item)
+				continue
+			}
+			if item, ok := item.(*object.AttrNode); ok {
+				nodes = bif.AppendNode(nodes, item)
+				continue
+			}
+			return bif.NewError("not allowed type in UnionExpr: %s", item.Type())
 		}
-		return bif.NewError("not allowed type in UnionExpr: %s", item.Type())
+	case bif.IsSeq(left) && bif.IsNode(right):
+		lseq := left.(*object.Sequence)
+
+		for _, item := range lseq.Items {
+			if item, ok := item.(*object.BaseNode); ok {
+				nodes = bif.AppendNode(nodes, item)
+				continue
+			}
+			if item, ok := item.(*object.AttrNode); ok {
+				nodes = bif.AppendNode(nodes, item)
+				continue
+			}
+			return bif.NewError("not allowed type in UnionExpr: %s", item.Type())
+		}
+
+		switch right := right.(type) {
+		case *object.BaseNode:
+			nodes = bif.AppendNode(nodes, right)
+		case *object.AttrNode:
+			nodes = bif.AppendNode(nodes, right)
+		}
+
+	case bif.IsNode(left) && bif.IsSeq(right):
+		rseq := right.(*object.Sequence)
+
+		switch left := left.(type) {
+		case *object.BaseNode:
+			nodes = bif.AppendNode(nodes, left)
+		case *object.AttrNode:
+			nodes = bif.AppendNode(nodes, left)
+		}
+
+		for _, item := range rseq.Items {
+			if item, ok := item.(*object.BaseNode); ok {
+				nodes = bif.AppendNode(nodes, item)
+				continue
+			}
+			if item, ok := item.(*object.AttrNode); ok {
+				nodes = bif.AppendNode(nodes, item)
+				continue
+			}
+			return bif.NewError("not allowed type in UnionExpr: %s", item.Type())
+		}
+	case bif.IsNode(left) && bif.IsNode(right):
+		switch left := left.(type) {
+		case *object.BaseNode:
+			nodes = bif.AppendNode(nodes, left)
+		case *object.AttrNode:
+			nodes = bif.AppendNode(nodes, left)
+		}
+
+		switch right := right.(type) {
+		case *object.BaseNode:
+			nodes = bif.AppendNode(nodes, right)
+		case *object.AttrNode:
+			nodes = bif.AppendNode(nodes, right)
+		}
+	default:
+		return bif.NewError("not allowed types in UnionExpr: %s, %s", left.Type(), right.Type())
 	}
 
 	seq := &object.Sequence{}
@@ -447,46 +505,115 @@ func evalUnionExpr(expr ast.ExprSingle, ctx *object.Context) object.Item {
 func evalIntersectExceptExpr(expr ast.ExprSingle, ctx *object.Context) object.Item {
 	iee := expr.(*ast.IntersectExceptExpr)
 
-	l := Eval(iee.LeftExpr, ctx)
-	r := Eval(iee.RightExpr, ctx)
-
-	if l.Type() != object.SequenceType || r.Type() != object.SequenceType {
-		return bif.NewError("not allowed types in IntersectExceptExpr: %s, %s", l.Type(), r.Type())
-	}
-
-	lseq := l.(*object.Sequence)
-	rseq := r.(*object.Sequence)
+	left := Eval(iee.LeftExpr, ctx)
+	right := Eval(iee.RightExpr, ctx)
 
 	var nodes []object.Node
 	var inodes []object.Node
 	var enodes []object.Node
 
-	for _, item := range lseq.Items {
-		if item, ok := item.(*object.BaseNode); ok {
-			nodes = bif.AppendNode(nodes, item)
-			continue
-		}
-		if item, ok := item.(*object.AttrNode); ok {
-			nodes = bif.AppendNode(nodes, item)
-			continue
-		}
-		return bif.NewError("not allowed type in IntersectExceptExpr: %s", item.Type())
-	}
+	switch {
+	case bif.IsSeq(left) && bif.IsSeq(right):
+		lseq := left.(*object.Sequence)
+		rseq := right.(*object.Sequence)
 
-	for _, item := range rseq.Items {
-		if item, ok := item.(*object.BaseNode); ok {
-			if bif.IsContainN(nodes, item) {
-				inodes = append(inodes, item)
+		for _, item := range lseq.Items {
+			if item, ok := item.(*object.BaseNode); ok {
+				nodes = bif.AppendNode(nodes, item)
+				continue
 			}
-			continue
-		}
-		if item, ok := item.(*object.AttrNode); ok {
-			if bif.IsContainN(nodes, item) {
-				inodes = append(inodes, item)
+			if item, ok := item.(*object.AttrNode); ok {
+				nodes = bif.AppendNode(nodes, item)
+				continue
 			}
-			continue
+			return bif.NewError("not allowed type in IntersectExceptExpr: %s", item.Type())
 		}
-		return bif.NewError("not allowed type in IntersectExceptExpr: %s", item.Type())
+
+		for _, item := range rseq.Items {
+			if item, ok := item.(*object.BaseNode); ok {
+				if bif.IsContainN(nodes, item) {
+					inodes = append(inodes, item)
+				}
+				continue
+			}
+			if item, ok := item.(*object.AttrNode); ok {
+				if bif.IsContainN(nodes, item) {
+					inodes = append(inodes, item)
+				}
+				continue
+			}
+			return bif.NewError("not allowed type in IntersectExceptExpr: %s", item.Type())
+		}
+	case bif.IsSeq(left) && bif.IsNode(right):
+		lseq := left.(*object.Sequence)
+
+		for _, item := range lseq.Items {
+			if item, ok := item.(*object.BaseNode); ok {
+				nodes = bif.AppendNode(nodes, item)
+				continue
+			}
+			if item, ok := item.(*object.AttrNode); ok {
+				nodes = bif.AppendNode(nodes, item)
+				continue
+			}
+			return bif.NewError("not allowed type in IntersectExceptExpr: %s", item.Type())
+		}
+
+		switch right := right.(type) {
+		case *object.BaseNode:
+			if bif.IsContainN(nodes, right) {
+				inodes = append(inodes, right)
+			}
+		case *object.AttrNode:
+			if bif.IsContainN(nodes, right) {
+				inodes = append(inodes, right)
+			}
+		}
+	case bif.IsNode(left) && bif.IsSeq(right):
+		rseq := right.(*object.Sequence)
+
+		switch left := left.(type) {
+		case *object.BaseNode:
+			nodes = bif.AppendNode(nodes, left)
+		case *object.AttrNode:
+			nodes = bif.AppendNode(nodes, left)
+		}
+
+		for _, item := range rseq.Items {
+			if item, ok := item.(*object.BaseNode); ok {
+				if bif.IsContainN(nodes, item) {
+					inodes = append(inodes, item)
+				}
+				continue
+			}
+			if item, ok := item.(*object.AttrNode); ok {
+				if bif.IsContainN(nodes, item) {
+					inodes = append(inodes, item)
+				}
+				continue
+			}
+			return bif.NewError("not allowed type in IntersectExceptExpr: %s", item.Type())
+		}
+	case bif.IsNode(left) && bif.IsNode(right):
+		switch left := left.(type) {
+		case *object.BaseNode:
+			nodes = bif.AppendNode(nodes, left)
+		case *object.AttrNode:
+			nodes = bif.AppendNode(nodes, left)
+		}
+
+		switch right := right.(type) {
+		case *object.BaseNode:
+			if bif.IsContainN(nodes, right) {
+				inodes = append(inodes, right)
+			}
+		case *object.AttrNode:
+			if bif.IsContainN(nodes, right) {
+				inodes = append(inodes, right)
+			}
+		}
+	default:
+		return bif.NewError("not allowed types in IntersectExceptExpr: %s, %s", left.Type(), right.Type())
 	}
 
 	seq := &object.Sequence{}

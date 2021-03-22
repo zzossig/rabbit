@@ -1046,9 +1046,49 @@ func TestNodeComp(t *testing.T) {
 	}
 }
 
-// func TestNodeExpr(t *testing.T) {
+func TestNodeExpr(t *testing.T) {
+	seq := testEvalXML("//book union //author")
+	sequence := seq.(*object.Sequence)
+	if len(sequence.Items) != 11 {
+		t.Errorf("wrong number of items. got=%d, expected=11", len(sequence.Items))
+	}
 
-// }
+	seq2 := testEvalXML("//book | //author")
+	sequence2 := seq2.(*object.Sequence)
+	if len(sequence2.Items) != 11 {
+		t.Errorf("wrong number of items. got=%d, expected=11", len(sequence2.Items))
+	}
+
+	seq3 := testEvalXML("//book[@category='1'] union //author")
+	sequence3 := seq3.(*object.Sequence)
+	if len(sequence3.Items) != 7 {
+		t.Errorf("wrong number of items. got=%d, expected=7", len(sequence3.Items))
+	}
+
+	seq4 := testEvalXML("//book union //author[.='Per Bothner']")
+	sequence4 := seq4.(*object.Sequence)
+	if len(sequence4.Items) != 6 {
+		t.Errorf("wrong number of items. got=%d, expected=6", len(sequence4.Items))
+	}
+
+	seq5 := testEvalXML("//book[@category='1'] | //author[.='Per Bothner']")
+	sequence5 := seq5.(*object.Sequence)
+	if len(sequence5.Items) != 2 {
+		t.Errorf("wrong number of items. got=%d, expected=2", len(sequence5.Items))
+	}
+
+	seq6 := testEvalXML("//book except //book[@category='1']")
+	sequence6 := seq6.(*object.Sequence)
+	if len(sequence6.Items) != 4 {
+		t.Errorf("wrong number of items. got=%d, expected=4", len(sequence6.Items))
+	}
+
+	seq7 := testEvalXML("//book intersect //book[@category='1']")
+	sequence7 := seq7.(*object.Sequence)
+	if len(sequence7.Items) != 1 {
+		t.Errorf("wrong number of items. got=%d, expected=1", len(sequence7.Items))
+	}
+}
 
 func testEval(input string) object.Item {
 	l := lexer.New(input)
