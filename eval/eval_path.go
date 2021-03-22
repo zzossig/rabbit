@@ -17,16 +17,15 @@ func evalPathExpr(expr ast.ExprSingle, ctx *object.Context) object.Item {
 	ctx.CItem = ctx.Doc
 
 	if pe.Token.Type == token.DSLASH {
-		var nodes []object.Node
+		nodes := []object.Node{ctx.Doc}
 		var err object.Item
 
-		cnode := ctx.CNode
 		nodes, err = walkDescKind(nodes, ctx.Doc, 10, nil, ctx)
 		if err != nil {
 			return err
 		}
 
-		ctx.CNode = append(cnode, nodes...)
+		ctx.CNode = nodes
 		ctx.CAxis = "child::"
 	} else {
 		ctx.CAxis = "child::"
@@ -685,7 +684,6 @@ func nameTestAttr(t *ast.NameTest, plist *ast.PredicateList, ctx *object.Context
 						ctx.CPos = i
 						ctx.CItem = a
 						ctx.CNode = []object.Node{a}
-						ctx.CAxis = "attribute::"
 
 						if len(plist.PL) > 0 {
 							pred := evalPredicateList(plist, ctx)
@@ -716,7 +714,6 @@ func nameTestAttr(t *ast.NameTest, plist *ast.PredicateList, ctx *object.Context
 						ctx.CPos = i
 						ctx.CItem = a
 						ctx.CNode = []object.Node{a}
-						ctx.CAxis = "attribute::"
 
 						if len(plist.PL) > 0 {
 							pred := evalPredicateList(plist, ctx)

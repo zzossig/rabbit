@@ -318,16 +318,10 @@ func IsPrecede(n1, n2 object.Node, src *object.BaseNode) object.Item {
 	for c := src.FirstChild(); c != nil; c = c.NextSibling() {
 		c := c.(*object.BaseNode)
 
-		if n2.Type() != object.AttributeNodeType && n2.Tree() == c.Tree() {
-			return object.FALSE
-		}
-		if n1.Type() != object.AttributeNodeType && n1.Tree() == c.Tree() {
-			return object.TRUE
-		}
-
 		if n1.Type() == object.AttributeNodeType && n2.Type() == object.AttributeNodeType {
 			n1 := n1.(*object.AttrNode)
 			n2 := n2.(*object.AttrNode)
+
 			for _, a := range src.Attr() {
 				a := a.(*object.AttrNode)
 				if n1.Tree() == a.Tree() && n1.Key() == a.Key() {
@@ -339,24 +333,46 @@ func IsPrecede(n1, n2 object.Node, src *object.BaseNode) object.Item {
 			}
 		} else if n1.Type() == object.AttributeNodeType {
 			n1 := n1.(*object.AttrNode)
+
 			for _, a := range src.Attr() {
 				a := a.(*object.AttrNode)
 				if n1.Tree() == a.Tree() && n1.Key() == a.Key() {
-					return object.TRUE
+					if n1.Tree() != n2.Tree() {
+						return object.TRUE
+					} else {
+						return object.FALSE
+					}
+
 				}
 			}
 		} else if n2.Type() == object.AttributeNodeType {
 			n2 := n2.(*object.AttrNode)
+
 			for _, a := range src.Attr() {
 				a := a.(*object.AttrNode)
 				if n2.Tree() == a.Tree() && n2.Key() == a.Key() {
-					return object.FALSE
+					if n1.Tree() != n2.Tree() {
+						return object.FALSE
+					} else {
+						return object.TRUE
+					}
+
 				}
+			}
+		} else {
+			if n2.Tree() == c.Tree() {
+				return object.FALSE
+			}
+			if n1.Tree() == c.Tree() {
+				return object.TRUE
 			}
 		}
 
 		if c.FirstChild() != nil {
-			return IsPrecede(n1, n2, c)
+			result := IsPrecede(n1, n2, c)
+			if result != object.NIL {
+				return result
+			}
 		}
 	}
 	return object.NIL

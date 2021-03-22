@@ -985,10 +985,69 @@ func TestPathPredicateExpr(t *testing.T) {
 	if node42.Tree().Data != "no" {
 		t.Errorf("selected tag name must be a [no]")
 	}
+
+	seq43 := testEvalXML("//attribute::category[. = '1']")
+	sequence43 := seq43.(*object.Sequence)
+	if len(sequence43.Items) != 1 {
+		t.Errorf("wrong number of items. got=%d, expected=1", len(sequence43.Items))
+	}
+	node43, ok := sequence43.Items[0].(*object.AttrNode)
+	if !ok {
+		t.Errorf("node must be an AttrNode. got=%s", node43.Type())
+	}
+	if node43.Inspect() != "1" {
+		t.Errorf("wrong attribute value. got=%s, expected='1'", node43.Inspect())
+	}
+
+	seq44 := testEvalXML("//@category[. = '2']")
+	sequence44 := seq44.(*object.Sequence)
+	if len(sequence44.Items) != 1 {
+		t.Errorf("wrong number of items. got=%d, expected=1", len(sequence44.Items))
+	}
+	node44, ok := sequence44.Items[0].(*object.AttrNode)
+	if !ok {
+		t.Errorf("node must be an AttrNode. got=%s", node44.Type())
+	}
+	if node44.Inspect() != "2" {
+		t.Errorf("wrong attribute value. got=%s, expected='2'", node44.Inspect())
+	}
 }
 
-// func testNodeComp(t *testing.T) {
-// 	seq := testEvalXML("//attribute::category[. = '1'] << //@category[. = '2']")
+func TestNodeComp(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected bool
+	}{
+		{`//attribute::category[. = '1'] << //@category[. = '2']`, true},
+		{`//attribute::category[. = '1'] >> //@category[. = '2']`, false},
+		{`//attribute::category[. = '1'] is //@category[. = '2']`, false},
+		{`//attribute::category[. = '1'] is //@category[. = '1']`, true},
+		{`//attribute::category[. = '1'] is //book/haha`, false},
+		{`//book/haha is //@category[. = '2']`, false},
+		{`//month/haha is //year//haha`, true},
+		{`//attribute::category[.='cooking'] << //tt:title`, true},
+		{`//attribute::category[.='cooking'] >> //tt:title`, false},
+		{`//attribute::category[.='cooking'] << //tt:book`, false},
+		{`//attribute::category[.='cooking'] >> //tt:book`, true},
+		{`//tt:title << //attribute::category[.='cooking']`, false},
+		{`//tt:title >> //attribute::category[.='cooking']`, true},
+		{`//tt:book << //attribute::category[.='cooking']`, true},
+		{`//tt:book >> //attribute::category[.='cooking']`, false},
+	}
+
+	for _, tt := range tests {
+		seq := testEvalXML(tt.input)
+		sequence := seq.(*object.Sequence)
+		item := sequence.Items[0].(*object.Boolean)
+
+		if item.Value() != tt.expected {
+			t.Errorf("got=%t, expected=%t", item.Value(), tt.expected)
+		}
+	}
+}
+
+// func TestNodeExpr(t *testing.T) {
+
 // }
 
 func testEval(input string) object.Item {

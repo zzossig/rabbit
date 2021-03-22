@@ -15,6 +15,22 @@ func evalComparisonExpr(expr ast.ExprSingle, ctx *object.Context) object.Item {
 	op := ce.Token
 
 	switch {
+	case bif.IsSeq(left) && bif.IsNumeric(right):
+		return compSeqNumber(op, left, right)
+	case bif.IsSeq(left) && bif.IsString(right):
+		return compSeqString(op, left, right)
+	case bif.IsSeq(left) && bif.IsArray(right):
+		return compSeqArray(op, left, right)
+	case bif.IsSeq(left) && bif.IsSeq(right):
+		return compSeqSeq(op, left, right, ctx)
+
+	case bif.IsNode(left) && bif.IsString(right):
+		return compNodeString(op, left, right, ctx)
+	case bif.IsString(left) && bif.IsNode(right):
+		return compStringNode(op, left, right, ctx)
+	case bif.IsNode(left) && bif.IsNode(right):
+		return compNodeNode(op, left, right, ctx)
+
 	case bif.IsNumeric(left) && bif.IsNumeric(right):
 		return compNumberNumber(op, left, right)
 	case bif.IsNumeric(left) && bif.IsSeq(right):
@@ -38,24 +54,8 @@ func evalComparisonExpr(expr ast.ExprSingle, ctx *object.Context) object.Item {
 	case bif.IsArray(left) && bif.IsSeq(right):
 		return compArraySeq(op, left, right)
 
-	case bif.IsSeq(left) && bif.IsNumeric(right):
-		return compSeqNumber(op, left, right)
-	case bif.IsSeq(left) && bif.IsString(right):
-		return compSeqString(op, left, right)
-	case bif.IsSeq(left) && bif.IsArray(right):
-		return compSeqArray(op, left, right)
-	case bif.IsSeq(left) && bif.IsSeq(right):
-		return compSeqSeq(op, left, right, ctx)
-
 	case bif.IsBoolean(left) && bif.IsBoolean(right):
 		return compBool(op, left, right)
-
-	case bif.IsNode(left) && bif.IsString(right):
-		return compNodeString(op, left, right, ctx)
-	case bif.IsString(left) && bif.IsNode(right):
-		return compStringNode(op, left, right, ctx)
-	case bif.IsNode(left) && bif.IsNode(right):
-		return compNodeNode(op, left, right, ctx)
 	}
 
 	return bif.NewError("The operator '%s' is not defined for operands of type %s and %s\n", op.Literal, left.Type(), right.Type())
