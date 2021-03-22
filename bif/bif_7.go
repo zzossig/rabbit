@@ -40,6 +40,8 @@ func boolean(args ...object.Item) object.Item {
 			return object.FALSE
 		}
 		return object.TRUE
+	case *object.BaseNode:
+		return object.TRUE
 	}
 
 	return object.FALSE

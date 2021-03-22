@@ -21,12 +21,14 @@ func evalComparisonExpr(expr ast.ExprSingle, ctx *object.Context) object.Item {
 		return compNumberSeq(op, left, right)
 	case bif.IsNumeric(left) && bif.IsArray(right):
 		return compNumberArray(op, left, right)
+
 	case bif.IsString(left) && bif.IsString(right):
 		return compStringString(op, left, right)
 	case bif.IsString(left) && bif.IsArray(right):
 		return compStringArray(op, left, right)
 	case bif.IsString(left) && bif.IsSeq(right):
 		return compStringSeq(op, left, right)
+
 	case bif.IsArray(left) && bif.IsNumeric(right):
 		return compArrayNumber(op, left, right)
 	case bif.IsArray(left) && bif.IsString(right):
@@ -35,6 +37,7 @@ func evalComparisonExpr(expr ast.ExprSingle, ctx *object.Context) object.Item {
 		return compArrayArray(op, left, right)
 	case bif.IsArray(left) && bif.IsSeq(right):
 		return compArraySeq(op, left, right)
+
 	case bif.IsSeq(left) && bif.IsNumeric(right):
 		return compSeqNumber(op, left, right)
 	case bif.IsSeq(left) && bif.IsString(right):
@@ -43,8 +46,16 @@ func evalComparisonExpr(expr ast.ExprSingle, ctx *object.Context) object.Item {
 		return compSeqArray(op, left, right)
 	case bif.IsSeq(left) && bif.IsSeq(right):
 		return compSeqSeq(op, left, right, ctx)
+
 	case bif.IsBoolean(left) && bif.IsBoolean(right):
 		return compBool(op, left, right)
+
+	case bif.IsNode(left) && bif.IsString(right):
+		return compNodeString(op, left, right, ctx)
+	case bif.IsString(left) && bif.IsNode(right):
+		return compStringNode(op, left, right, ctx)
+	case bif.IsNode(left) && bif.IsNode(right):
+		return compNodeNode(op, left, right, ctx)
 	}
 
 	return bif.NewError("The operator '%s' is not defined for operands of type %s and %s\n", op.Literal, left.Type(), right.Type())
@@ -1325,4 +1336,292 @@ func compBool(op token.Token, left, right object.Item) object.Item {
 	default:
 		return bif.NewError("The operator '%s' is not defined for operands of type %s and %s\n", op.Literal, left.Type(), right.Type())
 	}
+}
+
+func compNodeString(op token.Token, left, right object.Item, ctx *object.Context) object.Item {
+	rightVal := right.(*object.String)
+
+	switch leftNode := left.(type) {
+	case *object.BaseNode:
+		switch op.Type {
+		case token.EQ, token.EQV:
+			if leftNode.Text() == rightVal.Value() {
+				return object.TRUE
+			}
+		case token.NE, token.NEV:
+			if leftNode.Text() != rightVal.Value() {
+				return object.TRUE
+			}
+		case token.GT, token.GTV:
+			if leftNode.Text() > rightVal.Value() {
+				return object.TRUE
+			}
+		case token.GE, token.GEV:
+			if leftNode.Text() >= rightVal.Value() {
+				return object.TRUE
+			}
+		case token.LT, token.LTV:
+			if leftNode.Text() < rightVal.Value() {
+				return object.TRUE
+			}
+		case token.LE, token.LEV:
+			if leftNode.Text() <= rightVal.Value() {
+				return object.TRUE
+			}
+		case token.IS, token.DGT, token.DLT:
+			return bif.NewError("cannot compare node with string: %s, %s", leftNode.Type(), rightVal.Type())
+		}
+	case *object.AttrNode:
+		switch op.Type {
+		case token.EQ, token.EQV:
+			if leftNode.Text() == rightVal.Value() {
+				return object.TRUE
+			}
+		case token.NE, token.NEV:
+			if leftNode.Text() != rightVal.Value() {
+				return object.TRUE
+			}
+		case token.GT, token.GTV:
+			if leftNode.Text() > rightVal.Value() {
+				return object.TRUE
+			}
+		case token.GE, token.GEV:
+			if leftNode.Text() >= rightVal.Value() {
+				return object.TRUE
+			}
+		case token.LT, token.LTV:
+			if leftNode.Text() < rightVal.Value() {
+				return object.TRUE
+			}
+		case token.LE, token.LEV:
+			if leftNode.Text() <= rightVal.Value() {
+				return object.TRUE
+			}
+		case token.IS, token.DGT, token.DLT:
+			return bif.NewError("cannot compare node with string: %s, %s", leftNode.Type(), rightVal.Type())
+		}
+	}
+
+	return object.FALSE
+}
+
+func compStringNode(op token.Token, left, right object.Item, ctx *object.Context) object.Item {
+	leftVal := left.(*object.String)
+
+	switch rightNode := right.(type) {
+	case *object.BaseNode:
+		switch op.Type {
+		case token.EQ, token.EQV:
+			if leftVal.Value() == rightNode.Text() {
+				return object.TRUE
+			}
+		case token.NE, token.NEV:
+			if leftVal.Value() != rightNode.Text() {
+				return object.TRUE
+			}
+		case token.GT, token.GTV:
+			if leftVal.Value() > rightNode.Text() {
+				return object.TRUE
+			}
+		case token.GE, token.GEV:
+			if leftVal.Value() >= rightNode.Text() {
+				return object.TRUE
+			}
+		case token.LT, token.LTV:
+			if leftVal.Value() < rightNode.Text() {
+				return object.TRUE
+			}
+		case token.LE, token.LEV:
+			if leftVal.Value() <= rightNode.Text() {
+				return object.TRUE
+			}
+		case token.IS, token.DGT, token.DLT:
+			return bif.NewError("cannot compare node with string: %s, %s", leftVal.Type(), rightNode.Type())
+		}
+	case *object.AttrNode:
+		switch op.Type {
+		case token.EQ, token.EQV:
+			if leftVal.Value() == rightNode.Text() {
+				return object.TRUE
+			}
+		case token.NE, token.NEV:
+			if leftVal.Value() != rightNode.Text() {
+				return object.TRUE
+			}
+		case token.GT, token.GTV:
+			if leftVal.Value() > rightNode.Text() {
+				return object.TRUE
+			}
+		case token.GE, token.GEV:
+			if leftVal.Value() >= rightNode.Text() {
+				return object.TRUE
+			}
+		case token.LT, token.LTV:
+			if leftVal.Value() < rightNode.Text() {
+				return object.TRUE
+			}
+		case token.LE, token.LEV:
+			if leftVal.Value() <= rightNode.Text() {
+				return object.TRUE
+			}
+		case token.IS, token.DGT, token.DLT:
+			return bif.NewError("cannot compare node with string: %s, %s", leftVal.Type(), rightNode.Type())
+		}
+	}
+
+	return object.FALSE
+}
+
+func compNodeNode(op token.Token, left, right object.Item, ctx *object.Context) object.Item {
+	if leftNode, ok := left.(*object.BaseNode); ok {
+		switch rightNode := right.(type) {
+		case *object.BaseNode:
+			switch op.Type {
+			case token.EQ, token.EQV:
+				if leftNode.Text() == rightNode.Text() {
+					return object.TRUE
+				}
+			case token.NE, token.NEV:
+				if leftNode.Text() != rightNode.Text() {
+					return object.TRUE
+				}
+			case token.GT, token.GTV:
+				if leftNode.Text() > rightNode.Text() {
+					return object.TRUE
+				}
+			case token.GE, token.GEV:
+				if leftNode.Text() >= rightNode.Text() {
+					return object.TRUE
+				}
+			case token.LT, token.LTV:
+				if leftNode.Text() < rightNode.Text() {
+					return object.TRUE
+				}
+			case token.LE, token.LEV:
+				if leftNode.Text() <= rightNode.Text() {
+					return object.TRUE
+				}
+			case token.IS:
+				return bif.NewBoolean(leftNode.Tree() == rightNode.Tree())
+			case token.DGT:
+				doc := ctx.Doc.(*object.BaseNode)
+				return bif.IsPrecede(rightNode, leftNode, doc)
+			case token.DLT:
+				doc := ctx.Doc.(*object.BaseNode)
+				return bif.IsPrecede(leftNode, rightNode, doc)
+			}
+		case *object.AttrNode:
+			switch op.Type {
+			case token.EQ, token.EQV:
+				if leftNode.Text() == rightNode.Text() {
+					return object.TRUE
+				}
+			case token.NE, token.NEV:
+				if leftNode.Text() != rightNode.Text() {
+					return object.TRUE
+				}
+			case token.GT, token.GTV:
+				if leftNode.Text() > rightNode.Text() {
+					return object.TRUE
+				}
+			case token.GE, token.GEV:
+				if leftNode.Text() >= rightNode.Text() {
+					return object.TRUE
+				}
+			case token.LT, token.LTV:
+				if leftNode.Text() < rightNode.Text() {
+					return object.TRUE
+				}
+			case token.LE, token.LEV:
+				if leftNode.Text() <= rightNode.Text() {
+					return object.TRUE
+				}
+			case token.IS:
+				return object.FALSE
+			case token.DGT:
+				doc := ctx.Doc.(*object.BaseNode)
+				return bif.IsPrecede(rightNode, leftNode, doc)
+			case token.DLT:
+				doc := ctx.Doc.(*object.BaseNode)
+				return bif.IsPrecede(leftNode, rightNode, doc)
+			}
+		}
+	}
+
+	if leftNode, ok := left.(*object.AttrNode); ok {
+		switch rightNode := right.(type) {
+		case *object.BaseNode:
+			switch op.Type {
+			case token.EQ, token.EQV:
+				if leftNode.Text() == rightNode.Text() {
+					return object.TRUE
+				}
+			case token.NE, token.NEV:
+				if leftNode.Text() != rightNode.Text() {
+					return object.TRUE
+				}
+			case token.GT, token.GTV:
+				if leftNode.Text() > rightNode.Text() {
+					return object.TRUE
+				}
+			case token.GE, token.GEV:
+				if leftNode.Text() >= rightNode.Text() {
+					return object.TRUE
+				}
+			case token.LT, token.LTV:
+				if leftNode.Text() < rightNode.Text() {
+					return object.TRUE
+				}
+			case token.LE, token.LEV:
+				if leftNode.Text() <= rightNode.Text() {
+					return object.TRUE
+				}
+			case token.IS:
+				return object.FALSE
+			case token.DGT:
+				doc := ctx.Doc.(*object.BaseNode)
+				return bif.IsPrecede(rightNode, leftNode, doc)
+			case token.DLT:
+				doc := ctx.Doc.(*object.BaseNode)
+				return bif.IsPrecede(leftNode, rightNode, doc)
+			}
+		case *object.AttrNode:
+			switch op.Type {
+			case token.EQ, token.EQV:
+				if leftNode.Text() == rightNode.Text() {
+					return object.TRUE
+				}
+			case token.NE, token.NEV:
+				if leftNode.Text() != rightNode.Text() {
+					return object.TRUE
+				}
+			case token.GT, token.GTV:
+				if leftNode.Text() > rightNode.Text() {
+					return object.TRUE
+				}
+			case token.GE, token.GEV:
+				if leftNode.Text() >= rightNode.Text() {
+					return object.TRUE
+				}
+			case token.LT, token.LTV:
+				if leftNode.Text() < rightNode.Text() {
+					return object.TRUE
+				}
+			case token.LE, token.LEV:
+				if leftNode.Text() <= rightNode.Text() {
+					return object.TRUE
+				}
+			case token.IS:
+				return bif.NewBoolean(leftNode.Tree() == rightNode.Tree() && leftNode.Key() == rightNode.Key())
+			case token.DGT:
+				doc := ctx.Doc.(*object.BaseNode)
+				return bif.IsPrecede(rightNode, leftNode, doc)
+			case token.DLT:
+				doc := ctx.Doc.(*object.BaseNode)
+				return bif.IsPrecede(leftNode, rightNode, doc)
+			}
+		}
+	}
+
+	return object.FALSE
 }

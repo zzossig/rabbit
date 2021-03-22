@@ -93,6 +93,8 @@ func evalAxisStep(expr ast.ExprSingle, ctx *object.Context) object.Item {
 		case 2:
 			if as.AbbrevForwardStep.Token.Type == token.AT {
 				ctx.CAxis = "attribute::"
+			} else {
+				ctx.CAxis = "child::"
 			}
 			if as.AbbrevForwardStep.NodeTest == nil {
 				if ctx.CItem.Type() == object.DocumentNodeType {
@@ -572,7 +574,8 @@ func nameTestChild(t *ast.NameTest, plist *ast.PredicateList, ctx *object.Contex
 		for _, c := range ctx.CNode {
 			i := 0
 			for n := c.FirstChild(); n != nil; n = n.NextSibling() {
-				if n.Type() == object.ElementNodeType && t.EQName.Value() == n.Tree().Data {
+				if n.Type() == object.ElementNodeType &&
+					t.EQName.Value() == n.Tree().Data {
 					i++
 					ctx.CPos = i
 					ctx.CItem = n
@@ -672,12 +675,31 @@ func nameTestAttr(t *ast.NameTest, plist *ast.PredicateList, ctx *object.Context
 	switch t.TypeID {
 	case 1:
 		for _, c := range ctx.CNode {
+			i := 0
 			if c.Type() == object.ElementNodeType {
 				c := c.(*object.BaseNode)
 				for _, a := range c.Attr() {
 					a := a.(*object.AttrNode)
 					if a.Key() == t.EQName.Value() {
-						nodes = bif.AppendNode(nodes, a)
+						i++
+						ctx.CPos = i
+						ctx.CItem = a
+						ctx.CNode = []object.Node{a}
+						ctx.CAxis = "attribute::"
+
+						if len(plist.PL) > 0 {
+							pred := evalPredicateList(plist, ctx)
+							if bif.IsError(pred) {
+								return pred
+							}
+
+							boolObj := pred.(*object.Boolean)
+							if boolObj.Value() {
+								nodes = bif.AppendNode(nodes, a)
+							}
+						} else {
+							nodes = bif.AppendNode(nodes, a)
+						}
 					}
 				}
 			}
@@ -686,10 +708,29 @@ func nameTestAttr(t *ast.NameTest, plist *ast.PredicateList, ctx *object.Context
 		switch t.Wildcard.TypeID {
 		case 1:
 			for _, c := range ctx.CNode {
+				i := 0
 				if c.Type() == object.ElementNodeType {
 					c := c.(*object.BaseNode)
 					for _, a := range c.Attr() {
-						nodes = bif.AppendNode(nodes, a)
+						i++
+						ctx.CPos = i
+						ctx.CItem = a
+						ctx.CNode = []object.Node{a}
+						ctx.CAxis = "attribute::"
+
+						if len(plist.PL) > 0 {
+							pred := evalPredicateList(plist, ctx)
+							if bif.IsError(pred) {
+								return pred
+							}
+
+							boolObj := pred.(*object.Boolean)
+							if boolObj.Value() {
+								nodes = bif.AppendNode(nodes, a)
+							}
+						} else {
+							nodes = bif.AppendNode(nodes, a)
+						}
 					}
 				}
 			}
@@ -713,14 +754,55 @@ func nameTestSelf(t *ast.NameTest, plist *ast.PredicateList, ctx *object.Context
 	switch t.TypeID {
 	case 1:
 		for _, c := range ctx.CNode {
-			if t.EQName.Value() == c.Tree().Data {
-				nodes = append(nodes, c)
+			i := 0
+			if c.Type() == object.ElementNodeType &&
+				t.EQName.Value() == c.Tree().Data {
+				i++
+				ctx.CPos = i
+				ctx.CItem = c
+				ctx.CNode = []object.Node{c}
+
+				if len(plist.PL) > 0 {
+					pred := evalPredicateList(plist, ctx)
+					if bif.IsError(pred) {
+						return pred
+					}
+
+					boolObj := pred.(*object.Boolean)
+					if boolObj.Value() {
+						nodes = append(nodes, c)
+					}
+				} else {
+					nodes = append(nodes, c)
+				}
 			}
 		}
 	case 2:
 		switch t.Wildcard.TypeID {
 		case 1:
-			nodes = append(nodes, ctx.CNode...)
+			for _, c := range ctx.CNode {
+				i := 0
+				if c.Type() == object.ElementNodeType {
+					i++
+					ctx.CPos = i
+					ctx.CItem = c
+					ctx.CNode = []object.Node{c}
+
+					if len(plist.PL) > 0 {
+						pred := evalPredicateList(plist, ctx)
+						if bif.IsError(pred) {
+							return pred
+						}
+
+						boolObj := pred.(*object.Boolean)
+						if boolObj.Value() {
+							nodes = append(nodes, c)
+						}
+					} else {
+						nodes = append(nodes, c)
+					}
+				}
+			}
 		}
 	}
 
@@ -738,24 +820,64 @@ func nameTestSelf(t *ast.NameTest, plist *ast.PredicateList, ctx *object.Context
 func nameTestDescOrSelf(t *ast.NameTest, plist *ast.PredicateList, ctx *object.Context) object.Item {
 	var nodes []object.Node
 	var err object.Item
+	cnode := ctx.CNode
 
 	switch t.TypeID {
 	case 1:
 		for _, c := range ctx.CNode {
-			if t.EQName.Value() == c.Tree().Data {
-				nodes = bif.AppendNode(nodes, c)
+			i := 0
+			if c.Type() == object.ElementNodeType &&
+				t.EQName.Value() == c.Tree().Data {
+				i++
+				ctx.CPos = i
+				ctx.CItem = c
+				ctx.CNode = []object.Node{c}
+
+				if len(plist.PL) > 0 {
+					pred := evalPredicateList(plist, ctx)
+					if bif.IsError(pred) {
+						return pred
+					}
+
+					boolObj := pred.(*object.Boolean)
+					if boolObj.Value() {
+						nodes = bif.AppendNode(nodes, c)
+					}
+				} else {
+					nodes = bif.AppendNode(nodes, c)
+				}
 			}
 		}
 	case 2:
 		switch t.Wildcard.TypeID {
 		case 1:
 			for _, c := range ctx.CNode {
-				nodes = bif.AppendNode(nodes, c)
+				i := 0
+				if c.Type() == object.ElementNodeType {
+					i++
+					ctx.CPos = i
+					ctx.CItem = c
+					ctx.CNode = []object.Node{c}
+
+					if len(plist.PL) > 0 {
+						pred := evalPredicateList(plist, ctx)
+						if bif.IsError(pred) {
+							return pred
+						}
+
+						boolObj := pred.(*object.Boolean)
+						if boolObj.Value() {
+							nodes = bif.AppendNode(nodes, c)
+						}
+					} else {
+						nodes = bif.AppendNode(nodes, c)
+					}
+				}
 			}
 		}
 	}
 
-	for _, c := range ctx.CNode {
+	for _, c := range cnode {
 		nodes, err = walkDescName(nodes, c, t, plist, ctx)
 		if err != nil {
 			return err
@@ -779,9 +901,28 @@ func nameTestFS(t *ast.NameTest, plist *ast.PredicateList, ctx *object.Context) 
 	switch t.TypeID {
 	case 1:
 		for _, c := range ctx.CNode {
+			i := 0
 			for s := c.NextSibling(); s != nil; s = s.NextSibling() {
-				if t.EQName.Value() == s.Tree().Data {
-					nodes = bif.AppendNode(nodes, s)
+				if s.Type() == object.ElementNodeType &&
+					t.EQName.Value() == s.Tree().Data {
+					i++
+					ctx.CPos = i
+					ctx.CItem = s
+					ctx.CNode = []object.Node{s}
+
+					if len(plist.PL) > 0 {
+						pred := evalPredicateList(plist, ctx)
+						if bif.IsError(pred) {
+							return pred
+						}
+
+						boolObj := pred.(*object.Boolean)
+						if boolObj.Value() {
+							nodes = bif.AppendNode(nodes, s)
+						}
+					} else {
+						nodes = bif.AppendNode(nodes, s)
+					}
 				}
 			}
 		}
@@ -789,8 +930,28 @@ func nameTestFS(t *ast.NameTest, plist *ast.PredicateList, ctx *object.Context) 
 		switch t.Wildcard.TypeID {
 		case 1:
 			for _, c := range ctx.CNode {
+				i := 0
 				for s := c.NextSibling(); s != nil; s = s.NextSibling() {
-					nodes = bif.AppendNode(nodes, s)
+					if s.Type() == object.ElementNodeType {
+						i++
+						ctx.CPos = i
+						ctx.CItem = s
+						ctx.CNode = []object.Node{s}
+
+						if len(plist.PL) > 0 {
+							pred := evalPredicateList(plist, ctx)
+							if bif.IsError(pred) {
+								return pred
+							}
+
+							boolObj := pred.(*object.Boolean)
+							if boolObj.Value() {
+								nodes = bif.AppendNode(nodes, s)
+							}
+						} else {
+							nodes = bif.AppendNode(nodes, s)
+						}
+					}
 				}
 			}
 		}
@@ -814,6 +975,7 @@ func nameTestFollowing(t *ast.NameTest, plist *ast.PredicateList, ctx *object.Co
 	switch t.TypeID {
 	case 1:
 		for _, c := range ctx.CNode {
+			i := 0
 			for {
 				s := c.NextSibling()
 				if s == nil {
@@ -828,8 +990,26 @@ func nameTestFollowing(t *ast.NameTest, plist *ast.PredicateList, ctx *object.Co
 				}
 				c = s
 
-				if t.EQName.Value() == s.Tree().Data {
-					nodes = bif.AppendNode(nodes, s)
+				if s.Type() == object.ElementNodeType &&
+					t.EQName.Value() == s.Tree().Data {
+					i++
+					ctx.CPos = i
+					ctx.CItem = s
+					ctx.CNode = []object.Node{s}
+
+					if len(plist.PL) > 0 {
+						pred := evalPredicateList(plist, ctx)
+						if bif.IsError(pred) {
+							return pred
+						}
+
+						boolObj := pred.(*object.Boolean)
+						if boolObj.Value() {
+							nodes = bif.AppendNode(nodes, s)
+						}
+					} else {
+						nodes = bif.AppendNode(nodes, s)
+					}
 				}
 
 				nodes, err = walkDescName(nodes, s, t, plist, ctx)
@@ -842,6 +1022,7 @@ func nameTestFollowing(t *ast.NameTest, plist *ast.PredicateList, ctx *object.Co
 		switch t.Wildcard.TypeID {
 		case 1:
 			for _, c := range ctx.CNode {
+				i := 0
 				for {
 					s := c.NextSibling()
 					if s == nil {
@@ -856,7 +1037,27 @@ func nameTestFollowing(t *ast.NameTest, plist *ast.PredicateList, ctx *object.Co
 					}
 					c = s
 
-					nodes = bif.AppendNode(nodes, s)
+					if s.Type() == object.ElementNodeType {
+						i++
+						ctx.CPos = i
+						ctx.CItem = s
+						ctx.CNode = []object.Node{s}
+
+						if len(plist.PL) > 0 {
+							pred := evalPredicateList(plist, ctx)
+							if bif.IsError(pred) {
+								return pred
+							}
+
+							boolObj := pred.(*object.Boolean)
+							if boolObj.Value() {
+								nodes = bif.AppendNode(nodes, s)
+							}
+						} else {
+							nodes = bif.AppendNode(nodes, s)
+						}
+					}
+
 					nodes, err = walkDescName(nodes, s, t, plist, ctx)
 					if err != nil {
 						return err
@@ -887,16 +1088,55 @@ func nameTestParent(t *ast.NameTest, plist *ast.PredicateList, ctx *object.Conte
 	switch t.TypeID {
 	case 1:
 		for _, c := range ctx.CNode {
-			if c.Parent() != nil && t.EQName.Value() == c.Parent().Tree().Data {
-				nodes = bif.AppendNode(nodes, c.Parent())
+			i := 0
+			if c.Parent() != nil &&
+				c.Parent().Type() == object.ElementNodeType &&
+				t.EQName.Value() == c.Parent().Tree().Data {
+				i++
+				ctx.CPos = i
+				ctx.CItem = c.Parent()
+				ctx.CNode = []object.Node{c.Parent()}
+
+				if len(plist.PL) > 0 {
+					pred := evalPredicateList(plist, ctx)
+					if bif.IsError(pred) {
+						return pred
+					}
+
+					boolObj := pred.(*object.Boolean)
+					if boolObj.Value() {
+						nodes = bif.AppendNode(nodes, c.Parent())
+					}
+				} else {
+					nodes = bif.AppendNode(nodes, c.Parent())
+				}
 			}
 		}
 	case 2:
 		switch t.Wildcard.TypeID {
 		case 1:
 			for _, c := range ctx.CNode {
-				if c.Parent() != nil {
-					nodes = bif.AppendNode(nodes, c.Parent())
+				i := 0
+				if c.Parent() != nil &&
+					c.Type() == object.ElementNodeType {
+					i++
+					ctx.CPos = i
+					ctx.CItem = c.Parent()
+					ctx.CNode = []object.Node{c.Parent()}
+
+					if len(plist.PL) > 0 {
+						pred := evalPredicateList(plist, ctx)
+						if bif.IsError(pred) {
+							return pred
+						}
+
+						boolObj := pred.(*object.Boolean)
+						if boolObj.Value() {
+							nodes = bif.AppendNode(nodes, c.Parent())
+						}
+					} else {
+						nodes = bif.AppendNode(nodes, c.Parent())
+					}
 				}
 			}
 		}
@@ -919,9 +1159,28 @@ func nameTestAncestor(t *ast.NameTest, plist *ast.PredicateList, ctx *object.Con
 	switch t.TypeID {
 	case 1:
 		for _, c := range ctx.CNode {
+			i := 0
 			for p := c.Parent(); p != nil; p = p.Parent() {
-				if t.EQName.Value() == p.Tree().Data {
-					nodes = bif.AppendNode(nodes, p)
+				if p.Type() == object.ElementNodeType &&
+					t.EQName.Value() == p.Tree().Data {
+					i++
+					ctx.CPos = i
+					ctx.CItem = p
+					ctx.CNode = []object.Node{p}
+
+					if len(plist.PL) > 0 {
+						pred := evalPredicateList(plist, ctx)
+						if bif.IsError(pred) {
+							return pred
+						}
+
+						boolObj := pred.(*object.Boolean)
+						if boolObj.Value() {
+							nodes = bif.AppendNode(nodes, p)
+						}
+					} else {
+						nodes = bif.AppendNode(nodes, p)
+					}
 				}
 			}
 		}
@@ -929,8 +1188,28 @@ func nameTestAncestor(t *ast.NameTest, plist *ast.PredicateList, ctx *object.Con
 		switch t.Wildcard.TypeID {
 		case 1:
 			for _, c := range ctx.CNode {
+				i := 0
 				for p := c.Parent(); p != nil; p = p.Parent() {
-					nodes = bif.AppendNode(nodes, p)
+					if p.Type() == object.ElementNodeType {
+						i++
+						ctx.CPos = i
+						ctx.CItem = p
+						ctx.CNode = []object.Node{p}
+
+						if len(plist.PL) > 0 {
+							pred := evalPredicateList(plist, ctx)
+							if bif.IsError(pred) {
+								return pred
+							}
+
+							boolObj := pred.(*object.Boolean)
+							if boolObj.Value() {
+								nodes = bif.AppendNode(nodes, p)
+							}
+						} else {
+							nodes = bif.AppendNode(nodes, p)
+						}
+					}
 				}
 			}
 		}
@@ -953,9 +1232,28 @@ func nameTestPS(t *ast.NameTest, plist *ast.PredicateList, ctx *object.Context) 
 	switch t.TypeID {
 	case 1:
 		for _, c := range ctx.CNode {
+			i := 0
 			for s := c.PrevSibling(); s != nil; s = s.PrevSibling() {
-				if t.EQName.Value() == s.Tree().Data {
-					nodes = bif.AppendNode(nodes, s)
+				if s.Type() == object.ElementNodeType &&
+					t.EQName.Value() == s.Tree().Data {
+					i++
+					ctx.CPos = i
+					ctx.CItem = s
+					ctx.CNode = []object.Node{s}
+
+					if len(plist.PL) > 0 {
+						pred := evalPredicateList(plist, ctx)
+						if bif.IsError(pred) {
+							return pred
+						}
+
+						boolObj := pred.(*object.Boolean)
+						if boolObj.Value() {
+							nodes = bif.AppendNode(nodes, s)
+						}
+					} else {
+						nodes = bif.AppendNode(nodes, s)
+					}
 				}
 			}
 		}
@@ -963,8 +1261,28 @@ func nameTestPS(t *ast.NameTest, plist *ast.PredicateList, ctx *object.Context) 
 		switch t.Wildcard.TypeID {
 		case 1:
 			for _, c := range ctx.CNode {
+				i := 0
 				for s := c.PrevSibling(); s != nil; s = s.PrevSibling() {
-					nodes = bif.AppendNode(nodes, s)
+					if s.Type() == object.ElementNodeType {
+						i++
+						ctx.CPos = i
+						ctx.CItem = s
+						ctx.CNode = []object.Node{s}
+
+						if len(plist.PL) > 0 {
+							pred := evalPredicateList(plist, ctx)
+							if bif.IsError(pred) {
+								return pred
+							}
+
+							boolObj := pred.(*object.Boolean)
+							if boolObj.Value() {
+								nodes = bif.AppendNode(nodes, s)
+							}
+						} else {
+							nodes = bif.AppendNode(nodes, s)
+						}
+					}
 				}
 			}
 		}
@@ -988,6 +1306,7 @@ func nameTestPreceding(t *ast.NameTest, plist *ast.PredicateList, ctx *object.Co
 	switch t.TypeID {
 	case 1:
 		for _, c := range ctx.CNode {
+			i := 0
 			for {
 				s := c.PrevSibling()
 				if s == nil {
@@ -1003,7 +1322,24 @@ func nameTestPreceding(t *ast.NameTest, plist *ast.PredicateList, ctx *object.Co
 				c = s
 
 				if t.EQName.Value() == s.Tree().Data {
-					nodes = bif.AppendNode(nodes, s)
+					i++
+					ctx.CPos = i
+					ctx.CItem = s
+					ctx.CNode = []object.Node{s}
+
+					if len(plist.PL) > 0 {
+						pred := evalPredicateList(plist, ctx)
+						if bif.IsError(pred) {
+							return pred
+						}
+
+						boolObj := pred.(*object.Boolean)
+						if boolObj.Value() {
+							nodes = bif.AppendNode(nodes, s)
+						}
+					} else {
+						nodes = bif.AppendNode(nodes, s)
+					}
 				}
 
 				nodes, err = walkDescName(nodes, s, t, plist, ctx)
@@ -1016,6 +1352,7 @@ func nameTestPreceding(t *ast.NameTest, plist *ast.PredicateList, ctx *object.Co
 		switch t.Wildcard.TypeID {
 		case 1:
 			for _, c := range ctx.CNode {
+				i := 0
 				for {
 					s := c.PrevSibling()
 					if s == nil {
@@ -1030,7 +1367,27 @@ func nameTestPreceding(t *ast.NameTest, plist *ast.PredicateList, ctx *object.Co
 					}
 					c = s
 
-					nodes = bif.AppendNode(nodes, s)
+					if s.Type() == object.ElementNodeType {
+						i++
+						ctx.CPos = i
+						ctx.CItem = s
+						ctx.CNode = []object.Node{s}
+
+						if len(plist.PL) > 0 {
+							pred := evalPredicateList(plist, ctx)
+							if bif.IsError(pred) {
+								return pred
+							}
+
+							boolObj := pred.(*object.Boolean)
+							if boolObj.Value() {
+								nodes = bif.AppendNode(nodes, s)
+							}
+						} else {
+							nodes = bif.AppendNode(nodes, s)
+						}
+					}
+
 					nodes, err = walkDescName(nodes, s, t, plist, ctx)
 					if err != nil {
 						return err
@@ -1057,12 +1414,49 @@ func nameTestAncestorOrSelf(t *ast.NameTest, plist *ast.PredicateList, ctx *obje
 	switch t.TypeID {
 	case 1:
 		for _, c := range ctx.CNode {
-			if t.EQName.Value() == c.Tree().Data {
-				nodes = bif.AppendNode(nodes, c)
+			i := 0
+			if c.Type() == object.ElementNodeType &&
+				t.EQName.Value() == c.Tree().Data {
+				i++
+				ctx.CPos = i
+				ctx.CItem = c
+				ctx.CNode = []object.Node{c}
+
+				if len(plist.PL) > 0 {
+					pred := evalPredicateList(plist, ctx)
+					if bif.IsError(pred) {
+						return pred
+					}
+
+					boolObj := pred.(*object.Boolean)
+					if boolObj.Value() {
+						nodes = bif.AppendNode(nodes, c)
+					}
+				} else {
+					nodes = bif.AppendNode(nodes, c)
+				}
 			}
 			for p := c.Parent(); p != nil; p = p.Parent() {
-				if t.EQName.Value() == p.Tree().Data {
-					nodes = bif.AppendNode(nodes, p)
+				if p.Type() == object.ElementNodeType &&
+					t.EQName.Value() == p.Tree().Data {
+					i++
+					ctx.CPos = i
+					ctx.CItem = p
+					ctx.CNode = []object.Node{p}
+
+					if len(plist.PL) > 0 {
+						pred := evalPredicateList(plist, ctx)
+						if bif.IsError(pred) {
+							return pred
+						}
+
+						boolObj := pred.(*object.Boolean)
+						if boolObj.Value() {
+							nodes = bif.AppendNode(nodes, p)
+						}
+					} else {
+						nodes = bif.AppendNode(nodes, p)
+					}
 				}
 			}
 		}
@@ -1070,9 +1464,49 @@ func nameTestAncestorOrSelf(t *ast.NameTest, plist *ast.PredicateList, ctx *obje
 		switch t.Wildcard.TypeID {
 		case 1:
 			for _, c := range ctx.CNode {
-				nodes = bif.AppendNode(nodes, c)
+				i := 0
+				if c.Type() == object.ElementNodeType {
+					i++
+					ctx.CPos = i
+					ctx.CItem = c
+					ctx.CNode = []object.Node{c}
+
+					if len(plist.PL) > 0 {
+						pred := evalPredicateList(plist, ctx)
+						if bif.IsError(pred) {
+							return pred
+						}
+
+						boolObj := pred.(*object.Boolean)
+						if boolObj.Value() {
+							nodes = bif.AppendNode(nodes, c)
+						}
+					} else {
+						nodes = bif.AppendNode(nodes, c)
+					}
+				}
+
 				for p := c.Parent(); p != nil; p = p.Parent() {
-					nodes = bif.AppendNode(nodes, p)
+					if p.Type() == object.ElementNodeType {
+						i++
+						ctx.CPos = i
+						ctx.CItem = p
+						ctx.CNode = []object.Node{p}
+
+						if len(plist.PL) > 0 {
+							pred := evalPredicateList(plist, ctx)
+							if bif.IsError(pred) {
+								return pred
+							}
+
+							boolObj := pred.(*object.Boolean)
+							if boolObj.Value() {
+								nodes = bif.AppendNode(nodes, p)
+							}
+						} else {
+							nodes = bif.AppendNode(nodes, p)
+						}
+					}
 				}
 			}
 		}
@@ -1163,11 +1597,13 @@ func walkDescName(nodes []object.Node, n object.Node, t *ast.NameTest, plist *as
 						}
 
 						boolObj := pred.(*object.Boolean)
-						if boolObj.Value() {
+						if boolObj.Value() && c.Type() == object.ElementNodeType {
 							nodes = bif.AppendNode(nodes, c)
 						}
 					} else {
-						nodes = bif.AppendNode(nodes, c)
+						if c.Type() == object.ElementNodeType {
+							nodes = bif.AppendNode(nodes, c)
+						}
 					}
 				}
 			}

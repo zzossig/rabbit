@@ -37,7 +37,7 @@
 		<price>29.99</price>
 	</book>
 	<book category="web" IDREFS="bb cc dd">
-		<title lang="en">XQuery Kick Start</title>
+		<title lang="ko">XQuery Kick Start</title>
 		<author>James McGovern</author>
 		<author>Per Bothner</author>
 		<author>Kurt Cagle</author>
@@ -48,7 +48,7 @@
 	</book>
 	<!-- comment node -->
 	<book category="web" cover="paperback">
-		<title lang="en">Learning XML</title>
+		<title lang="cn">Learning XML</title>
 		<author>Erik T. Ray</author>
 		<year>2003</year>
 		<price>39.95</price>
