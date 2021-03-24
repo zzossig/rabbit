@@ -470,7 +470,7 @@ func TestPathExpr(t *testing.T) {
 	seq18 := testEvalXML("//month/following-sibling::year")
 	sequence18 := seq18.(*object.Sequence)
 	if sequence18.Items != nil {
-		t.Errorf("result must be a nil")
+		t.Errorf("the result should be nil")
 	}
 
 	seq19 := testEvalXML("//author/following-sibling::year")
@@ -488,7 +488,7 @@ func TestPathExpr(t *testing.T) {
 	seq21 := testEvalXML("//go/following-sibling::year")
 	sequence21 := seq21.(*object.Sequence)
 	if sequence21.Items != nil {
-		t.Errorf("result must be a nil")
+		t.Errorf("the result should be nil")
 	}
 
 	seq22 := testEvalXML("//month/preceding::year")
@@ -500,7 +500,7 @@ func TestPathExpr(t *testing.T) {
 	seq23 := testEvalXML("//month/preceding-sibling::year")
 	sequence23 := seq23.(*object.Sequence)
 	if sequence23.Items != nil {
-		t.Errorf("result must be a nil")
+		t.Errorf("the result should be nil")
 	}
 
 	seq24 := testEvalXML("//year/preceding-sibling::book")
@@ -614,7 +614,7 @@ func TestPathExpr(t *testing.T) {
 	seq40 := testEvalXML("//book/self::year")
 	sequence40 := seq40.(*object.Sequence)
 	if sequence40.Items != nil {
-		t.Errorf("result must be a nil")
+		t.Errorf("the result should be nil")
 	}
 
 	seq41 := testEvalXML("/*")
@@ -697,8 +697,8 @@ func TestPathExpr(t *testing.T) {
 
 	seq54 := testEvalXML("//no/preceding::*")
 	sequence54 := seq54.(*object.Sequence)
-	if len(sequence54.Items) != 14 {
-		t.Errorf("wrong number of items. got=%d, expected=14", len(sequence54.Items))
+	if len(sequence54.Items) != 15 {
+		t.Errorf("wrong number of items. got=%d, expected=15", len(sequence54.Items))
 	}
 
 	seq55 := testEvalXML("//no/ancestor-or-self::*")
@@ -718,7 +718,7 @@ func TestPathPredicateExpr(t *testing.T) {
 	seq := testEvalXML("//book[0]")
 	sequence := seq.(*object.Sequence)
 	if sequence.Items != nil {
-		t.Errorf("result must be a nil")
+		t.Errorf("the result should be nil")
 	}
 
 	seq2 := testEvalXML("//book[1]")
@@ -927,7 +927,7 @@ func TestPathPredicateExpr(t *testing.T) {
 	seq34 := testEvalXML("//no/preceding-sibling::*[haha]")
 	sequence34 := seq34.(*object.Sequence)
 	if sequence34.Items != nil {
-		t.Errorf("result must be a nil")
+		t.Errorf("the result should be nil")
 	}
 
 	seq35 := testEvalXML("//no/preceding-sibling::*[preceding-sibling::*]")
@@ -944,14 +944,14 @@ func TestPathPredicateExpr(t *testing.T) {
 
 	seq37 := testEvalXML("//no/preceding::*[.]")
 	sequence37 := seq37.(*object.Sequence)
-	if len(sequence37.Items) != 14 {
-		t.Errorf("wrong number of items. got=%d, expected=14", len(sequence37.Items))
+	if len(sequence37.Items) != 15 {
+		t.Errorf("wrong number of items. got=%d, expected=15", len(sequence37.Items))
 	}
 
 	seq38 := testEvalXML("//no/preceding::*[preceding::*]")
 	sequence38 := seq38.(*object.Sequence)
-	if len(sequence38.Items) != 12 {
-		t.Errorf("wrong number of items. got=%d, expected=12", len(sequence38.Items))
+	if len(sequence38.Items) != 14 {
+		t.Errorf("wrong number of items. got=%d, expected=14", len(sequence38.Items))
 	}
 
 	seq39 := testEvalXML("//no/preceding::year[.]")
@@ -1010,6 +1010,349 @@ func TestPathPredicateExpr(t *testing.T) {
 	}
 	if node44.Inspect() != "2" {
 		t.Errorf("wrong attribute value. got=%s, expected='2'", node44.Inspect())
+	}
+}
+
+func TestKindTest(t *testing.T) {
+	// seq := testEvalXML("//book/haha/year/text()")
+	// sequence := seq.(*object.Sequence)
+	// if len(sequence.Items) != 1 {
+	// 	t.Errorf("wrong number of items. got=%d, expected=1", len(sequence.Items))
+	// }
+	// node, ok := sequence.Items[0].(*object.BaseNode)
+	// if !ok {
+	// 	t.Errorf("sequence item must be a node")
+	// }
+	// if node.Text() != "001" {
+	// 	t.Errorf("wrong node value. got=%s, expected='001'", node.Text())
+	// }
+
+	// seq2 := testEvalXML("//book/haha/year/text()[0]")
+	// sequence2 := seq2.(*object.Sequence)
+	// if sequence2.Items != nil {
+	// 	t.Errorf("the result should be nil")
+	// }
+
+	// seq3 := testEvalXML("//book/haha/year/text()[1]")
+	// sequence3 := seq3.(*object.Sequence)
+	// if len(sequence3.Items) != 1 {
+	// 	t.Errorf("wrong number of items. got=%d, expected=1", len(sequence3.Items))
+	// }
+
+	// seq4 := testEvalXML("//book/haha/year/child::text()[1]")
+	// sequence4 := seq4.(*object.Sequence)
+	// if len(sequence4.Items) != 1 {
+	// 	t.Errorf("wrong number of items. got=%d, expected=1", len(sequence4.Items))
+	// }
+
+	// seq5 := testEvalXML("//book/document-node()")
+	// sequence5 := seq5.(*object.Sequence)
+	// if sequence5.Items != nil {
+	// 	t.Errorf("the result should be nil")
+	// }
+
+	// seq6 := testEvalXML("//document-node()")
+	// sequence6 := seq6.(*object.Sequence)
+	// if len(sequence6.Items) != 1 {
+	// 	t.Errorf("wrong number of items. got=%d, expected=1", len(sequence6.Items))
+	// }
+	// node6, ok := sequence6.Items[0].(*object.BaseNode)
+	// if !ok {
+	// 	t.Errorf("node should be BaseNode")
+	// }
+	// if node6.Type() != object.DocumentNodeType {
+	// 	t.Errorf("node type should be DocumentNodeType")
+	// }
+
+	// seq7 := testEvalXML("/document-node()")
+	// sequence7 := seq7.(*object.Sequence)
+	// if len(sequence7.Items) != 1 {
+	// 	t.Errorf("wrong number of items. got=%d, expected=1", len(sequence7.Items))
+	// }
+	// node7, ok := sequence7.Items[0].(*object.BaseNode)
+	// if !ok {
+	// 	t.Errorf("node should be BaseNode")
+	// }
+	// if node7.Type() != object.DocumentNodeType {
+	// 	t.Errorf("node type should be DocumentNodeType")
+	// }
+
+	// seq8 := testEvalXML("/document-node()[.]")
+	// sequence8 := seq8.(*object.Sequence)
+	// if len(sequence8.Items) != 1 {
+	// 	t.Errorf("wrong number of items. got=%d, expected=1", len(sequence8.Items))
+	// }
+	// node8, ok := sequence8.Items[0].(*object.BaseNode)
+	// if !ok {
+	// 	t.Errorf("node should be BaseNode")
+	// }
+	// if node8.Type() != object.DocumentNodeType {
+	// 	t.Errorf("node type should be DocumentNodeType")
+	// }
+
+	// seq9 := testEvalXML("//document-node()[1]")
+	// sequence9 := seq9.(*object.Sequence)
+	// if len(sequence9.Items) != 1 {
+	// 	t.Errorf("wrong number of items. got=%d, expected=1", len(sequence9.Items))
+	// }
+	// node9, ok := sequence9.Items[0].(*object.BaseNode)
+	// if !ok {
+	// 	t.Errorf("node should be BaseNode")
+	// }
+	// if node9.Type() != object.DocumentNodeType {
+	// 	t.Errorf("node type should be DocumentNodeType")
+	// }
+
+	// seq10 := testEvalXML("/document-node()[.][1]")
+	// sequence10 := seq10.(*object.Sequence)
+	// if len(sequence10.Items) != 1 {
+	// 	t.Errorf("wrong number of items. got=%d, expected=1", len(sequence10.Items))
+	// }
+	// node10, ok := sequence10.Items[0].(*object.BaseNode)
+	// if !ok {
+	// 	t.Errorf("node should be BaseNode")
+	// }
+	// if node10.Type() != object.DocumentNodeType {
+	// 	t.Errorf("node type should be DocumentNodeType")
+	// }
+
+	// seq11 := testEvalXML("/element()")
+	// sequence11 := seq11.(*object.Sequence)
+	// if len(sequence11.Items) != 1 {
+	// 	t.Errorf("wrong number of items. got=%d, expected=1", len(sequence11.Items))
+	// }
+	// node11, ok := sequence11.Items[0].(*object.BaseNode)
+	// if !ok {
+	// 	t.Errorf("node should be BaseNode")
+	// }
+	// if node11.Tree().Data != "html" {
+	// 	t.Errorf("root node should be [html]")
+	// }
+
+	// seq12 := testEvalXML("//element()")
+	// sequence12 := seq12.(*object.Sequence)
+	// if len(sequence12.Items) != 37 {
+	// 	t.Errorf("wrong number of items. got=%d, expected=37", len(sequence12.Items))
+	// }
+
+	// seq13 := testEvalXML("//element()[.]")
+	// sequence13 := seq13.(*object.Sequence)
+	// if len(sequence13.Items) != 37 {
+	// 	t.Errorf("wrong number of items. got=%d, expected=37", len(sequence13.Items))
+	// }
+
+	// seq14 := testEvalXML("//element()[1]")
+	// sequence14 := seq14.(*object.Sequence)
+	// if len(sequence14.Items) != 14 {
+	// 	t.Errorf("wrong number of items. got=%d, expected=14", len(sequence14.Items))
+	// }
+
+	// seq15 := testEvalXML("//attribute()")
+	// sequence15 := seq15.(*object.Sequence)
+	// if len(sequence15.Items) != 16 {
+	// 	t.Errorf("wrong number of items. got=%d, expected=16", len(sequence15.Items))
+	// }
+
+	// seq16 := testEvalXML("//attribute()[1]")
+	// sequence16 := seq16.(*object.Sequence)
+	// if len(sequence16.Items) != 12 {
+	// 	t.Errorf("wrong number of items. got=%d, expected=12", len(sequence16.Items))
+	// }
+
+	// seq17 := testEvalXML("//attribute()[.]")
+	// sequence17 := seq17.(*object.Sequence)
+	// if len(sequence17.Items) != 16 {
+	// 	t.Errorf("wrong number of items. got=%d, expected=16", len(sequence17.Items))
+	// }
+
+	// seq18 := testEvalXML("//book[@category='1']/attribute()")
+	// sequence18 := seq18.(*object.Sequence)
+	// if len(sequence18.Items) != 1 {
+	// 	t.Errorf("wrong number of items. got=%d, expected=1", len(sequence18.Items))
+	// }
+
+	// seq19 := testEvalXML("//attribute::*/attribute::attribute()")
+	// sequence19 := seq19.(*object.Sequence)
+	// if sequence19.Items != nil {
+	// 	t.Errorf("the result should be nil")
+	// }
+
+	// seq20 := testEvalXML("//tt:book/attribute()")
+	// sequence20 := seq20.(*object.Sequence)
+	// if len(sequence20.Items) != 2 {
+	// 	t.Errorf("wrong number of items. got=%d, expected=2", len(sequence20.Items))
+	// }
+
+	// seq21 := testEvalXML("//book[@category='web']/descendant::attribute()")
+	// sequence21 := seq21.(*object.Sequence)
+	// if len(sequence21.Items) != 6 {
+	// 	t.Errorf("wrong number of items. got=%d, expected=6", len(sequence21.Items))
+	// }
+
+	// seq22 := testEvalXML("//book[@category='web']/child::attribute()")
+	// sequence22 := seq22.(*object.Sequence)
+	// if len(sequence22.Items) != 4 {
+	// 	t.Errorf("wrong number of items. got=%d, expected=4", len(sequence22.Items))
+	// }
+
+	// seq23 := testEvalXML("//book[@category='web']/following::node()")
+	// sequence23 := seq23.(*object.Sequence)
+	// if len(sequence23.Items) != 21 {
+	// 	t.Errorf("wrong number of items. got=%d, expected=21", len(sequence23.Items))
+	// }
+
+	// seq24 := testEvalXML("//book[@category='web']/following::element()")
+	// sequence24 := seq24.(*object.Sequence)
+	// if len(sequence24.Items) != 5 {
+	// 	t.Errorf("wrong number of items. got=%d, expected=5", len(sequence24.Items))
+	// }
+
+	// seq25 := testEvalXML("//book[@category='web']/following::comment()")
+	// sequence25 := seq25.(*object.Sequence)
+	// if len(sequence25.Items) != 2 {
+	// 	t.Errorf("wrong number of items. got=%d, expected=2", len(sequence25.Items))
+	// }
+
+	// seq26 := testEvalXML("//book[@category='web']/following::text()")
+	// sequence26 := seq26.(*object.Sequence)
+	// if len(sequence26.Items) != 14 {
+	// 	t.Errorf("wrong number of items. got=%d, expected=14", len(sequence26.Items))
+	// }
+
+	// seq27 := testEvalXML("//title/following-sibling::element()")
+	// sequence27 := seq27.(*object.Sequence)
+	// if len(sequence27.Items) != 13 {
+	// 	t.Errorf("wrong number of items. got=%d, expected=13", len(sequence27.Items))
+	// }
+
+	// seq28 := testEvalXML("//title/following-sibling::attribute()")
+	// sequence28 := seq28.(*object.Sequence)
+	// if len(sequence28.Items) != 1 {
+	// 	t.Errorf("wrong number of items. got=%d, expected=1", len(sequence28.Items))
+	// }
+
+	// seq29 := testEvalXML("//book[@category='web']/child::text()")
+	// sequence29 := seq29.(*object.Sequence)
+	// if len(sequence29.Items) != 14 {
+	// 	t.Errorf("wrong number of items. got=%d, expected=14", len(sequence29.Items))
+	// }
+
+	// seq30 := testEvalXML("//book[@category='web']/child::element()")
+	// sequence30 := seq30.(*object.Sequence)
+	// if len(sequence30.Items) != 12 {
+	// 	t.Errorf("wrong number of items. got=%d, expected=12", len(sequence30.Items))
+	// }
+
+	// seq31 := testEvalXML("//book[@category='web']/self::element()")
+	// sequence31 := seq31.(*object.Sequence)
+	// if len(sequence31.Items) != 2 {
+	// 	t.Errorf("wrong number of items. got=%d, expected=2", len(sequence31.Items))
+	// }
+
+	// seq32 := testEvalXML("//book[@category='web']/self::text()")
+	// sequence32 := seq32.(*object.Sequence)
+	// if sequence32.Items != nil {
+	// 	t.Errorf("the result should be nil")
+	// }
+
+	// seq33 := testEvalXML("//book[@category='web']/descendant::text()")
+	// sequence33 := seq33.(*object.Sequence)
+	// if len(sequence33.Items) != 26 {
+	// 	t.Errorf("wrong number of items. got=%d, expected=26", len(sequence33.Items))
+	// }
+
+	// seq34 := testEvalXML("//book[@category='web']/descendant-or-self::element()")
+	// sequence34 := seq34.(*object.Sequence)
+	// if len(sequence34.Items) != 14 {
+	// 	t.Errorf("wrong number of items. got=%d, expected=14", len(sequence34.Items))
+	// }
+
+	// seq35 := testEvalXML("//book[@category='web']/descendant-or-self::text()")
+	// sequence35 := seq35.(*object.Sequence)
+	// if len(sequence35.Items) != 26 {
+	// 	t.Errorf("wrong number of items. got=%d, expected=26", len(sequence35.Items))
+	// }
+
+	// seq36 := testEvalXML("//book[@category='web']/parent::text()")
+	// sequence36 := seq36.(*object.Sequence)
+	// if sequence36.Items != nil {
+	// 	t.Errorf("the result should be nil")
+	// }
+
+	// seq37 := testEvalXML("//book[@category='web']/ancestor::text()")
+	// sequence37 := seq37.(*object.Sequence)
+	// if sequence37.Items != nil {
+	// 	t.Errorf("the result should be nil")
+	// }
+
+	// seq38 := testEvalXML("//book[@category='web']/parent::element()")
+	// sequence38 := seq38.(*object.Sequence)
+	// if len(sequence38.Items) != 1 {
+	// 	t.Errorf("wrong number of items. got=%d, expected=1", len(sequence38.Items))
+	// }
+
+	// seq39 := testEvalXML("//book[@category='web']/ancestor::element()")
+	// sequence39 := seq39.(*object.Sequence)
+	// if len(sequence39.Items) != 3 {
+	// 	t.Errorf("wrong number of items. got=%d, expected=3", len(sequence39.Items))
+	// }
+
+	// seq40 := testEvalXML("//book[@category='web']/preceding-sibling::element()")
+	// sequence40 := seq40.(*object.Sequence)
+	// if len(sequence40.Items) != 4 {
+	// 	t.Errorf("wrong number of items. got=%d, expected=4", len(sequence40.Items))
+	// }
+
+	// seq41 := testEvalXML("//book[@category='web']/preceding::element()")
+	// sequence41 := seq41.(*object.Sequence)
+	// if len(sequence41.Items) != 29 {
+	// 	t.Errorf("wrong number of items. got=%d, expected=29", len(sequence41.Items))
+	// }
+
+	// seq42 := testEvalXML("//book[@category='web']/preceding::text()")
+	// sequence42 := seq42.(*object.Sequence)
+	// if len(sequence42.Items) != 59 {
+	// 	t.Errorf("wrong number of items. got=%d, expected=59", len(sequence42.Items))
+	// }
+
+	// seq43 := testEvalXML("//book[@category='web']/ancestor-or-self::text()")
+	// sequence43 := seq43.(*object.Sequence)
+	// if sequence43.Items != nil {
+	// 	t.Errorf("the result should be nil")
+	// }
+
+	// seq44 := testEvalXML("//book[@category='web']/ancestor-or-self::element()")
+	// sequence44 := seq44.(*object.Sequence)
+	// if len(sequence44.Items) != 5 {
+	// 	t.Errorf("wrong number of items. got=%d, expected=5", len(sequence44.Items))
+	// }
+
+	// seq45 := testEvalXML("//book[@category='web']/ancestor-or-self::element()[1]")
+	// sequence45 := seq45.(*object.Sequence)
+	// if len(sequence45.Items) != 2 {
+	// 	t.Errorf("wrong number of items. got=%d, expected=2", len(sequence45.Items))
+	// }
+
+	// seq46 := testEvalXML("//book[@category='web']/ancestor-or-self::element()[2]")
+	// sequence46 := seq46.(*object.Sequence)
+	// if len(sequence46.Items) != 1 {
+	// 	t.Errorf("wrong number of items. got=%d, expected=1", len(sequence46.Items))
+	// }
+	// node46 := sequence46.Items[0].(*object.BaseNode)
+	// if node46.Tree().Data != "tt:bookstore" {
+	// 	t.Errorf("selected node should be [tt:bookstore]")
+	// }
+
+	// seq47 := testEvalXML("//book[@category='web']/preceding::element()[2]")
+	// sequence47 := seq47.(*object.Sequence)
+	// if len(sequence47.Items) != 2 {
+	// 	t.Errorf("wrong number of items. got=%d, expected=2", len(sequence47.Items))
+	// }
+
+	seq48 := testEvalXML("//book[@category='web']/preceding::element()[1]")
+	sequence48 := seq48.(*object.Sequence)
+	if len(sequence48.Items) != 2 {
+		t.Errorf("wrong number of items. got=%d, expected=2", len(sequence48.Items))
 	}
 }
 

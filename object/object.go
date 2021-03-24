@@ -319,6 +319,9 @@ func (bn *BaseNode) Attr() []Node {
 	return nil
 }
 func (bn *BaseNode) Text() string {
+	if bn.Type() == CommentNodeType || bn.Type() == TextNodeType {
+		return bn.Tree().Data
+	}
 	for c := bn.FirstChild(); c != nil; c = bn.NextSibling() {
 		if c.Type() == TextNodeType {
 			return c.Tree().Data

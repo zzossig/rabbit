@@ -762,7 +762,9 @@ func IsKindMatch(n object.Node, typeID byte) bool {
 			return true
 		}
 	case 10:
-		return true
+		if n.Type() != object.AttributeNodeType {
+			return true
+		}
 	}
 	return false
 }
@@ -781,22 +783,22 @@ func IsContain(src []object.Item, target object.Item) bool {
 func IsContainN(src []object.Node, target object.Node) bool {
 	for _, item := range src {
 		if item, ok := item.(*object.BaseNode); ok {
-			if item.Type() != target.Type() {
+			target, ok := target.(*object.BaseNode)
+			if !ok {
 				return false
 			}
 
-			target := target.(*object.BaseNode)
 			if item.Tree() == target.Tree() {
 				return true
 			}
 		}
 
 		if item, ok := item.(*object.AttrNode); ok {
-			if item.Type() != target.Type() {
+			target, ok := target.(*object.AttrNode)
+			if !ok {
 				return false
 			}
 
-			target := target.(*object.AttrNode)
 			if item.Tree() == target.Tree() && item.Key() == target.Key() {
 				return true
 			}
@@ -809,40 +811,6 @@ func IsContainN(src []object.Node, target object.Node) bool {
 func AppendNode(src []object.Node, target object.Node) []object.Node {
 	if !IsContainN(src, target) {
 		src = append(src, target)
-	}
-	return src
-}
-
-// AppendKind ..
-func AppendKind(src []object.Node, target object.Node, typeID byte) []object.Node {
-	switch typeID {
-	case 2:
-		if target.Type() == object.ElementNodeType {
-			src = AppendNode(src, target)
-		}
-	case 3:
-		if target.Type() == object.ElementNodeType {
-			target := target.(*object.BaseNode)
-			for _, a := range target.Attr() {
-				src = AppendNode(src, a)
-			}
-		}
-	case 7:
-		if target.Type() == object.CommentNodeType {
-			src = AppendNode(src, target)
-		}
-	case 8:
-		if target.Type() == object.TextNodeType {
-			src = AppendNode(src, target)
-		}
-	case 10:
-		src = AppendNode(src, target)
-		if target.Type() == object.ElementNodeType {
-			target := target.(*object.BaseNode)
-			for _, a := range target.Attr() {
-				src = AppendNode(src, a)
-			}
-		}
 	}
 	return src
 }
