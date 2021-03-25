@@ -253,6 +253,16 @@ func IsAnyAtomic(item object.Item) bool {
 		item.Type() == object.BooleanType
 }
 
+// IsAnyFunc ..
+func IsAnyFunc(item object.Item) bool {
+	if item == nil {
+		return false
+	}
+	return item.Type() == object.FuncType ||
+		item.Type() == object.MapType ||
+		item.Type() == object.ArrayType
+}
+
 // IsNode ..
 func IsNode(item object.Item) bool {
 	if item == nil {
@@ -769,16 +779,6 @@ func IsKindMatch(n object.Node, typeID byte) bool {
 	return false
 }
 
-// IsContain ..
-func IsContain(src []object.Item, target object.Item) bool {
-	for _, item := range src {
-		if item == target {
-			return true
-		}
-	}
-	return false
-}
-
 // IsContainN ..
 func IsContainN(src []object.Node, target object.Node) bool {
 	for _, item := range src {
@@ -813,4 +813,16 @@ func AppendNode(src []object.Node, target object.Node) []object.Node {
 		src = append(src, target)
 	}
 	return src
+}
+
+// CopyFocus ..
+func CopyFocus(ctx *object.Context) *object.Focus {
+	return &object.Focus{CSize: ctx.CSize, CPos: ctx.CPos, CAxis: ctx.CAxis}
+}
+
+// ReplaceFocus ..
+func ReplaceFocus(focus *object.Focus, ctx *object.Context) {
+	ctx.CSize = focus.CSize
+	ctx.CAxis = focus.CAxis
+	ctx.CPos = focus.CPos
 }

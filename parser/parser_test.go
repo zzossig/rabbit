@@ -1200,7 +1200,7 @@ func TestAbbreviatedSyntax(t *testing.T) {
 		},
 		{
 			"book/(chapter|appendix)/section",
-			"((book / (chapter | appendix)) / section)",
+			"(book / ((chapter | appendix) / section))",
 		},
 		{
 			"//*[title]",
@@ -1275,6 +1275,14 @@ func TestPathExpr(t *testing.T) {
 		{
 			"//company/office/department",
 			"((//company / office) / department)",
+		},
+		{
+			"//book[@category='web']/(ancestor::*)[1]",
+			"(//book[(@category = 'web')] / ancestor::*[1])",
+		},
+		{
+			"/company/div",
+			"(/company / div)",
 		},
 	}
 

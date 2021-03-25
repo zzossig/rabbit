@@ -1,5 +1,6 @@
 <html>
-	<head></head>
+	<head>
+	</head>
 	<body>
 		<tt:bookstore xmlns:tt="http://www.w3.org/TR/html4/">
 			<go>
@@ -14,26 +15,26 @@
 			<book category="1">
 				<title lang="en">Harry Potter</title>
 				<book category="2">
-					godc
-					<book category="3">
-						hterkj
-						<haha>
+			godc
+			<book category="3">
+				hterkj
+				<haha>
 							<year category="children" IDREF="aa">001</year>
 						</haha>
 					</book>
 				</book>
 				<year>
-					2005
-					<month>04
-						<haha>
-							zzzz
-						</haha>
+			2005
+			<month>04
+				<haha>
+					zzzz
+				</haha>
 						<day>
-							19
-						</day>
+					19
+				</day>
 						<no>
-							ggg
-						</no>
+					ggg
+				</no>
 					</month>
 				</year>
 				<price>29.99</price>

@@ -12,6 +12,13 @@ type Context struct {
 	CAxis string
 }
 
+// Focus ...
+type Focus struct {
+	CSize int
+	CPos  int
+	CAxis string
+}
+
 // NewContext ...
 func NewContext() *Context {
 	s := make(map[string]Item)

@@ -136,21 +136,21 @@ func IsGeneralComp(str string) bool {
 // IsNodeComp checks
 // NodeComp ::= "is" | "<<" | ">>"
 func IsNodeComp(str string) bool {
-	re := regexp.MustCompile(`^(is||<<||>>)$`)
+	re := regexp.MustCompile(`^(is|<<|>>)$`)
 	return re.MatchString(str)
 }
 
 // IsForwardAxis checks
 // ForwardAxis ::= ("child" "::") | ("descendant" "::") | ("attribute" "::") | ("self" "::") | ("descendant-or-self" "::") | ("following-sibling" "::") | ("following" "::") | ("namespace" "::")
 func IsForwardAxis(str string) bool {
-	re := regexp.MustCompile(`^(child::||descendant::||attribute::||self::||descendant-or-self::||following-sibling::||following::||namespace::)$`)
+	re := regexp.MustCompile(`^(child::|descendant::|attribute::|self::|descendant-or-self::|following-sibling::|following::|namespace::)$`)
 	return re.MatchString(str)
 }
 
 // IsReverseAxis checks
 // ReverseAxis ::= ("parent" "::") | ("ancestor" "::") | ("preceding-sibling" "::") | ("preceding" "::") | ("ancestor-or-self" "::")
 func IsReverseAxis(str string) bool {
-	re := regexp.MustCompile(`^(parent::||ancestor::||preceding-sibling::||preceding::||ancestor-or-self::)$`)
+	re := regexp.MustCompile(`^(parent::|ancestor::|preceding-sibling::|preceding::|ancestor-or-self::)$`)
 	return re.MatchString(str)
 }
 

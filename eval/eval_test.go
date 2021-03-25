@@ -162,7 +162,25 @@ func TestArrowExpr(t *testing.T) {
 		input    string
 		expected interface{}
 	}{
+		{"'a' => upper-case()", "A"},
 		{"'a' => upper-case() => lower-case()", "a"},
+		{"let $var := 'a' return $var => fn:upper-case()", "A"},
+		{`let $pi := 3.14, $area := function ($arg)
+				{
+					'area = ' ||	$pi * $arg * $arg
+				},
+			$r := 5
+			return $r => $area()`,
+			"area = 78.5",
+		},
+		{`let $area := function ($arg, $pi)
+      {
+         'area = ' ||	$pi * $arg * $arg
+      },
+			$r := 5
+			return $r => $area(3.14)`,
+			"area = 78.5",
+		},
 	}
 
 	for _, tt := range tests {
@@ -352,7 +370,7 @@ func TestDocNode(t *testing.T) {
 	seq2 := testEval("/div")
 	sequence2 := seq2.(*object.Sequence)
 	if sequence2.Items != nil {
-		t.Errorf("doc node not have a div node of child")
+		t.Errorf("the result should be nil")
 	}
 }
 
@@ -712,6 +730,42 @@ func TestPathExpr(t *testing.T) {
 	if len(sequence56.Items) != 6 {
 		t.Errorf("wrong number of items. got=%d, expected=6", len(sequence56.Items))
 	}
+
+	seq57 := testEvalXML("//book/(title|author)")
+	sequence57 := seq57.(*object.Sequence)
+	if len(sequence57.Items) != 9 {
+		t.Errorf("wrong number of items. got=%d, expected=9", len(sequence57.Items))
+	}
+
+	seq58 := testEvalXML("//book/(title|author)/title")
+	sequence58 := seq58.(*object.Sequence)
+	if sequence58.Items != nil {
+		t.Errorf("the result should be nil")
+	}
+
+	seq59 := testEvalXML("//book/(title|author)/self::author")
+	sequence59 := seq59.(*object.Sequence)
+	if len(sequence59.Items) != 6 {
+		t.Errorf("wrong number of items. got=%d, expected=6", len(sequence59.Items))
+	}
+
+	seq60 := testEvalXML("//book/(title|author)//*")
+	sequence60 := seq60.(*object.Sequence)
+	if sequence60.Items != nil {
+		t.Errorf("the result should be nil")
+	}
+
+	seq61 := testEvalXML("book")
+	sequence61 := seq61.(*object.Sequence)
+	if sequence61.Items != nil {
+		t.Errorf("the result should be nil")
+	}
+
+	seq62 := testEvalXML("html")
+	sequence62 := seq62.(*object.Sequence)
+	if len(sequence62.Items) != 1 {
+		t.Errorf("wrong number of items. got=%d, expected=1", len(sequence62.Items))
+	}
 }
 
 func TestPathPredicateExpr(t *testing.T) {
@@ -1011,348 +1065,471 @@ func TestPathPredicateExpr(t *testing.T) {
 	if node44.Inspect() != "2" {
 		t.Errorf("wrong attribute value. got=%s, expected='2'", node44.Inspect())
 	}
+
+	seq45 := testEvalXML("//book[year='2003'][1]")
+	sequence45 := seq45.(*object.Sequence)
+	if len(sequence45.Items) != 1 {
+		t.Errorf("wrong number of items. got=%d, expected=1", len(sequence45.Items))
+	}
+
+	seq46 := testEvalXML("//book[year='2003'][1][1]")
+	sequence46 := seq46.(*object.Sequence)
+	if len(sequence46.Items) != 1 {
+		t.Errorf("wrong number of items. got=%d, expected=1", len(sequence46.Items))
+	}
+
+	seq47 := testEvalXML("//book[year='2003'][1][1][1]")
+	sequence47 := seq47.(*object.Sequence)
+	if len(sequence47.Items) != 1 {
+		t.Errorf("wrong number of items. got=%d, expected=1", len(sequence47.Items))
+	}
+
+	seq48 := testEvalXML("//book[year='2003']/preceding::*[book]")
+	sequence48 := seq48.(*object.Sequence)
+	if len(sequence48.Items) != 2 {
+		t.Errorf("wrong number of items. got=%d, expected=2", len(sequence48.Items))
+	}
+
+	seq49 := testEvalXML("//book[year='2003']/preceding::*[book][1]")
+	sequence49 := seq49.(*object.Sequence)
+	if len(sequence49.Items) != 1 {
+		t.Errorf("wrong number of items. got=%d, expected=1", len(sequence49.Items))
+	}
+	node49 := sequence49.Items[0].(*object.BaseNode)
+	if len(node49.Attr()) != 1 {
+		t.Errorf("wrong number of attrs. got=%d, expected=1", len(node49.Attr()))
+	}
+	attr49, ok := node49.Attr()[0].(*object.AttrNode)
+	if !ok {
+		t.Errorf("node type should be AttrNode")
+	}
+	if attr49.Key() != "category" || attr49.Inspect() != "2" {
+		t.Errorf("expected attr: %s='%s'", attr49.Key(), attr49.Inspect())
+	}
+
+	seq50 := testEvalXML("//book[year='2003']/preceding::*[book][2]")
+	sequence50 := seq50.(*object.Sequence)
+	if len(sequence50.Items) != 1 {
+		t.Errorf("wrong number of items. got=%d, expected=1", len(sequence50.Items))
+	}
 }
 
 func TestKindTest(t *testing.T) {
-	// seq := testEvalXML("//book/haha/year/text()")
-	// sequence := seq.(*object.Sequence)
-	// if len(sequence.Items) != 1 {
-	// 	t.Errorf("wrong number of items. got=%d, expected=1", len(sequence.Items))
-	// }
-	// node, ok := sequence.Items[0].(*object.BaseNode)
-	// if !ok {
-	// 	t.Errorf("sequence item must be a node")
-	// }
-	// if node.Text() != "001" {
-	// 	t.Errorf("wrong node value. got=%s, expected='001'", node.Text())
-	// }
+	seq := testEvalXML("//book/haha/year/text()")
+	sequence := seq.(*object.Sequence)
+	if len(sequence.Items) != 1 {
+		t.Errorf("wrong number of items. got=%d, expected=1", len(sequence.Items))
+	}
+	node, ok := sequence.Items[0].(*object.BaseNode)
+	if !ok {
+		t.Errorf("sequence item must be a node")
+	}
+	if node.Text() != "001" {
+		t.Errorf("wrong node value. got=%s, expected='001'", node.Text())
+	}
 
-	// seq2 := testEvalXML("//book/haha/year/text()[0]")
-	// sequence2 := seq2.(*object.Sequence)
-	// if sequence2.Items != nil {
-	// 	t.Errorf("the result should be nil")
-	// }
+	seq2 := testEvalXML("//book/haha/year/text()[0]")
+	sequence2 := seq2.(*object.Sequence)
+	if sequence2.Items != nil {
+		t.Errorf("the result should be nil")
+	}
 
-	// seq3 := testEvalXML("//book/haha/year/text()[1]")
-	// sequence3 := seq3.(*object.Sequence)
-	// if len(sequence3.Items) != 1 {
-	// 	t.Errorf("wrong number of items. got=%d, expected=1", len(sequence3.Items))
-	// }
+	seq3 := testEvalXML("//book/haha/year/text()[1]")
+	sequence3 := seq3.(*object.Sequence)
+	if len(sequence3.Items) != 1 {
+		t.Errorf("wrong number of items. got=%d, expected=1", len(sequence3.Items))
+	}
 
-	// seq4 := testEvalXML("//book/haha/year/child::text()[1]")
-	// sequence4 := seq4.(*object.Sequence)
-	// if len(sequence4.Items) != 1 {
-	// 	t.Errorf("wrong number of items. got=%d, expected=1", len(sequence4.Items))
-	// }
+	seq4 := testEvalXML("//book/haha/year/child::text()[1]")
+	sequence4 := seq4.(*object.Sequence)
+	if len(sequence4.Items) != 1 {
+		t.Errorf("wrong number of items. got=%d, expected=1", len(sequence4.Items))
+	}
 
-	// seq5 := testEvalXML("//book/document-node()")
-	// sequence5 := seq5.(*object.Sequence)
-	// if sequence5.Items != nil {
-	// 	t.Errorf("the result should be nil")
-	// }
+	seq5 := testEvalXML("//book/document-node()")
+	sequence5 := seq5.(*object.Sequence)
+	if sequence5.Items != nil {
+		t.Errorf("the result should be nil")
+	}
 
-	// seq6 := testEvalXML("//document-node()")
-	// sequence6 := seq6.(*object.Sequence)
-	// if len(sequence6.Items) != 1 {
-	// 	t.Errorf("wrong number of items. got=%d, expected=1", len(sequence6.Items))
-	// }
-	// node6, ok := sequence6.Items[0].(*object.BaseNode)
-	// if !ok {
-	// 	t.Errorf("node should be BaseNode")
-	// }
-	// if node6.Type() != object.DocumentNodeType {
-	// 	t.Errorf("node type should be DocumentNodeType")
-	// }
+	seq6 := testEvalXML("//document-node()")
+	sequence6 := seq6.(*object.Sequence)
+	if len(sequence6.Items) != 1 {
+		t.Errorf("wrong number of items. got=%d, expected=1", len(sequence6.Items))
+	}
+	node6, ok := sequence6.Items[0].(*object.BaseNode)
+	if !ok {
+		t.Errorf("node should be BaseNode")
+	}
+	if node6.Type() != object.DocumentNodeType {
+		t.Errorf("node type should be DocumentNodeType")
+	}
 
-	// seq7 := testEvalXML("/document-node()")
-	// sequence7 := seq7.(*object.Sequence)
-	// if len(sequence7.Items) != 1 {
-	// 	t.Errorf("wrong number of items. got=%d, expected=1", len(sequence7.Items))
-	// }
-	// node7, ok := sequence7.Items[0].(*object.BaseNode)
-	// if !ok {
-	// 	t.Errorf("node should be BaseNode")
-	// }
-	// if node7.Type() != object.DocumentNodeType {
-	// 	t.Errorf("node type should be DocumentNodeType")
-	// }
+	seq7 := testEvalXML("/document-node()")
+	sequence7 := seq7.(*object.Sequence)
+	if len(sequence7.Items) != 1 {
+		t.Errorf("wrong number of items. got=%d, expected=1", len(sequence7.Items))
+	}
+	node7, ok := sequence7.Items[0].(*object.BaseNode)
+	if !ok {
+		t.Errorf("node should be BaseNode")
+	}
+	if node7.Type() != object.DocumentNodeType {
+		t.Errorf("node type should be DocumentNodeType")
+	}
 
-	// seq8 := testEvalXML("/document-node()[.]")
-	// sequence8 := seq8.(*object.Sequence)
-	// if len(sequence8.Items) != 1 {
-	// 	t.Errorf("wrong number of items. got=%d, expected=1", len(sequence8.Items))
-	// }
-	// node8, ok := sequence8.Items[0].(*object.BaseNode)
-	// if !ok {
-	// 	t.Errorf("node should be BaseNode")
-	// }
-	// if node8.Type() != object.DocumentNodeType {
-	// 	t.Errorf("node type should be DocumentNodeType")
-	// }
+	seq8 := testEvalXML("/document-node()[.]")
+	sequence8 := seq8.(*object.Sequence)
+	if len(sequence8.Items) != 1 {
+		t.Errorf("wrong number of items. got=%d, expected=1", len(sequence8.Items))
+	}
+	node8, ok := sequence8.Items[0].(*object.BaseNode)
+	if !ok {
+		t.Errorf("node should be BaseNode")
+	}
+	if node8.Type() != object.DocumentNodeType {
+		t.Errorf("node type should be DocumentNodeType")
+	}
 
-	// seq9 := testEvalXML("//document-node()[1]")
-	// sequence9 := seq9.(*object.Sequence)
-	// if len(sequence9.Items) != 1 {
-	// 	t.Errorf("wrong number of items. got=%d, expected=1", len(sequence9.Items))
-	// }
-	// node9, ok := sequence9.Items[0].(*object.BaseNode)
-	// if !ok {
-	// 	t.Errorf("node should be BaseNode")
-	// }
-	// if node9.Type() != object.DocumentNodeType {
-	// 	t.Errorf("node type should be DocumentNodeType")
-	// }
+	seq9 := testEvalXML("//document-node()[1]")
+	sequence9 := seq9.(*object.Sequence)
+	if len(sequence9.Items) != 1 {
+		t.Errorf("wrong number of items. got=%d, expected=1", len(sequence9.Items))
+	}
+	node9, ok := sequence9.Items[0].(*object.BaseNode)
+	if !ok {
+		t.Errorf("node should be BaseNode")
+	}
+	if node9.Type() != object.DocumentNodeType {
+		t.Errorf("node type should be DocumentNodeType")
+	}
 
-	// seq10 := testEvalXML("/document-node()[.][1]")
-	// sequence10 := seq10.(*object.Sequence)
-	// if len(sequence10.Items) != 1 {
-	// 	t.Errorf("wrong number of items. got=%d, expected=1", len(sequence10.Items))
-	// }
-	// node10, ok := sequence10.Items[0].(*object.BaseNode)
-	// if !ok {
-	// 	t.Errorf("node should be BaseNode")
-	// }
-	// if node10.Type() != object.DocumentNodeType {
-	// 	t.Errorf("node type should be DocumentNodeType")
-	// }
+	seq10 := testEvalXML("/document-node()[.][1]")
+	sequence10 := seq10.(*object.Sequence)
+	if len(sequence10.Items) != 1 {
+		t.Errorf("wrong number of items. got=%d, expected=1", len(sequence10.Items))
+	}
+	node10, ok := sequence10.Items[0].(*object.BaseNode)
+	if !ok {
+		t.Errorf("node should be BaseNode")
+	}
+	if node10.Type() != object.DocumentNodeType {
+		t.Errorf("node type should be DocumentNodeType")
+	}
 
-	// seq11 := testEvalXML("/element()")
-	// sequence11 := seq11.(*object.Sequence)
-	// if len(sequence11.Items) != 1 {
-	// 	t.Errorf("wrong number of items. got=%d, expected=1", len(sequence11.Items))
-	// }
-	// node11, ok := sequence11.Items[0].(*object.BaseNode)
-	// if !ok {
-	// 	t.Errorf("node should be BaseNode")
-	// }
-	// if node11.Tree().Data != "html" {
-	// 	t.Errorf("root node should be [html]")
-	// }
+	seq11 := testEvalXML("/element()")
+	sequence11 := seq11.(*object.Sequence)
+	if len(sequence11.Items) != 1 {
+		t.Errorf("wrong number of items. got=%d, expected=1", len(sequence11.Items))
+	}
+	node11, ok := sequence11.Items[0].(*object.BaseNode)
+	if !ok {
+		t.Errorf("node should be BaseNode")
+	}
+	if node11.Tree().Data != "html" {
+		t.Errorf("root node should be [html]")
+	}
 
-	// seq12 := testEvalXML("//element()")
-	// sequence12 := seq12.(*object.Sequence)
-	// if len(sequence12.Items) != 37 {
-	// 	t.Errorf("wrong number of items. got=%d, expected=37", len(sequence12.Items))
-	// }
+	seq12 := testEvalXML("//element()")
+	sequence12 := seq12.(*object.Sequence)
+	if len(sequence12.Items) != 37 {
+		t.Errorf("wrong number of items. got=%d, expected=37", len(sequence12.Items))
+	}
 
-	// seq13 := testEvalXML("//element()[.]")
-	// sequence13 := seq13.(*object.Sequence)
-	// if len(sequence13.Items) != 37 {
-	// 	t.Errorf("wrong number of items. got=%d, expected=37", len(sequence13.Items))
-	// }
+	seq13 := testEvalXML("//element()[.]")
+	sequence13 := seq13.(*object.Sequence)
+	if len(sequence13.Items) != 37 {
+		t.Errorf("wrong number of items. got=%d, expected=37", len(sequence13.Items))
+	}
 
-	// seq14 := testEvalXML("//element()[1]")
-	// sequence14 := seq14.(*object.Sequence)
-	// if len(sequence14.Items) != 14 {
-	// 	t.Errorf("wrong number of items. got=%d, expected=14", len(sequence14.Items))
-	// }
+	seq14 := testEvalXML("//element()[1]")
+	sequence14 := seq14.(*object.Sequence)
+	if len(sequence14.Items) != 14 {
+		t.Errorf("wrong number of items. got=%d, expected=14", len(sequence14.Items))
+	}
 
-	// seq15 := testEvalXML("//attribute()")
-	// sequence15 := seq15.(*object.Sequence)
-	// if len(sequence15.Items) != 16 {
-	// 	t.Errorf("wrong number of items. got=%d, expected=16", len(sequence15.Items))
-	// }
+	seq15 := testEvalXML("//attribute()")
+	sequence15 := seq15.(*object.Sequence)
+	if len(sequence15.Items) != 16 {
+		t.Errorf("wrong number of items. got=%d, expected=16", len(sequence15.Items))
+	}
 
-	// seq16 := testEvalXML("//attribute()[1]")
-	// sequence16 := seq16.(*object.Sequence)
-	// if len(sequence16.Items) != 12 {
-	// 	t.Errorf("wrong number of items. got=%d, expected=12", len(sequence16.Items))
-	// }
+	seq16 := testEvalXML("//attribute()[1]")
+	sequence16 := seq16.(*object.Sequence)
+	if len(sequence16.Items) != 12 {
+		t.Errorf("wrong number of items. got=%d, expected=12", len(sequence16.Items))
+	}
 
-	// seq17 := testEvalXML("//attribute()[.]")
-	// sequence17 := seq17.(*object.Sequence)
-	// if len(sequence17.Items) != 16 {
-	// 	t.Errorf("wrong number of items. got=%d, expected=16", len(sequence17.Items))
-	// }
+	seq17 := testEvalXML("//attribute()[.]")
+	sequence17 := seq17.(*object.Sequence)
+	if len(sequence17.Items) != 16 {
+		t.Errorf("wrong number of items. got=%d, expected=16", len(sequence17.Items))
+	}
 
-	// seq18 := testEvalXML("//book[@category='1']/attribute()")
-	// sequence18 := seq18.(*object.Sequence)
-	// if len(sequence18.Items) != 1 {
-	// 	t.Errorf("wrong number of items. got=%d, expected=1", len(sequence18.Items))
-	// }
+	seq18 := testEvalXML("//book[@category='1']/attribute()")
+	sequence18 := seq18.(*object.Sequence)
+	if len(sequence18.Items) != 1 {
+		t.Errorf("wrong number of items. got=%d, expected=1", len(sequence18.Items))
+	}
 
-	// seq19 := testEvalXML("//attribute::*/attribute::attribute()")
-	// sequence19 := seq19.(*object.Sequence)
-	// if sequence19.Items != nil {
-	// 	t.Errorf("the result should be nil")
-	// }
+	seq19 := testEvalXML("//attribute::*/attribute::attribute()")
+	sequence19 := seq19.(*object.Sequence)
+	if sequence19.Items != nil {
+		t.Errorf("the result should be nil")
+	}
 
-	// seq20 := testEvalXML("//tt:book/attribute()")
-	// sequence20 := seq20.(*object.Sequence)
-	// if len(sequence20.Items) != 2 {
-	// 	t.Errorf("wrong number of items. got=%d, expected=2", len(sequence20.Items))
-	// }
+	seq20 := testEvalXML("//tt:book/attribute()")
+	sequence20 := seq20.(*object.Sequence)
+	if len(sequence20.Items) != 2 {
+		t.Errorf("wrong number of items. got=%d, expected=2", len(sequence20.Items))
+	}
 
-	// seq21 := testEvalXML("//book[@category='web']/descendant::attribute()")
-	// sequence21 := seq21.(*object.Sequence)
-	// if len(sequence21.Items) != 6 {
-	// 	t.Errorf("wrong number of items. got=%d, expected=6", len(sequence21.Items))
-	// }
+	seq21 := testEvalXML("//book[@category='web']/descendant::attribute()")
+	sequence21 := seq21.(*object.Sequence)
+	if sequence21.Items != nil {
+		t.Errorf("the result should be nil")
+	}
 
-	// seq22 := testEvalXML("//book[@category='web']/child::attribute()")
-	// sequence22 := seq22.(*object.Sequence)
-	// if len(sequence22.Items) != 4 {
-	// 	t.Errorf("wrong number of items. got=%d, expected=4", len(sequence22.Items))
-	// }
+	seq22 := testEvalXML("//book[@category='web']/child::attribute()")
+	sequence22 := seq22.(*object.Sequence)
+	if len(sequence22.Items) != 4 {
+		t.Errorf("wrong number of items. got=%d, expected=4", len(sequence22.Items))
+	}
 
-	// seq23 := testEvalXML("//book[@category='web']/following::node()")
-	// sequence23 := seq23.(*object.Sequence)
-	// if len(sequence23.Items) != 21 {
-	// 	t.Errorf("wrong number of items. got=%d, expected=21", len(sequence23.Items))
-	// }
+	seq23 := testEvalXML("//book[@category='web']/following::node()")
+	sequence23 := seq23.(*object.Sequence)
+	if len(sequence23.Items) != 21 {
+		t.Errorf("wrong number of items. got=%d, expected=21", len(sequence23.Items))
+	}
 
-	// seq24 := testEvalXML("//book[@category='web']/following::element()")
-	// sequence24 := seq24.(*object.Sequence)
-	// if len(sequence24.Items) != 5 {
-	// 	t.Errorf("wrong number of items. got=%d, expected=5", len(sequence24.Items))
-	// }
+	seq24 := testEvalXML("//book[@category='web']/following::element()")
+	sequence24 := seq24.(*object.Sequence)
+	if len(sequence24.Items) != 5 {
+		t.Errorf("wrong number of items. got=%d, expected=5", len(sequence24.Items))
+	}
 
-	// seq25 := testEvalXML("//book[@category='web']/following::comment()")
-	// sequence25 := seq25.(*object.Sequence)
-	// if len(sequence25.Items) != 2 {
-	// 	t.Errorf("wrong number of items. got=%d, expected=2", len(sequence25.Items))
-	// }
+	seq25 := testEvalXML("//book[@category='web']/following::comment()")
+	sequence25 := seq25.(*object.Sequence)
+	if len(sequence25.Items) != 2 {
+		t.Errorf("wrong number of items. got=%d, expected=2", len(sequence25.Items))
+	}
 
-	// seq26 := testEvalXML("//book[@category='web']/following::text()")
-	// sequence26 := seq26.(*object.Sequence)
-	// if len(sequence26.Items) != 14 {
-	// 	t.Errorf("wrong number of items. got=%d, expected=14", len(sequence26.Items))
-	// }
+	seq26 := testEvalXML("//book[@category='web']/following::text()")
+	sequence26 := seq26.(*object.Sequence)
+	if len(sequence26.Items) != 14 {
+		t.Errorf("wrong number of items. got=%d, expected=14", len(sequence26.Items))
+	}
 
-	// seq27 := testEvalXML("//title/following-sibling::element()")
-	// sequence27 := seq27.(*object.Sequence)
-	// if len(sequence27.Items) != 13 {
-	// 	t.Errorf("wrong number of items. got=%d, expected=13", len(sequence27.Items))
-	// }
+	seq27 := testEvalXML("//title/following-sibling::element()")
+	sequence27 := seq27.(*object.Sequence)
+	if len(sequence27.Items) != 13 {
+		t.Errorf("wrong number of items. got=%d, expected=13", len(sequence27.Items))
+	}
 
-	// seq28 := testEvalXML("//title/following-sibling::attribute()")
-	// sequence28 := seq28.(*object.Sequence)
-	// if len(sequence28.Items) != 1 {
-	// 	t.Errorf("wrong number of items. got=%d, expected=1", len(sequence28.Items))
-	// }
+	seq28 := testEvalXML("//title/following-sibling::attribute()")
+	sequence28 := seq28.(*object.Sequence)
+	if sequence28.Items != nil {
+		t.Errorf("the result should be nil")
+	}
 
-	// seq29 := testEvalXML("//book[@category='web']/child::text()")
-	// sequence29 := seq29.(*object.Sequence)
-	// if len(sequence29.Items) != 14 {
-	// 	t.Errorf("wrong number of items. got=%d, expected=14", len(sequence29.Items))
-	// }
+	seq29 := testEvalXML("//book[@category='web']/child::text()")
+	sequence29 := seq29.(*object.Sequence)
+	if len(sequence29.Items) != 14 {
+		t.Errorf("wrong number of items. got=%d, expected=14", len(sequence29.Items))
+	}
 
-	// seq30 := testEvalXML("//book[@category='web']/child::element()")
-	// sequence30 := seq30.(*object.Sequence)
-	// if len(sequence30.Items) != 12 {
-	// 	t.Errorf("wrong number of items. got=%d, expected=12", len(sequence30.Items))
-	// }
+	seq30 := testEvalXML("//book[@category='web']/child::element()")
+	sequence30 := seq30.(*object.Sequence)
+	if len(sequence30.Items) != 12 {
+		t.Errorf("wrong number of items. got=%d, expected=12", len(sequence30.Items))
+	}
 
-	// seq31 := testEvalXML("//book[@category='web']/self::element()")
-	// sequence31 := seq31.(*object.Sequence)
-	// if len(sequence31.Items) != 2 {
-	// 	t.Errorf("wrong number of items. got=%d, expected=2", len(sequence31.Items))
-	// }
+	seq31 := testEvalXML("//book[@category='web']/self::element()")
+	sequence31 := seq31.(*object.Sequence)
+	if len(sequence31.Items) != 2 {
+		t.Errorf("wrong number of items. got=%d, expected=2", len(sequence31.Items))
+	}
 
-	// seq32 := testEvalXML("//book[@category='web']/self::text()")
-	// sequence32 := seq32.(*object.Sequence)
-	// if sequence32.Items != nil {
-	// 	t.Errorf("the result should be nil")
-	// }
+	seq32 := testEvalXML("//book[@category='web']/self::text()")
+	sequence32 := seq32.(*object.Sequence)
+	if sequence32.Items != nil {
+		t.Errorf("the result should be nil")
+	}
 
-	// seq33 := testEvalXML("//book[@category='web']/descendant::text()")
-	// sequence33 := seq33.(*object.Sequence)
-	// if len(sequence33.Items) != 26 {
-	// 	t.Errorf("wrong number of items. got=%d, expected=26", len(sequence33.Items))
-	// }
+	seq33 := testEvalXML("//book[@category='web']/descendant::text()")
+	sequence33 := seq33.(*object.Sequence)
+	if len(sequence33.Items) != 26 {
+		t.Errorf("wrong number of items. got=%d, expected=26", len(sequence33.Items))
+	}
 
-	// seq34 := testEvalXML("//book[@category='web']/descendant-or-self::element()")
-	// sequence34 := seq34.(*object.Sequence)
-	// if len(sequence34.Items) != 14 {
-	// 	t.Errorf("wrong number of items. got=%d, expected=14", len(sequence34.Items))
-	// }
+	seq34 := testEvalXML("//book[@category='web']/descendant-or-self::element()")
+	sequence34 := seq34.(*object.Sequence)
+	if len(sequence34.Items) != 14 {
+		t.Errorf("wrong number of items. got=%d, expected=14", len(sequence34.Items))
+	}
 
-	// seq35 := testEvalXML("//book[@category='web']/descendant-or-self::text()")
-	// sequence35 := seq35.(*object.Sequence)
-	// if len(sequence35.Items) != 26 {
-	// 	t.Errorf("wrong number of items. got=%d, expected=26", len(sequence35.Items))
-	// }
+	seq35 := testEvalXML("//book[@category='web']/descendant-or-self::text()")
+	sequence35 := seq35.(*object.Sequence)
+	if len(sequence35.Items) != 26 {
+		t.Errorf("wrong number of items. got=%d, expected=26", len(sequence35.Items))
+	}
 
-	// seq36 := testEvalXML("//book[@category='web']/parent::text()")
-	// sequence36 := seq36.(*object.Sequence)
-	// if sequence36.Items != nil {
-	// 	t.Errorf("the result should be nil")
-	// }
+	seq36 := testEvalXML("//book[@category='web']/parent::text()")
+	sequence36 := seq36.(*object.Sequence)
+	if sequence36.Items != nil {
+		t.Errorf("the result should be nil")
+	}
 
-	// seq37 := testEvalXML("//book[@category='web']/ancestor::text()")
-	// sequence37 := seq37.(*object.Sequence)
-	// if sequence37.Items != nil {
-	// 	t.Errorf("the result should be nil")
-	// }
+	seq37 := testEvalXML("//book[@category='web']/ancestor::text()")
+	sequence37 := seq37.(*object.Sequence)
+	if sequence37.Items != nil {
+		t.Errorf("the result should be nil")
+	}
 
-	// seq38 := testEvalXML("//book[@category='web']/parent::element()")
-	// sequence38 := seq38.(*object.Sequence)
-	// if len(sequence38.Items) != 1 {
-	// 	t.Errorf("wrong number of items. got=%d, expected=1", len(sequence38.Items))
-	// }
+	seq38 := testEvalXML("//book[@category='web']/parent::element()")
+	sequence38 := seq38.(*object.Sequence)
+	if len(sequence38.Items) != 1 {
+		t.Errorf("wrong number of items. got=%d, expected=1", len(sequence38.Items))
+	}
 
-	// seq39 := testEvalXML("//book[@category='web']/ancestor::element()")
-	// sequence39 := seq39.(*object.Sequence)
-	// if len(sequence39.Items) != 3 {
-	// 	t.Errorf("wrong number of items. got=%d, expected=3", len(sequence39.Items))
-	// }
+	seq39 := testEvalXML("//book[@category='web']/ancestor::element()")
+	sequence39 := seq39.(*object.Sequence)
+	if len(sequence39.Items) != 3 {
+		t.Errorf("wrong number of items. got=%d, expected=3", len(sequence39.Items))
+	}
 
-	// seq40 := testEvalXML("//book[@category='web']/preceding-sibling::element()")
-	// sequence40 := seq40.(*object.Sequence)
-	// if len(sequence40.Items) != 4 {
-	// 	t.Errorf("wrong number of items. got=%d, expected=4", len(sequence40.Items))
-	// }
+	seq40 := testEvalXML("//book[@category='web']/preceding-sibling::element()")
+	sequence40 := seq40.(*object.Sequence)
+	if len(sequence40.Items) != 4 {
+		t.Errorf("wrong number of items. got=%d, expected=4", len(sequence40.Items))
+	}
 
-	// seq41 := testEvalXML("//book[@category='web']/preceding::element()")
-	// sequence41 := seq41.(*object.Sequence)
-	// if len(sequence41.Items) != 29 {
-	// 	t.Errorf("wrong number of items. got=%d, expected=29", len(sequence41.Items))
-	// }
+	seq41 := testEvalXML("//book[@category='web']/preceding::element()")
+	sequence41 := seq41.(*object.Sequence)
+	if len(sequence41.Items) != 29 {
+		t.Errorf("wrong number of items. got=%d, expected=29", len(sequence41.Items))
+	}
 
-	// seq42 := testEvalXML("//book[@category='web']/preceding::text()")
-	// sequence42 := seq42.(*object.Sequence)
-	// if len(sequence42.Items) != 59 {
-	// 	t.Errorf("wrong number of items. got=%d, expected=59", len(sequence42.Items))
-	// }
+	seq42 := testEvalXML("//book[@category='web']/preceding::text()")
+	sequence42 := seq42.(*object.Sequence)
+	if len(sequence42.Items) != 60 {
+		t.Errorf("wrong number of items. got=%d, expected=60", len(sequence42.Items))
+	}
 
-	// seq43 := testEvalXML("//book[@category='web']/ancestor-or-self::text()")
-	// sequence43 := seq43.(*object.Sequence)
-	// if sequence43.Items != nil {
-	// 	t.Errorf("the result should be nil")
-	// }
+	seq43 := testEvalXML("//book[@category='web']/ancestor-or-self::text()")
+	sequence43 := seq43.(*object.Sequence)
+	if sequence43.Items != nil {
+		t.Errorf("the result should be nil")
+	}
 
-	// seq44 := testEvalXML("//book[@category='web']/ancestor-or-self::element()")
-	// sequence44 := seq44.(*object.Sequence)
-	// if len(sequence44.Items) != 5 {
-	// 	t.Errorf("wrong number of items. got=%d, expected=5", len(sequence44.Items))
-	// }
+	seq44 := testEvalXML("//book[@category='web']/ancestor-or-self::element()")
+	sequence44 := seq44.(*object.Sequence)
+	if len(sequence44.Items) != 5 {
+		t.Errorf("wrong number of items. got=%d, expected=5", len(sequence44.Items))
+	}
 
-	// seq45 := testEvalXML("//book[@category='web']/ancestor-or-self::element()[1]")
-	// sequence45 := seq45.(*object.Sequence)
-	// if len(sequence45.Items) != 2 {
-	// 	t.Errorf("wrong number of items. got=%d, expected=2", len(sequence45.Items))
-	// }
+	seq45 := testEvalXML("//book[@category='web']/ancestor-or-self::element()[1]")
+	sequence45 := seq45.(*object.Sequence)
+	if len(sequence45.Items) != 2 {
+		t.Errorf("wrong number of items. got=%d, expected=2", len(sequence45.Items))
+	}
 
-	// seq46 := testEvalXML("//book[@category='web']/ancestor-or-self::element()[2]")
-	// sequence46 := seq46.(*object.Sequence)
-	// if len(sequence46.Items) != 1 {
-	// 	t.Errorf("wrong number of items. got=%d, expected=1", len(sequence46.Items))
-	// }
-	// node46 := sequence46.Items[0].(*object.BaseNode)
-	// if node46.Tree().Data != "tt:bookstore" {
-	// 	t.Errorf("selected node should be [tt:bookstore]")
-	// }
+	seq46 := testEvalXML("//book[@category='web']/ancestor-or-self::element()[2]")
+	sequence46 := seq46.(*object.Sequence)
+	if len(sequence46.Items) != 1 {
+		t.Errorf("wrong number of items. got=%d, expected=1", len(sequence46.Items))
+	}
+	node46 := sequence46.Items[0].(*object.BaseNode)
+	if node46.Tree().Data != "tt:bookstore" {
+		t.Errorf("selected node should be [tt:bookstore]")
+	}
 
-	// seq47 := testEvalXML("//book[@category='web']/preceding::element()[2]")
-	// sequence47 := seq47.(*object.Sequence)
-	// if len(sequence47.Items) != 2 {
-	// 	t.Errorf("wrong number of items. got=%d, expected=2", len(sequence47.Items))
-	// }
+	seq47 := testEvalXML("//book[@category='web']/preceding::element()[2]")
+	sequence47 := seq47.(*object.Sequence)
+	if len(sequence47.Items) != 2 {
+		t.Errorf("wrong number of items. got=%d, expected=2", len(sequence47.Items))
+	}
 
 	seq48 := testEvalXML("//book[@category='web']/preceding::element()[1]")
 	sequence48 := seq48.(*object.Sequence)
 	if len(sequence48.Items) != 2 {
 		t.Errorf("wrong number of items. got=%d, expected=2", len(sequence48.Items))
+	}
+
+	seq49 := testEvalXML("//book[@category='web']/preceding::node()")
+	sequence49 := seq49.(*object.Sequence)
+	if len(sequence49.Items) != 90 {
+		t.Errorf("wrong number of items. got=%d, expected=90", len(sequence49.Items))
+	}
+
+	seq50 := testEvalXML("//book[@category='web']/preceding::node()[1]")
+	sequence50 := seq50.(*object.Sequence)
+	if len(sequence50.Items) != 2 {
+		t.Errorf("wrong number of items. got=%d, expected=2", len(sequence50.Items))
+	}
+
+	seq51 := testEvalXML("//book[@category='web']/preceding::node()[2]")
+	sequence51 := seq51.(*object.Sequence)
+	if len(sequence51.Items) != 2 {
+		t.Errorf("wrong number of items. got=%d, expected=2", len(sequence51.Items))
+	}
+
+	seq52 := testEvalXML("//book[@category='web']/preceding-sibling::node()")
+	sequence52 := seq52.(*object.Sequence)
+	if len(sequence52.Items) != 11 {
+		t.Errorf("wrong number of items. got=%d, expected=11", len(sequence52.Items))
+	}
+
+	seq53 := testEvalXML("//book[@category='web']/preceding-sibling::element()[1]")
+	sequence53 := seq53.(*object.Sequence)
+	if len(sequence53.Items) != 2 {
+		t.Errorf("wrong number of items. got=%d, expected=2", len(sequence53.Items))
+	}
+
+	seq54 := testEvalXML("//book[@category='web']/preceding-sibling::element()[2]")
+	sequence54 := seq54.(*object.Sequence)
+	if len(sequence54.Items) != 2 {
+		t.Errorf("wrong number of items. got=%d, expected=2", len(sequence54.Items))
+	}
+
+	seq55 := testEvalXML("//book[@category='web']/(ancestor::*)[1]")
+	sequence55 := seq55.(*object.Sequence)
+	if len(sequence55.Items) != 1 {
+		t.Errorf("wrong number of items. got=%d, expected=1", len(sequence55.Items))
+	}
+	node55 := sequence55.Items[0].(*object.BaseNode)
+	if node55.Tree().Data != "html" {
+		t.Errorf("selected node should be [html]")
+	}
+
+	seq56 := testEvalXML("element()")
+	sequence56 := seq56.(*object.Sequence)
+	if len(sequence56.Items) != 1 {
+		t.Errorf("wrong number of items. got=%d, expected=1", len(sequence56.Items))
+	}
+	node56 := sequence56.Items[0].(*object.BaseNode)
+	if node56.Tree().Data != "html" {
+		t.Errorf("selected node should be [html]")
+	}
+
+	seq57 := testEvalXML("node()")
+	sequence57 := seq57.(*object.Sequence)
+	if len(sequence57.Items) != 1 {
+		t.Errorf("wrong number of items. got=%d, expected=1", len(sequence57.Items))
+	}
+	node57 := sequence57.Items[0].(*object.BaseNode)
+	if node57.Tree().Data != "html" {
+		t.Errorf("selected node should be [html]")
+	}
+
+	seq58 := testEvalXML("document-node()")
+	sequence58 := seq58.(*object.Sequence)
+	if len(sequence58.Items) != 1 {
+		t.Errorf("wrong number of items. got=%d, expected=1", len(sequence58.Items))
+	}
+	node58 := sequence58.Items[0].(*object.BaseNode)
+	if node58.Type() != object.DocumentNodeType {
+		t.Errorf("node type should be document-node")
 	}
 }
 
@@ -1430,6 +1607,65 @@ func TestNodeExpr(t *testing.T) {
 	sequence7 := seq7.(*object.Sequence)
 	if len(sequence7.Items) != 1 {
 		t.Errorf("wrong number of items. got=%d, expected=1", len(sequence7.Items))
+	}
+}
+
+func TestPathWithTypes(t *testing.T) {
+	seq := testEvalXML("//1")
+	sequence := seq.(*object.Sequence)
+	if len(sequence.Items) != 112 {
+		t.Errorf("wrong number of items. got=%d, expected=112", len(sequence.Items))
+	}
+
+	seq2 := testEvalXML("//(1+2)")
+	sequence2 := seq2.(*object.Sequence)
+	if len(sequence2.Items) != 112 {
+		t.Errorf("wrong number of items. got=%d, expected=112", len(sequence2.Items))
+	}
+
+	seq3 := testEvalXML("/1.1")
+	sequence3 := seq3.(*object.Sequence)
+	if len(sequence3.Items) != 1 {
+		t.Errorf("wrong number of items. got=%d, expected=1", len(sequence3.Items))
+	}
+	item3, ok := sequence3.Items[0].(*object.Decimal)
+	if !ok {
+		t.Errorf("item should be decimal type")
+	}
+	if item3.Value() != 1.1 {
+		t.Errorf("item value should be 1.1. got=%f", item3.Value())
+	}
+
+	seq4 := testEvalXML("//book/1.1e6")
+	sequence4 := seq4.(*object.Sequence)
+	if len(sequence4.Items) != 5 {
+		t.Errorf("wrong number of items. got=%d, expected=5", len(sequence4.Items))
+	}
+	item4, ok := sequence4.Items[0].(*object.Double)
+	if !ok {
+		t.Errorf("item should be double type")
+	}
+	if item4.Value() != 1.1e6 {
+		t.Errorf("item value should be 1.1e6. got=%f", item4.Value())
+	}
+
+	seq5 := testEvalXML("//year/'abc'")
+	sequence5 := seq5.(*object.Sequence)
+	if len(sequence5.Items) != 4 {
+		t.Errorf("wrong number of items. got=%d, expected=4", len(sequence5.Items))
+	}
+	item5, ok := sequence5.Items[0].(*object.String)
+	if !ok {
+		t.Errorf("item should be string type")
+	}
+	if item5.Value() != "abc" {
+		t.Errorf("item value should be 'abc'. got=%s", item5.Value())
+	}
+
+	seq6 := testEvalXML("//'abc'")
+	sequence6 := seq6.(*object.Sequence)
+	if len(sequence6.Items) != 112 {
+		t.Errorf("wrong number of items. got=%d, expected=112", len(sequence6.Items))
 	}
 }
 

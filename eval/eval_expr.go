@@ -399,8 +399,10 @@ func evalLogicalExpr(expr ast.ExprSingle, ctx *object.Context) object.Item {
 
 func evalUnionExpr(expr ast.ExprSingle, ctx *object.Context) object.Item {
 	ue := expr.(*ast.UnionExpr)
+	cnode := ctx.CNode
 
 	left := Eval(ue.LeftExpr, ctx)
+	ctx.CNode = cnode
 	right := Eval(ue.RightExpr, ctx)
 
 	var nodes []object.Node

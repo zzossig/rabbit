@@ -209,7 +209,7 @@ type Double struct {
 	value float64
 }
 
-func (d *Double) Type() Type         { return DecimalType }
+func (d *Double) Type() Type         { return DoubleType }
 func (d *Double) Inspect() string    { return fmt.Sprintf("%e", d.value) }
 func (d *Double) SetValue(v float64) { d.value = v }
 func (d *Double) Value() float64     { return d.value }

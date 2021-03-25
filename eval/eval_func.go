@@ -4,6 +4,7 @@ import (
 	"github.com/zzossig/xpath/ast"
 	"github.com/zzossig/xpath/bif"
 	"github.com/zzossig/xpath/object"
+	"github.com/zzossig/xpath/util"
 )
 
 func evalFunctionLiteral(expr ast.ExprSingle, ctx *object.Context) object.Item {
@@ -97,7 +98,13 @@ func evalPredicate(it object.Item, pred *ast.Predicate, ctx *object.Context) obj
 
 	switch it := it.(type) {
 	case *object.Sequence:
-		src = append(src, it.Items...)
+		if util.IsReverseAxis(ctx.CAxis) {
+			for i := len(it.Items) - 1; i >= 0; i-- {
+				src = append(src, it.Items[i])
+			}
+		} else {
+			src = append(src, it.Items...)
+		}
 	default:
 		src = append(src, it)
 	}
@@ -242,9 +249,35 @@ func evalArrowExpr(expr ast.ExprSingle, ctx *object.Context) object.Item {
 				args = []object.Item{result}
 			}
 		case 2:
-			// TODO VarRef
+			ctxItem, ok := ctx.Get(b.VarName.Value())
+			if !ok {
+				bif.NewError("function not defined: %s", b.VarRef.String())
+			}
+			ctxFunc, ok := ctxItem.(*object.FuncInline)
+			if !ok {
+				bif.NewError("function not defined: %s", b.VarRef.String())
+			}
+
+			evaled := evalArgumentList(b.Args, ctx)
+			args = append(args, evaled...)
+			if len(ctxFunc.PL.Params) != len(args) {
+				return bif.NewError("wrong number of argument. got=%d, want=%d", len(args), len(ctxFunc.PL.Params))
+			}
+
+			enclosedCtx := object.NewEnclosedContext(ctx)
+			for i, param := range ctxFunc.PL.Params {
+				enclosedCtx.Set(param.Value(), args[i])
+			}
+
+			result = Eval(&ctxFunc.Body.Expr, enclosedCtx)
+			if i < len(bindings)-1 {
+				args = []object.Item{result}
+			}
 		case 3:
-			// TODO ParenthesizedExpr
+			result = Eval(&b.ParenthesizedExpr, ctx)
+			if i < len(bindings)-1 {
+				args = []object.Item{result}
+			}
 		}
 	}
 
@@ -276,11 +309,13 @@ func evalDynamicFunctionCall(f object.Item, args []object.Item, ctx *object.Cont
 		if len(f.PL.Params) != len(args) {
 			return bif.NewError("wrong number of argument. got=%d, want=%d", len(args), len(f.PL.Params))
 		}
+
+		enclosedCtx := object.NewEnclosedContext(ctx)
 		for i, param := range f.PL.Params {
-			ctx.Set(param.EQName.Value(), args[i])
+			enclosedCtx.Set(param.EQName.Value(), args[i])
 		}
 
-		return Eval(&f.Body.Expr, ctx)
+		return Eval(&f.Body.Expr, enclosedCtx)
 	case *object.FuncNamed:
 		if f.Name.Prefix() == "" {
 			f.Name.SetPrefix("fn")

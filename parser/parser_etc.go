@@ -118,12 +118,10 @@ func (p *Parser) parseArrowFunctionSpecifier() ast.ArrowFunctionSpecifier {
 
 	switch p.curToken.Type {
 	case token.DOLLAR:
-		v := p.parseVariable()
-		vr, ok := v.(*ast.VarRef)
-		if !ok {
-			// TODO error
-			return afs
-		}
+		p.nextToken()
+
+		vr := &ast.VarRef{}
+		vr.VarName = p.parseEQName()
 
 		afs.TypeID = 2
 		afs.VarRef = *vr
