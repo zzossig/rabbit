@@ -8,7 +8,6 @@ type Context struct {
 	CNode []Node
 	CItem Item
 	Focus
-	Option
 }
 
 // Focus ...
@@ -16,11 +15,6 @@ type Focus struct {
 	CSize int
 	CPos  int
 	CAxis string
-}
-
-// Option ...
-type Option struct {
-	Strict bool
 }
 
 // NewContext ...
@@ -39,7 +33,6 @@ func NewEnclosedContext(outer *Context) *Context {
 	ctx.CSize = outer.CSize
 	ctx.CAxis = outer.CAxis
 	ctx.CPos = outer.CPos
-	ctx.Strict = outer.Strict
 	return ctx
 }
 
