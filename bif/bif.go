@@ -7,8 +7,8 @@ import (
 	"github.com/zzossig/xpath/object"
 )
 
-// Builtins defined in https://www.w3.org/TR/xpath-functions-31/
-var Builtins = map[string]object.Func{
+// F ...
+var F = map[string]object.Func{
 	"op:numeric-add":            numericAdd,
 	"op:numeric-subtract":       numericSubtract,
 	"op:numeric-multiply":       numericMultiply,
@@ -21,143 +21,15 @@ var Builtins = map[string]object.Func{
 	"op:numeric-less-than":      numericLessThan,
 	"op:numeric-greater-than":   numericGreaterThan,
 
-	"fn:doc":           doc,
+	"fn:doc":       doc,
+	"fn:node-name": nodeName,
+
 	"fn:abs":           abs,
 	"fn:concat":        concat,
 	"fn:for-each-pair": forEachPair,
 	"fn:upper-case":    upperCase,
 	"fn:lower-case":    lowerCase,
 	"fn:boolean":       boolean,
-}
-
-// BuiltinPNames ..
-func BuiltinPNames(name string, num int) []string {
-	var pnames []string
-
-	switch name {
-	default:
-		pnames = append(pnames, "arg")
-	case "fn:concat":
-		for i := 1; i <= num; i++ {
-			pnames = append(pnames, fmt.Sprintf("arg%d", i))
-		}
-	case "fn:for-each-pair":
-		pnames = append(pnames, []string{"seq1", "seq2", "action"}...)
-	case "fn:doc":
-		pnames = append(pnames, "uri")
-	}
-
-	return pnames
-}
-
-// BuiltinPTypes ..
-func BuiltinPTypes(name string, num int) []object.Type {
-	var ptypes []object.Type
-
-	switch name {
-	case "op:numeric-add":
-		fallthrough
-	case "op:numeric-subtract":
-		fallthrough
-	case "op:numeric-multiply":
-		fallthrough
-	case "op:numeric-divide":
-		fallthrough
-	case "op:numeric-integer-divide":
-		fallthrough
-	case "op:numeric-mod":
-		fallthrough
-	case "op:numeric-equal":
-		fallthrough
-	case "op:numeric-less-than":
-		fallthrough
-	case "op:numeric-greater-than":
-		ptypes = append(ptypes, []object.Type{object.NumericType, object.NumericType}...)
-	case "op:numeric-unary-plus":
-		fallthrough
-	case "op:numeric-unary-minus":
-		ptypes = append(ptypes, object.NumericType)
-	case "fn:doc":
-		ptypes = append(ptypes, object.StringType)
-	case "fn:abs":
-		ptypes = append(ptypes, object.NumericType)
-	case "fn:lower-case":
-		ptypes = append(ptypes, object.StringType)
-	case "fn:upper-case":
-		ptypes = append(ptypes, object.StringType)
-	case "fn:boolean":
-		ptypes = append(ptypes, object.ItemType)
-	case "fn:for-each-pair":
-		ptypes = append(ptypes, []object.Type{object.ItemType, object.ItemType, object.FuncType}...)
-	}
-
-	return ptypes
-}
-
-// CheckBuiltinPTypes ..
-func CheckBuiltinPTypes(fname string, args []object.Item) object.Item {
-	if fname == "fn:concat" {
-		for _, arg := range args {
-			if !IsAnyAtomic(arg) {
-				return NewError("wrong type of argument in concat function: %s", arg.Type())
-			}
-		}
-	} else {
-		types := BuiltinPTypes(fname, len(args))
-
-		for i, t := range types {
-			isMatch := true
-
-			switch t {
-			case object.AnyAtomicType:
-				if !IsAnyAtomic(args[i]) {
-					isMatch = false
-				}
-			case object.NumericType:
-				if !IsNumeric(args[i]) {
-					isMatch = false
-				}
-			case object.FuncType:
-				if !IsFunction(args[i]) {
-					isMatch = false
-				}
-			case object.MapType:
-				if !IsMap(args[i]) {
-					isMatch = false
-				}
-			case object.ArrayType:
-				if IsArray(args[i]) {
-					isMatch = false
-				}
-			case object.NodeType:
-				if !IsNode(args[i]) {
-					isMatch = false
-				}
-			case object.StringType:
-				if IsString(args[i]) {
-					isMatch = false
-				}
-			case object.BooleanType:
-				if IsBoolean(args[i]) {
-					isMatch = false
-				}
-			case object.DoubleType, object.DecimalType:
-				if args[i].Type() != object.DoubleType && args[i].Type() != object.DecimalType {
-					isMatch = false
-				}
-			case object.IntegerType:
-				if args[i].Type() != object.IntegerType {
-					isMatch = false
-				}
-			}
-
-			if !isMatch {
-				return NewError("wrong type of argument in %s function: %s", fname, args[i].Type())
-			}
-		}
-	}
-
-	return object.NIL
 }
 
 // NewError ..

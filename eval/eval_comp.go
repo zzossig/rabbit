@@ -64,38 +64,38 @@ func evalComparisonExpr(expr ast.ExprSingle, ctx *object.Context) object.Item {
 func compNumberNumber(op token.Token, left, right object.Item) object.Item {
 	switch op.Type {
 	case token.EQ, token.EQV:
-		builtin := bif.Builtins["op:numeric-equal"]
-		return builtin(left, right)
+		builtin := bif.F["op:numeric-equal"]
+		return builtin(nil, left, right)
 	case token.NE, token.NEV:
-		builtin := bif.Builtins["op:numeric-equal"]
-		b := builtin(left, right)
+		builtin := bif.F["op:numeric-equal"]
+		b := builtin(nil, left, right)
 		boolean := b.(*object.Boolean)
 		return bif.NewBoolean(!boolean.Value())
 	case token.LT, token.LTV:
-		builtin := bif.Builtins["op:numeric-less-than"]
-		return builtin(left, right)
+		builtin := bif.F["op:numeric-less-than"]
+		return builtin(nil, left, right)
 	case token.GT, token.GTV:
-		builtin := bif.Builtins["op:numeric-greater-than"]
-		return builtin(left, right)
+		builtin := bif.F["op:numeric-greater-than"]
+		return builtin(nil, left, right)
 	case token.LE, token.LEV:
-		builtin := bif.Builtins["op:numeric-less-than"]
-		b := builtin(left, right)
+		builtin := bif.F["op:numeric-less-than"]
+		b := builtin(nil, left, right)
 		boolean := b.(*object.Boolean)
 
 		if !boolean.Value() {
-			builtin = bif.Builtins["op:numeric-equal"]
-			return builtin(left, right)
+			builtin = bif.F["op:numeric-equal"]
+			return builtin(nil, left, right)
 		}
 
 		return boolean
 	case token.GE, token.GEV:
-		builtin := bif.Builtins["op:numeric-greater-than"]
-		b := builtin(left, right)
+		builtin := bif.F["op:numeric-greater-than"]
+		b := builtin(nil, left, right)
 		boolean := b.(*object.Boolean)
 
 		if !boolean.Value() {
-			builtin = bif.Builtins["op:numeric-equal"]
-			return builtin(left, right)
+			builtin = bif.F["op:numeric-equal"]
+			return builtin(nil, left, right)
 		}
 
 		return boolean

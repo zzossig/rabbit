@@ -91,25 +91,17 @@ func evalUnaryExpr(expr ast.ExprSingle, ctx *object.Context) object.Item {
 		funcName = "op:numeric-unary-minus"
 	}
 
-	builtin, ok := bif.Builtins[funcName]
-	if !ok {
-		return bif.NewError("function not found: %s", funcName)
-	}
+	builtin := bif.F[funcName]
 
-	check := bif.CheckBuiltinPTypes(funcName, []object.Item{right})
-	if bif.IsError(check) {
-		return check
-	}
-
-	return builtin(right)
+	return builtin(nil, right)
 }
 
 func evalIfExpr(expr ast.ExprSingle, ctx *object.Context) object.Item {
 	ie := expr.(*ast.IfExpr)
-	builtin := bif.Builtins["fn:boolean"]
+	builtin := bif.F["fn:boolean"]
 
 	testE := Eval(ie.TestExpr, ctx)
-	bl := builtin(testE)
+	bl := builtin(nil, testE)
 	boolObj := bl.(*object.Boolean)
 
 	if boolObj.Value() {
@@ -224,8 +216,8 @@ func evalQuantifiedExpr(expr ast.ExprSingle, ctx *object.Context) object.Item {
 			e, ok := Eval(qe.ExprSingle, enclosedCtx).(*object.Boolean)
 
 			if !ok {
-				builtin := bif.Builtins["fn:boolean"]
-				bl := builtin(e)
+				builtin := bif.F["fn:boolean"]
+				bl := builtin(nil, e)
 
 				boolObj := bl.(*object.Boolean)
 				if qe.Token.Type == token.EVERY && !boolObj.Value() {
@@ -248,8 +240,8 @@ func evalQuantifiedExpr(expr ast.ExprSingle, ctx *object.Context) object.Item {
 		e, ok := Eval(qe.ExprSingle, enclosedCtx).(*object.Boolean)
 
 		if !ok {
-			builtin := bif.Builtins["fn:boolean"]
-			bl := builtin(e)
+			builtin := bif.F["fn:boolean"]
+			bl := builtin(nil, e)
 
 			boolObj := bl.(*object.Boolean)
 			if qe.Token.Type == token.EVERY && !boolObj.Value() {
@@ -288,14 +280,9 @@ func evalAdditiveExpr(expr ast.ExprSingle, ctx *object.Context) object.Item {
 		funcName = "op:numeric-subtract"
 	}
 
-	builtin := bif.Builtins[funcName]
+	builtin := bif.F[funcName]
 
-	check := bif.CheckBuiltinPTypes(funcName, []object.Item{left, right})
-	if bif.IsError(check) {
-		return check
-	}
-
-	return builtin(left, right)
+	return builtin(nil, left, right)
 }
 
 func evalMultiplicativeExpr(expr ast.ExprSingle, ctx *object.Context) object.Item {
@@ -316,14 +303,9 @@ func evalMultiplicativeExpr(expr ast.ExprSingle, ctx *object.Context) object.Ite
 		funcName = "op:numeric-mod"
 	}
 
-	builtin := bif.Builtins[funcName]
+	builtin := bif.F[funcName]
 
-	check := bif.CheckBuiltinPTypes(funcName, []object.Item{left, right})
-	if bif.IsError(check) {
-		return check
-	}
-
-	return builtin(left, right)
+	return builtin(nil, left, right)
 }
 
 func evalStringConcatExpr(expr ast.ExprSingle, ctx *object.Context) object.Item {
@@ -333,14 +315,9 @@ func evalStringConcatExpr(expr ast.ExprSingle, ctx *object.Context) object.Item 
 	right := Eval(sce.RightExpr, ctx)
 
 	funcName := "fn:concat"
-	builtin := bif.Builtins[funcName]
+	builtin := bif.F[funcName]
 
-	check := bif.CheckBuiltinPTypes(funcName, []object.Item{left, right})
-	if bif.IsError(check) {
-		return check
-	}
-
-	return builtin(left, right)
+	return builtin(nil, left, right)
 }
 
 func evalRangeExpr(expr ast.ExprSingle, ctx *object.Context) object.Item {
@@ -371,7 +348,7 @@ func evalLogicalExpr(expr ast.ExprSingle, ctx *object.Context) object.Item {
 	var right object.Item
 	var op token.Token
 
-	builtin := bif.Builtins["fn:boolean"]
+	builtin := bif.F["fn:boolean"]
 
 	switch expr := expr.(type) {
 	case *ast.AndExpr:
@@ -384,8 +361,8 @@ func evalLogicalExpr(expr ast.ExprSingle, ctx *object.Context) object.Item {
 		op = expr.Token
 	}
 
-	l := builtin(left)
-	r := builtin(right)
+	l := builtin(nil, left)
+	r := builtin(nil, right)
 
 	leftBool := l.(*object.Boolean)
 	rightBool := r.(*object.Boolean)

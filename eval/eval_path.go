@@ -261,8 +261,8 @@ func evalPredicateList(plist *ast.PredicateList, ii *int, ctx *object.Context) o
 				}
 			}
 		default:
-			builtin := bif.Builtins["fn:boolean"]
-			boolObj := builtin(item).(*object.Boolean)
+			builtin := bif.F["fn:boolean"]
+			boolObj := builtin(nil, item).(*object.Boolean)
 
 			if boolObj.Value() {
 				*ii++

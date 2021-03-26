@@ -6,7 +6,7 @@ import (
 	"github.com/zzossig/xpath/object"
 )
 
-func numericAdd(args ...object.Item) object.Item {
+func numericAdd(ctx *object.Context, args ...object.Item) object.Item {
 	arg1 := args[0]
 	arg2 := args[1]
 
@@ -52,7 +52,7 @@ func numericAdd(args ...object.Item) object.Item {
 	return object.NIL
 }
 
-func numericSubtract(args ...object.Item) object.Item {
+func numericSubtract(ctx *object.Context, args ...object.Item) object.Item {
 	arg1 := args[0]
 	arg2 := args[1]
 
@@ -98,7 +98,7 @@ func numericSubtract(args ...object.Item) object.Item {
 	return object.NIL
 }
 
-func numericMultiply(args ...object.Item) object.Item {
+func numericMultiply(ctx *object.Context, args ...object.Item) object.Item {
 	arg1 := args[0]
 	arg2 := args[1]
 
@@ -144,7 +144,7 @@ func numericMultiply(args ...object.Item) object.Item {
 	return object.NIL
 }
 
-func numericDivide(args ...object.Item) object.Item {
+func numericDivide(ctx *object.Context, args ...object.Item) object.Item {
 	arg1 := args[0]
 	arg2 := args[1]
 
@@ -190,7 +190,7 @@ func numericDivide(args ...object.Item) object.Item {
 	return object.NIL
 }
 
-func numericIntegerDivide(args ...object.Item) object.Item {
+func numericIntegerDivide(ctx *object.Context, args ...object.Item) object.Item {
 	arg1 := args[0]
 	arg2 := args[1]
 
@@ -236,7 +236,7 @@ func numericIntegerDivide(args ...object.Item) object.Item {
 	return object.NIL
 }
 
-func numericMod(args ...object.Item) object.Item {
+func numericMod(ctx *object.Context, args ...object.Item) object.Item {
 	arg1 := args[0]
 	arg2 := args[1]
 
@@ -282,7 +282,7 @@ func numericMod(args ...object.Item) object.Item {
 	return object.NIL
 }
 
-func numericUnaryPlus(args ...object.Item) object.Item {
+func numericUnaryPlus(ctx *object.Context, args ...object.Item) object.Item {
 	arg := args[0]
 
 	switch {
@@ -300,7 +300,7 @@ func numericUnaryPlus(args ...object.Item) object.Item {
 	return object.NIL
 }
 
-func numericUnaryMinus(args ...object.Item) object.Item {
+func numericUnaryMinus(ctx *object.Context, args ...object.Item) object.Item {
 	arg := args[0]
 
 	switch {

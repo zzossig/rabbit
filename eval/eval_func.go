@@ -29,7 +29,7 @@ func evalFunctionCall(expr ast.ExprSingle, ctx *object.Context) object.Item {
 		fc.EQName.SetPrefix("fn")
 	}
 
-	builtin, ok := bif.Builtins[fc.EQName.Value()]
+	builtin, ok := bif.F[fc.EQName.Value()]
 	if !ok {
 		return bif.NewError("function not found: " + fc.EQName.Value())
 	}
@@ -49,17 +49,11 @@ func evalFunctionCall(expr ast.ExprSingle, ctx *object.Context) object.Item {
 		fp.Name = fc.EQName
 		fp.Args = args
 		fp.PCnt = pcnt
-		fp.PNames = bif.BuiltinPNames(fp.Name.Value(), len(fp.Args))
 
 		return fp
 	}
 
-	check := bif.CheckBuiltinPTypes(fc.EQName.Value(), args)
-	if bif.IsError(check) {
-		return check
-	}
-
-	return builtin(args...)
+	return builtin(ctx, args...)
 }
 
 func evalVarRef(expr ast.ExprSingle, ctx *object.Context) object.Item {
@@ -161,8 +155,8 @@ func evalPredicate(it object.Item, pred *ast.Predicate, ctx *object.Context) obj
 				items = append(items, s)
 			}
 		case *object.String:
-			builtin := bif.Builtins["fn:boolean"]
-			bl := builtin(ev)
+			builtin := bif.F["fn:boolean"]
+			bl := builtin(nil, ev)
 
 			boolObj := bl.(*object.Boolean)
 			if boolObj.Value() {
@@ -266,14 +260,14 @@ func evalArrowExpr(expr ast.ExprSingle, ctx *object.Context) object.Item {
 			if b.EQName.Prefix() == "" {
 				b.EQName.SetPrefix("fn")
 			}
-			builtin, ok := bif.Builtins[b.EQName.Value()]
+			builtin, ok := bif.F[b.EQName.Value()]
 			if !ok {
 				bif.NewError("function not defined: %s", b.EQName.Value())
 			}
 
 			evaled := evalArgumentList(b.Args, ctx)
 			args = append(args, evaled...)
-			result = builtin(args...)
+			result = builtin(ctx, args...)
 			if i < len(bindings)-1 {
 				args = []object.Item{result}
 			}
@@ -349,7 +343,7 @@ func evalDynamicFunctionCall(f object.Item, args []object.Item, ctx *object.Cont
 		if f.Name.Prefix() == "" {
 			f.Name.SetPrefix("fn")
 		}
-		builtin, ok := bif.Builtins[f.Name.Value()]
+		builtin, ok := bif.F[f.Name.Value()]
 		if !ok {
 			return bif.NewError("built-in function not found: %s", f.Name.Value())
 		}
@@ -357,7 +351,7 @@ func evalDynamicFunctionCall(f object.Item, args []object.Item, ctx *object.Cont
 			return bif.NewError("wrong number of argument. got=%d, want=%d", len(args), f.Num)
 		}
 
-		return builtin(args...)
+		return builtin(ctx, args...)
 	case *object.Array:
 		if len(args) != 1 {
 			return bif.NewError("wrong number of argument. got=%d, want=1", len(args))

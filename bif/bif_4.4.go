@@ -6,7 +6,7 @@ import (
 	"github.com/zzossig/xpath/object"
 )
 
-func abs(args ...object.Item) object.Item {
+func abs(ctx *object.Context, args ...object.Item) object.Item {
 	if len(args) != 1 {
 		return NewError("wrong number of arguments. got=%d, want=1", len(args))
 	}

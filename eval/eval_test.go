@@ -1723,13 +1723,12 @@ func testEval(input string) object.Item {
 	xpath := p.ParseXPath()
 	ctx := object.NewContext()
 
-	docFunc := bif.Builtins["fn:doc"]
+	docFunc := bif.F["fn:doc"]
 	str := &object.String{}
 	str.SetValue("testdata/quotes-1.html")
-	docNode := docFunc(str)
-	if !bif.IsError(docNode) {
-		d := docNode.(*object.BaseNode)
-		ctx.Doc = object.Node(d)
+	err := docFunc(ctx, str)
+	if err != nil {
+		return err
 	}
 
 	return Eval(xpath, ctx)
@@ -1741,13 +1740,12 @@ func testEvalXML(input string) object.Item {
 	xpath := p.ParseXPath()
 	ctx := object.NewContext()
 
-	docFunc := bif.Builtins["fn:doc"]
+	docFunc := bif.F["fn:doc"]
 	str := &object.String{}
 	str.SetValue("testdata/company.xml")
-	docNode := docFunc(str)
-	if !bif.IsError(docNode) {
-		d := docNode.(*object.BaseNode)
-		ctx.Doc = object.Node(d)
+	err := docFunc(ctx, str)
+	if err != nil {
+		return err
 	}
 
 	return Eval(xpath, ctx)
@@ -1759,13 +1757,12 @@ func testEvalXML2(input string) object.Item {
 	xpath := p.ParseXPath()
 	ctx := object.NewContext()
 
-	docFunc := bif.Builtins["fn:doc"]
+	docFunc := bif.F["fn:doc"]
 	str := &object.String{}
 	str.SetValue("testdata/company_2.xml")
-	docNode := docFunc(str)
-	if !bif.IsError(docNode) {
-		d := docNode.(*object.BaseNode)
-		ctx.Doc = object.Node(d)
+	err := docFunc(ctx, str)
+	if err != nil {
+		return err
 	}
 
 	return Eval(xpath, ctx)

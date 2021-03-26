@@ -1,7 +1,7 @@
 package object
 
 // Func represents function type
-type Func func(args ...Item) Item
+type Func func(ctx *Context, args ...Item) Item
 
 // Type represents Item Type
 type Type string

@@ -2,7 +2,7 @@ package bif
 
 import "github.com/zzossig/xpath/object"
 
-func forEachPair(args ...object.Item) object.Item {
+func forEachPair(ctx *object.Context, args ...object.Item) object.Item {
 	if len(args) != 3 {
 		return NewError("wrong number of arguments. got=%d, want=3", len(args))
 	}
@@ -74,7 +74,7 @@ func forEachPair(args ...object.Item) object.Item {
 				}
 			}
 
-			result.Items = append(result.Items, f(a...))
+			result.Items = append(result.Items, f(ctx, a...))
 		}
 
 	default:

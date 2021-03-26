@@ -167,10 +167,9 @@ func (fi *FuncInline) Inspect() string { return "function" }
 
 // FuncPartial ..
 type FuncPartial struct {
-	Name   ast.EQName
-	Args   []Item
-	PNames []string
-	PCnt   int
+	Name ast.EQName
+	Args []Item
+	PCnt int
 	*Context
 	*Func
 }

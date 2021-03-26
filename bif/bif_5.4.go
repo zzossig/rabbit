@@ -7,7 +7,7 @@ import (
 	"github.com/zzossig/xpath/object"
 )
 
-func concat(args ...object.Item) object.Item {
+func concat(ctx *object.Context, args ...object.Item) object.Item {
 	var sb strings.Builder
 	for _, arg := range args {
 		switch arg := arg.(type) {
@@ -28,7 +28,7 @@ func concat(args ...object.Item) object.Item {
 	return NewString(sb.String())
 }
 
-func upperCase(args ...object.Item) object.Item {
+func upperCase(ctx *object.Context, args ...object.Item) object.Item {
 	if len(args) != 1 {
 		return NewError("wrong number of arguments. got=%d, want=1", len(args))
 	}
@@ -47,13 +47,13 @@ func upperCase(args ...object.Item) object.Item {
 		if len(seq.Items) != 1 {
 			return NewError("wrong number of sequence items. got=%d, want=1", len(args))
 		}
-		return upperCase(seq.Items[0])
+		return upperCase(ctx, seq.Items[0])
 	}
 
 	return NewError("cannot match item type with required type")
 }
 
-func lowerCase(args ...object.Item) object.Item {
+func lowerCase(ctx *object.Context, args ...object.Item) object.Item {
 	if len(args) != 1 {
 		return NewError("wrong number of arguments. got=%d, want=1", len(args))
 	}
@@ -72,7 +72,7 @@ func lowerCase(args ...object.Item) object.Item {
 		if len(seq.Items) != 1 {
 			return NewError("wrong number of sequence items. got=%d, want=1", len(args))
 		}
-		return lowerCase(seq.Items[0])
+		return lowerCase(ctx, seq.Items[0])
 	}
 
 	return NewError("cannot match item type with required type")
