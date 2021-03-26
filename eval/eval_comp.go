@@ -16,11 +16,11 @@ func evalComparisonExpr(expr ast.ExprSingle, ctx *object.Context) object.Item {
 
 	switch {
 	case bif.IsSeq(left) && bif.IsNumeric(right):
-		return compSeqNumber(op, left, right)
+		return compSeqNumber(op, left, right, ctx)
 	case bif.IsSeq(left) && bif.IsString(right):
-		return compSeqString(op, left, right)
+		return compSeqString(op, left, right, ctx)
 	case bif.IsSeq(left) && bif.IsArray(right):
-		return compSeqArray(op, left, right)
+		return compSeqArray(op, left, right, ctx)
 	case bif.IsSeq(left) && bif.IsSeq(right):
 		return compSeqSeq(op, left, right, ctx)
 
@@ -32,36 +32,36 @@ func evalComparisonExpr(expr ast.ExprSingle, ctx *object.Context) object.Item {
 		return compNodeNode(op, left, right, ctx)
 
 	case bif.IsNumeric(left) && bif.IsNumeric(right):
-		return compNumberNumber(op, left, right)
+		return compNumberNumber(op, left, right, ctx)
 	case bif.IsNumeric(left) && bif.IsSeq(right):
-		return compNumberSeq(op, left, right)
+		return compNumberSeq(op, left, right, ctx)
 	case bif.IsNumeric(left) && bif.IsArray(right):
-		return compNumberArray(op, left, right)
+		return compNumberArray(op, left, right, ctx)
 
 	case bif.IsString(left) && bif.IsString(right):
-		return compStringString(op, left, right)
+		return compStringString(op, left, right, ctx)
 	case bif.IsString(left) && bif.IsArray(right):
-		return compStringArray(op, left, right)
+		return compStringArray(op, left, right, ctx)
 	case bif.IsString(left) && bif.IsSeq(right):
-		return compStringSeq(op, left, right)
+		return compStringSeq(op, left, right, ctx)
 
 	case bif.IsArray(left) && bif.IsNumeric(right):
-		return compArrayNumber(op, left, right)
+		return compArrayNumber(op, left, right, ctx)
 	case bif.IsArray(left) && bif.IsString(right):
-		return compArrayString(op, left, right)
+		return compArrayString(op, left, right, ctx)
 	case bif.IsArray(left) && bif.IsArray(right):
-		return compArrayArray(op, left, right)
+		return compArrayArray(op, left, right, ctx)
 	case bif.IsArray(left) && bif.IsSeq(right):
-		return compArraySeq(op, left, right)
+		return compArraySeq(op, left, right, ctx)
 
 	case bif.IsBoolean(left) && bif.IsBoolean(right):
-		return compBool(op, left, right)
+		return compBool(op, left, right, ctx)
 	}
 
 	return bif.NewError("The operator '%s' is not defined for operands of type %s and %s\n", op.Literal, left.Type(), right.Type())
 }
 
-func compNumberNumber(op token.Token, left, right object.Item) object.Item {
+func compNumberNumber(op token.Token, left, right object.Item, ctx *object.Context) object.Item {
 	switch op.Type {
 	case token.EQ, token.EQV:
 		builtin := bif.Builtins["op:numeric-equal"]
@@ -104,13 +104,13 @@ func compNumberNumber(op token.Token, left, right object.Item) object.Item {
 	}
 }
 
-func compNumberArray(op token.Token, left, right object.Item) object.Item {
+func compNumberArray(op token.Token, left, right object.Item, ctx *object.Context) object.Item {
 	rightVal := right.(*object.Array)
 
 	switch op.Type {
 	case token.EQ, token.EQV:
 		for _, item := range rightVal.Items {
-			e := bif.IsEQ(left, item)
+			e := bif.IsEQ(left, item, ctx)
 			if bif.IsError(e) {
 				return e
 			}
@@ -122,7 +122,7 @@ func compNumberArray(op token.Token, left, right object.Item) object.Item {
 		return object.FALSE
 	case token.NE, token.NEV:
 		for _, item := range rightVal.Items {
-			e := bif.IsNE(left, item)
+			e := bif.IsNE(left, item, ctx)
 			if bif.IsError(e) {
 				return e
 			}
@@ -134,7 +134,7 @@ func compNumberArray(op token.Token, left, right object.Item) object.Item {
 		return object.FALSE
 	case token.LT, token.LTV:
 		for _, item := range rightVal.Items {
-			e := bif.IsLT(left, item)
+			e := bif.IsLT(left, item, ctx)
 			if bif.IsError(e) {
 				return e
 			}
@@ -146,7 +146,7 @@ func compNumberArray(op token.Token, left, right object.Item) object.Item {
 		return object.FALSE
 	case token.LE, token.LEV:
 		for _, item := range rightVal.Items {
-			e := bif.IsLE(left, item)
+			e := bif.IsLE(left, item, ctx)
 			if bif.IsError(e) {
 				return e
 			}
@@ -158,7 +158,7 @@ func compNumberArray(op token.Token, left, right object.Item) object.Item {
 		return object.FALSE
 	case token.GT, token.GTV:
 		for _, item := range rightVal.Items {
-			e := bif.IsGT(left, item)
+			e := bif.IsGT(left, item, ctx)
 			if bif.IsError(e) {
 				return e
 			}
@@ -170,7 +170,7 @@ func compNumberArray(op token.Token, left, right object.Item) object.Item {
 		return object.FALSE
 	case token.GE, token.GEV:
 		for _, item := range rightVal.Items {
-			e := bif.IsGE(left, item)
+			e := bif.IsGE(left, item, ctx)
 			if bif.IsError(e) {
 				return e
 			}
@@ -185,13 +185,13 @@ func compNumberArray(op token.Token, left, right object.Item) object.Item {
 	}
 }
 
-func compNumberSeq(op token.Token, left, right object.Item) object.Item {
+func compNumberSeq(op token.Token, left, right object.Item, ctx *object.Context) object.Item {
 	rightVal := right.(*object.Sequence)
 
 	switch op.Type {
 	case token.EQ, token.EQV:
 		for _, item := range rightVal.Items {
-			e := bif.IsEQ(left, item)
+			e := bif.IsEQ(left, item, ctx)
 			if bif.IsError(e) {
 				return e
 			}
@@ -203,7 +203,7 @@ func compNumberSeq(op token.Token, left, right object.Item) object.Item {
 		return object.FALSE
 	case token.NE, token.NEV:
 		for _, item := range rightVal.Items {
-			e := bif.IsNE(left, item)
+			e := bif.IsNE(left, item, ctx)
 			if bif.IsError(e) {
 				return e
 			}
@@ -215,7 +215,7 @@ func compNumberSeq(op token.Token, left, right object.Item) object.Item {
 		return object.FALSE
 	case token.LT, token.LTV:
 		for _, item := range rightVal.Items {
-			e := bif.IsLT(left, item)
+			e := bif.IsLT(left, item, ctx)
 			if bif.IsError(e) {
 				return e
 			}
@@ -227,7 +227,7 @@ func compNumberSeq(op token.Token, left, right object.Item) object.Item {
 		return object.FALSE
 	case token.LE, token.LEV:
 		for _, item := range rightVal.Items {
-			e := bif.IsLE(left, item)
+			e := bif.IsLE(left, item, ctx)
 			if bif.IsError(e) {
 				return e
 			}
@@ -239,7 +239,7 @@ func compNumberSeq(op token.Token, left, right object.Item) object.Item {
 		return object.FALSE
 	case token.GT, token.GTV:
 		for _, item := range rightVal.Items {
-			e := bif.IsGT(left, item)
+			e := bif.IsGT(left, item, ctx)
 			if bif.IsError(e) {
 				return e
 			}
@@ -251,7 +251,7 @@ func compNumberSeq(op token.Token, left, right object.Item) object.Item {
 		return object.FALSE
 	case token.GE, token.GEV:
 		for _, item := range rightVal.Items {
-			e := bif.IsGE(left, item)
+			e := bif.IsGE(left, item, ctx)
 			if bif.IsError(e) {
 				return e
 			}
@@ -266,7 +266,7 @@ func compNumberSeq(op token.Token, left, right object.Item) object.Item {
 	}
 }
 
-func compStringString(op token.Token, left, right object.Item) object.Item {
+func compStringString(op token.Token, left, right object.Item, ctx *object.Context) object.Item {
 	leftVal := left.(*object.String).Value()
 	rightVal := right.(*object.String).Value()
 
@@ -288,7 +288,7 @@ func compStringString(op token.Token, left, right object.Item) object.Item {
 	}
 }
 
-func compStringArray(op token.Token, left, right object.Item) object.Item {
+func compStringArray(op token.Token, left, right object.Item, ctx *object.Context) object.Item {
 	leftVal := left.(*object.String)
 	rightVal := right.(*object.Array)
 
@@ -364,7 +364,7 @@ func compStringArray(op token.Token, left, right object.Item) object.Item {
 	}
 }
 
-func compStringSeq(op token.Token, left, right object.Item) object.Item {
+func compStringSeq(op token.Token, left, right object.Item, ctx *object.Context) object.Item {
 	leftVal := left.(*object.String)
 	rightVal := right.(*object.Sequence)
 
@@ -494,13 +494,13 @@ func compStringSeq(op token.Token, left, right object.Item) object.Item {
 	}
 }
 
-func compArrayNumber(op token.Token, left, right object.Item) object.Item {
+func compArrayNumber(op token.Token, left, right object.Item, ctx *object.Context) object.Item {
 	leftVal := left.(*object.Array)
 
 	switch op.Type {
 	case token.EQ, token.EQV:
 		for _, item := range leftVal.Items {
-			e := bif.IsEQ(item, right)
+			e := bif.IsEQ(item, right, ctx)
 			if bif.IsError(e) {
 				return e
 			}
@@ -512,7 +512,7 @@ func compArrayNumber(op token.Token, left, right object.Item) object.Item {
 		return object.FALSE
 	case token.NE, token.NEV:
 		for _, item := range leftVal.Items {
-			e := bif.IsNE(item, right)
+			e := bif.IsNE(item, right, ctx)
 			if bif.IsError(e) {
 				return e
 			}
@@ -524,7 +524,7 @@ func compArrayNumber(op token.Token, left, right object.Item) object.Item {
 		return object.FALSE
 	case token.LT, token.LTV:
 		for _, item := range leftVal.Items {
-			e := bif.IsLT(item, right)
+			e := bif.IsLT(item, right, ctx)
 			if bif.IsError(e) {
 				return e
 			}
@@ -536,7 +536,7 @@ func compArrayNumber(op token.Token, left, right object.Item) object.Item {
 		return object.FALSE
 	case token.LE, token.LEV:
 		for _, item := range leftVal.Items {
-			e := bif.IsLE(item, right)
+			e := bif.IsLE(item, right, ctx)
 			if bif.IsError(e) {
 				return e
 			}
@@ -548,7 +548,7 @@ func compArrayNumber(op token.Token, left, right object.Item) object.Item {
 		return object.FALSE
 	case token.GT, token.GTV:
 		for _, item := range leftVal.Items {
-			e := bif.IsGT(item, right)
+			e := bif.IsGT(item, right, ctx)
 			if bif.IsError(e) {
 				return e
 			}
@@ -560,7 +560,7 @@ func compArrayNumber(op token.Token, left, right object.Item) object.Item {
 		return object.FALSE
 	case token.GE, token.GEV:
 		for _, item := range leftVal.Items {
-			e := bif.IsGE(item, right)
+			e := bif.IsGE(item, right, ctx)
 			if bif.IsError(e) {
 				return e
 			}
@@ -575,7 +575,7 @@ func compArrayNumber(op token.Token, left, right object.Item) object.Item {
 	}
 }
 
-func compArrayString(op token.Token, left, right object.Item) object.Item {
+func compArrayString(op token.Token, left, right object.Item, ctx *object.Context) object.Item {
 	leftVal := left.(*object.Array)
 	rightVal := right.(*object.String)
 
@@ -651,7 +651,7 @@ func compArrayString(op token.Token, left, right object.Item) object.Item {
 	}
 }
 
-func compArraySeq(op token.Token, left, right object.Item) object.Item {
+func compArraySeq(op token.Token, left, right object.Item, ctx *object.Context) object.Item {
 	leftVal := left.(*object.Array)
 	rightVal := right.(*object.Sequence)
 
@@ -659,7 +659,7 @@ func compArraySeq(op token.Token, left, right object.Item) object.Item {
 	case token.EQ, token.EQV:
 		for _, li := range leftVal.Items {
 			for _, ri := range rightVal.Items {
-				e := bif.IsEQ(li, ri)
+				e := bif.IsEQ(li, ri, ctx)
 				if bif.IsError(e) {
 					return e
 				}
@@ -673,7 +673,7 @@ func compArraySeq(op token.Token, left, right object.Item) object.Item {
 	case token.NE, token.NEV:
 		for _, li := range leftVal.Items {
 			for _, ri := range rightVal.Items {
-				e := bif.IsNE(li, ri)
+				e := bif.IsNE(li, ri, ctx)
 				if bif.IsError(e) {
 					return e
 				}
@@ -687,7 +687,7 @@ func compArraySeq(op token.Token, left, right object.Item) object.Item {
 	case token.LT, token.LTV:
 		for _, li := range leftVal.Items {
 			for _, ri := range rightVal.Items {
-				e := bif.IsLT(li, ri)
+				e := bif.IsLT(li, ri, ctx)
 				if bif.IsError(e) {
 					return e
 				}
@@ -701,7 +701,7 @@ func compArraySeq(op token.Token, left, right object.Item) object.Item {
 	case token.LE, token.LEV:
 		for _, li := range leftVal.Items {
 			for _, ri := range rightVal.Items {
-				e := bif.IsLE(li, ri)
+				e := bif.IsLE(li, ri, ctx)
 				if bif.IsError(e) {
 					return e
 				}
@@ -715,7 +715,7 @@ func compArraySeq(op token.Token, left, right object.Item) object.Item {
 	case token.GT, token.GTV:
 		for _, li := range leftVal.Items {
 			for _, ri := range rightVal.Items {
-				e := bif.IsGT(li, ri)
+				e := bif.IsGT(li, ri, ctx)
 				if bif.IsError(e) {
 					return e
 				}
@@ -729,7 +729,7 @@ func compArraySeq(op token.Token, left, right object.Item) object.Item {
 	case token.GE, token.GEV:
 		for _, li := range leftVal.Items {
 			for _, ri := range rightVal.Items {
-				e := bif.IsGE(li, ri)
+				e := bif.IsGE(li, ri, ctx)
 				if bif.IsError(e) {
 					return e
 				}
@@ -745,7 +745,7 @@ func compArraySeq(op token.Token, left, right object.Item) object.Item {
 	}
 }
 
-func compArrayArray(op token.Token, left, right object.Item) object.Item {
+func compArrayArray(op token.Token, left, right object.Item, ctx *object.Context) object.Item {
 	leftVal := left.(*object.Array)
 	rightVal := right.(*object.Array)
 
@@ -753,7 +753,7 @@ func compArrayArray(op token.Token, left, right object.Item) object.Item {
 	case token.EQ, token.EQV:
 		for _, li := range leftVal.Items {
 			for _, ri := range rightVal.Items {
-				e := bif.IsEQ(li, ri)
+				e := bif.IsEQ(li, ri, ctx)
 				if bif.IsError(e) {
 					return e
 				}
@@ -767,7 +767,7 @@ func compArrayArray(op token.Token, left, right object.Item) object.Item {
 	case token.NE, token.NEV:
 		for _, li := range leftVal.Items {
 			for _, ri := range rightVal.Items {
-				e := bif.IsNE(li, ri)
+				e := bif.IsNE(li, ri, ctx)
 				if bif.IsError(e) {
 					return e
 				}
@@ -781,7 +781,7 @@ func compArrayArray(op token.Token, left, right object.Item) object.Item {
 	case token.LT, token.LTV:
 		for _, li := range leftVal.Items {
 			for _, ri := range rightVal.Items {
-				e := bif.IsLT(li, ri)
+				e := bif.IsLT(li, ri, ctx)
 				if bif.IsError(e) {
 					return e
 				}
@@ -795,7 +795,7 @@ func compArrayArray(op token.Token, left, right object.Item) object.Item {
 	case token.LE, token.LEV:
 		for _, li := range leftVal.Items {
 			for _, ri := range rightVal.Items {
-				e := bif.IsLE(li, ri)
+				e := bif.IsLE(li, ri, ctx)
 				if bif.IsError(e) {
 					return e
 				}
@@ -809,7 +809,7 @@ func compArrayArray(op token.Token, left, right object.Item) object.Item {
 	case token.GT, token.GTV:
 		for _, li := range leftVal.Items {
 			for _, ri := range rightVal.Items {
-				e := bif.IsGT(li, ri)
+				e := bif.IsGT(li, ri, ctx)
 				if bif.IsError(e) {
 					return e
 				}
@@ -823,7 +823,7 @@ func compArrayArray(op token.Token, left, right object.Item) object.Item {
 	case token.GE, token.GEV:
 		for _, li := range leftVal.Items {
 			for _, ri := range rightVal.Items {
-				e := bif.IsGE(li, ri)
+				e := bif.IsGE(li, ri, ctx)
 				if bif.IsError(e) {
 					return e
 				}
@@ -839,13 +839,13 @@ func compArrayArray(op token.Token, left, right object.Item) object.Item {
 	}
 }
 
-func compSeqNumber(op token.Token, left, right object.Item) object.Item {
+func compSeqNumber(op token.Token, left, right object.Item, ctx *object.Context) object.Item {
 	leftVal := left.(*object.Sequence)
 
 	switch op.Type {
 	case token.EQ, token.EQV:
 		for _, item := range leftVal.Items {
-			e := bif.IsEQ(item, right)
+			e := bif.IsEQ(item, right, ctx)
 			if bif.IsError(e) {
 				return e
 			}
@@ -857,7 +857,7 @@ func compSeqNumber(op token.Token, left, right object.Item) object.Item {
 		return object.FALSE
 	case token.NE, token.NEV:
 		for _, item := range leftVal.Items {
-			e := bif.IsNE(item, right)
+			e := bif.IsNE(item, right, ctx)
 			if bif.IsError(e) {
 				return e
 			}
@@ -869,7 +869,7 @@ func compSeqNumber(op token.Token, left, right object.Item) object.Item {
 		return object.FALSE
 	case token.LT, token.LTV:
 		for _, item := range leftVal.Items {
-			e := bif.IsLT(item, right)
+			e := bif.IsLT(item, right, ctx)
 			if bif.IsError(e) {
 				return e
 			}
@@ -881,7 +881,7 @@ func compSeqNumber(op token.Token, left, right object.Item) object.Item {
 		return object.FALSE
 	case token.LE, token.LEV:
 		for _, item := range leftVal.Items {
-			e := bif.IsLE(item, right)
+			e := bif.IsLE(item, right, ctx)
 			if bif.IsError(e) {
 				return e
 			}
@@ -893,7 +893,7 @@ func compSeqNumber(op token.Token, left, right object.Item) object.Item {
 		return object.FALSE
 	case token.GT, token.GTV:
 		for _, item := range leftVal.Items {
-			e := bif.IsGT(item, right)
+			e := bif.IsGT(item, right, ctx)
 			if bif.IsError(e) {
 				return e
 			}
@@ -905,7 +905,7 @@ func compSeqNumber(op token.Token, left, right object.Item) object.Item {
 		return object.FALSE
 	case token.GE, token.GEV:
 		for _, item := range leftVal.Items {
-			e := bif.IsGE(item, right)
+			e := bif.IsGE(item, right, ctx)
 			if bif.IsError(e) {
 				return e
 			}
@@ -920,7 +920,7 @@ func compSeqNumber(op token.Token, left, right object.Item) object.Item {
 	}
 }
 
-func compSeqString(op token.Token, left, right object.Item) object.Item {
+func compSeqString(op token.Token, left, right object.Item, ctx *object.Context) object.Item {
 	leftVal := left.(*object.Sequence)
 	rightVal := right.(*object.String)
 
@@ -1050,7 +1050,7 @@ func compSeqString(op token.Token, left, right object.Item) object.Item {
 	}
 }
 
-func compSeqArray(op token.Token, left, right object.Item) object.Item {
+func compSeqArray(op token.Token, left, right object.Item, ctx *object.Context) object.Item {
 	leftVal := left.(*object.Sequence)
 	rightVal := right.(*object.Array)
 
@@ -1058,7 +1058,7 @@ func compSeqArray(op token.Token, left, right object.Item) object.Item {
 	case token.EQ, token.EQV:
 		for _, li := range leftVal.Items {
 			for _, ri := range rightVal.Items {
-				e := bif.IsEQ(li, ri)
+				e := bif.IsEQ(li, ri, ctx)
 				if bif.IsError(e) {
 					return e
 				}
@@ -1072,7 +1072,7 @@ func compSeqArray(op token.Token, left, right object.Item) object.Item {
 	case token.NE, token.NEV:
 		for _, li := range leftVal.Items {
 			for _, ri := range rightVal.Items {
-				e := bif.IsNE(li, ri)
+				e := bif.IsNE(li, ri, ctx)
 				if bif.IsError(e) {
 					return e
 				}
@@ -1086,7 +1086,7 @@ func compSeqArray(op token.Token, left, right object.Item) object.Item {
 	case token.LT, token.LTV:
 		for _, li := range leftVal.Items {
 			for _, ri := range rightVal.Items {
-				e := bif.IsLT(li, ri)
+				e := bif.IsLT(li, ri, ctx)
 				if bif.IsError(e) {
 					return e
 				}
@@ -1100,7 +1100,7 @@ func compSeqArray(op token.Token, left, right object.Item) object.Item {
 	case token.LE, token.LEV:
 		for _, li := range leftVal.Items {
 			for _, ri := range rightVal.Items {
-				e := bif.IsLE(li, ri)
+				e := bif.IsLE(li, ri, ctx)
 				if bif.IsError(e) {
 					return e
 				}
@@ -1114,7 +1114,7 @@ func compSeqArray(op token.Token, left, right object.Item) object.Item {
 	case token.GT, token.GTV:
 		for _, li := range leftVal.Items {
 			for _, ri := range rightVal.Items {
-				e := bif.IsGT(li, ri)
+				e := bif.IsGT(li, ri, ctx)
 				if bif.IsError(e) {
 					return e
 				}
@@ -1128,7 +1128,7 @@ func compSeqArray(op token.Token, left, right object.Item) object.Item {
 	case token.GE, token.GEV:
 		for _, li := range leftVal.Items {
 			for _, ri := range rightVal.Items {
-				e := bif.IsGE(li, ri)
+				e := bif.IsGE(li, ri, ctx)
 				if bif.IsError(e) {
 					return e
 				}
@@ -1152,7 +1152,7 @@ func compSeqSeq(op token.Token, left, right object.Item, ctx *object.Context) ob
 	case token.EQ, token.EQV:
 		for _, li := range leftVal.Items {
 			for _, ri := range rightVal.Items {
-				e := bif.IsEQ(li, ri)
+				e := bif.IsEQ(li, ri, ctx)
 				if bif.IsError(e) {
 					return e
 				}
@@ -1166,7 +1166,7 @@ func compSeqSeq(op token.Token, left, right object.Item, ctx *object.Context) ob
 	case token.NE, token.NEV:
 		for _, li := range leftVal.Items {
 			for _, ri := range rightVal.Items {
-				e := bif.IsNE(li, ri)
+				e := bif.IsNE(li, ri, ctx)
 				if bif.IsError(e) {
 					return e
 				}
@@ -1180,7 +1180,7 @@ func compSeqSeq(op token.Token, left, right object.Item, ctx *object.Context) ob
 	case token.LT, token.LTV:
 		for _, li := range leftVal.Items {
 			for _, ri := range rightVal.Items {
-				e := bif.IsLT(li, ri)
+				e := bif.IsLT(li, ri, ctx)
 				if bif.IsError(e) {
 					return e
 				}
@@ -1194,7 +1194,7 @@ func compSeqSeq(op token.Token, left, right object.Item, ctx *object.Context) ob
 	case token.LE, token.LEV:
 		for _, li := range leftVal.Items {
 			for _, ri := range rightVal.Items {
-				e := bif.IsLE(li, ri)
+				e := bif.IsLE(li, ri, ctx)
 				if bif.IsError(e) {
 					return e
 				}
@@ -1208,7 +1208,7 @@ func compSeqSeq(op token.Token, left, right object.Item, ctx *object.Context) ob
 	case token.GT, token.GTV:
 		for _, li := range leftVal.Items {
 			for _, ri := range rightVal.Items {
-				e := bif.IsGT(li, ri)
+				e := bif.IsGT(li, ri, ctx)
 				if bif.IsError(e) {
 					return e
 				}
@@ -1222,7 +1222,7 @@ func compSeqSeq(op token.Token, left, right object.Item, ctx *object.Context) ob
 	case token.GE, token.GEV:
 		for _, li := range leftVal.Items {
 			for _, ri := range rightVal.Items {
-				e := bif.IsGE(li, ri)
+				e := bif.IsGE(li, ri, ctx)
 				if bif.IsError(e) {
 					return e
 				}
@@ -1297,7 +1297,7 @@ func compSeqSeq(op token.Token, left, right object.Item, ctx *object.Context) ob
 	}
 }
 
-func compBool(op token.Token, left, right object.Item) object.Item {
+func compBool(op token.Token, left, right object.Item, ctx *object.Context) object.Item {
 	leftVal, ok := left.(*object.Boolean)
 	if !ok {
 		return bif.NewError("cannot compare Types: %s, %s", left.Type(), right.Type())

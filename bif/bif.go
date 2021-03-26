@@ -2,6 +2,7 @@ package bif
 
 import (
 	"fmt"
+	"strconv"
 
 	"github.com/zzossig/xpath/object"
 )
@@ -389,7 +390,7 @@ func IsPrecede(n1, n2 object.Node, src *object.BaseNode) object.Item {
 }
 
 // IsEQ ..
-func IsEQ(left, right object.Item) object.Item {
+func IsEQ(left, right object.Item, ctx *object.Context) object.Item {
 	if leftVal, ok := left.(*object.Integer); ok {
 		switch rightVal := right.(type) {
 		case *object.Integer:
@@ -398,6 +399,20 @@ func IsEQ(left, right object.Item) object.Item {
 			return NewBoolean(float64(leftVal.Value()) == rightVal.Value())
 		case *object.Double:
 			return NewBoolean(float64(leftVal.Value()) == rightVal.Value())
+		case *object.BaseNode:
+			if !ctx.Strict {
+				if i, err := strconv.ParseInt(rightVal.Text(), 0, 64); err == nil {
+					return NewBoolean(leftVal.Value() == int(i))
+				}
+				return object.FALSE
+			}
+		case *object.AttrNode:
+			if !ctx.Strict {
+				if i, err := strconv.ParseInt(rightVal.Text(), 0, 64); err == nil {
+					return NewBoolean(leftVal.Value() == int(i))
+				}
+				return object.FALSE
+			}
 		}
 	} else if leftVal, ok := left.(*object.Decimal); ok {
 		switch rightVal := right.(type) {
@@ -407,6 +422,20 @@ func IsEQ(left, right object.Item) object.Item {
 			return NewBoolean(leftVal.Value() == rightVal.Value())
 		case *object.Double:
 			return NewBoolean(leftVal.Value() == rightVal.Value())
+		case *object.BaseNode:
+			if !ctx.Strict {
+				if i, err := strconv.ParseFloat(rightVal.Text(), 64); err == nil {
+					return NewBoolean(leftVal.Value() == i)
+				}
+				return object.FALSE
+			}
+		case *object.AttrNode:
+			if !ctx.Strict {
+				if i, err := strconv.ParseFloat(rightVal.Text(), 64); err == nil {
+					return NewBoolean(leftVal.Value() == i)
+				}
+				return object.FALSE
+			}
 		}
 	} else if leftVal, ok := left.(*object.Double); ok {
 		switch rightVal := right.(type) {
@@ -416,9 +445,44 @@ func IsEQ(left, right object.Item) object.Item {
 			return NewBoolean(leftVal.Value() == rightVal.Value())
 		case *object.Double:
 			return NewBoolean(leftVal.Value() == rightVal.Value())
+		case *object.BaseNode:
+			if !ctx.Strict {
+				if i, err := strconv.ParseFloat(rightVal.Text(), 64); err == nil {
+					return NewBoolean(leftVal.Value() == i)
+				}
+				return object.FALSE
+			}
+		case *object.AttrNode:
+			if !ctx.Strict {
+				if i, err := strconv.ParseFloat(rightVal.Text(), 64); err == nil {
+					return NewBoolean(leftVal.Value() == i)
+				}
+				return object.FALSE
+			}
 		}
 	} else if leftVal, ok := left.(*object.String); ok {
 		switch rightVal := right.(type) {
+		case *object.Integer:
+			if !ctx.Strict {
+				if i, err := strconv.ParseInt(leftVal.Value(), 0, 64); err == nil {
+					return NewBoolean(int(i) == rightVal.Value())
+				}
+				return object.FALSE
+			}
+		case *object.Decimal:
+			if !ctx.Strict {
+				if i, err := strconv.ParseFloat(leftVal.Value(), 64); err == nil {
+					return NewBoolean(i == rightVal.Value())
+				}
+				return object.FALSE
+			}
+		case *object.Double:
+			if !ctx.Strict {
+				if i, err := strconv.ParseFloat(leftVal.Value(), 64); err == nil {
+					return NewBoolean(i == rightVal.Value())
+				}
+				return object.FALSE
+			}
 		case *object.String:
 			return NewBoolean(leftVal.Value() == rightVal.Value())
 		case *object.BaseNode:
@@ -428,28 +492,71 @@ func IsEQ(left, right object.Item) object.Item {
 		}
 	} else if leftVal, ok := left.(*object.BaseNode); ok {
 		switch rightVal := right.(type) {
+		case *object.Integer:
+			if !ctx.Strict {
+				if i, err := strconv.ParseInt(leftVal.Text(), 0, 64); err == nil {
+					return NewBoolean(int(i) == rightVal.Value())
+				}
+				return object.FALSE
+			}
+		case *object.Decimal:
+			if !ctx.Strict {
+				if i, err := strconv.ParseFloat(leftVal.Text(), 64); err == nil {
+					return NewBoolean(i == rightVal.Value())
+				}
+				return object.FALSE
+			}
+		case *object.Double:
+			if !ctx.Strict {
+				if i, err := strconv.ParseFloat(leftVal.Text(), 64); err == nil {
+					return NewBoolean(i == rightVal.Value())
+				}
+				return object.FALSE
+			}
 		case *object.BaseNode:
 			return NewBoolean(leftVal.Text() == rightVal.Text())
 		case *object.AttrNode:
-			return object.FALSE
+			return NewBoolean(leftVal.Text() == rightVal.Text())
 		case *object.String:
 			return NewBoolean(leftVal.Text() == rightVal.Value())
 		}
 	} else if leftVal, ok := left.(*object.AttrNode); ok {
 		switch rightVal := right.(type) {
+		case *object.Integer:
+			if !ctx.Strict {
+				if i, err := strconv.ParseInt(leftVal.Text(), 0, 64); err == nil {
+					return NewBoolean(int(i) == rightVal.Value())
+				}
+				return object.FALSE
+			}
+		case *object.Decimal:
+			if !ctx.Strict {
+				if i, err := strconv.ParseFloat(leftVal.Text(), 64); err == nil {
+					return NewBoolean(i == rightVal.Value())
+				}
+				return object.FALSE
+			}
+		case *object.Double:
+			if !ctx.Strict {
+				if i, err := strconv.ParseFloat(leftVal.Text(), 64); err == nil {
+					return NewBoolean(i == rightVal.Value())
+				}
+				return object.FALSE
+			}
 		case *object.AttrNode:
 			return NewBoolean(leftVal.Text() == rightVal.Text())
 		case *object.BaseNode:
-			return object.FALSE
+			return NewBoolean(leftVal.Text() == rightVal.Text())
 		case *object.String:
 			return NewBoolean(leftVal.Text() == rightVal.Value())
 		}
 	}
-	return NewError("cannot compare types: %s, %s", left.Type(), right.Type())
+
+	return NewError("cannot compare: %s, %s", left.Inspect(), right.Inspect())
 }
 
 // IsNE ..
-func IsNE(left, right object.Item) object.Item {
+func IsNE(left, right object.Item, ctx *object.Context) object.Item {
 	if leftVal, ok := left.(*object.Integer); ok {
 		switch rightVal := right.(type) {
 		case *object.Integer:
@@ -458,6 +565,20 @@ func IsNE(left, right object.Item) object.Item {
 			return NewBoolean(float64(leftVal.Value()) != rightVal.Value())
 		case *object.Double:
 			return NewBoolean(float64(leftVal.Value()) != rightVal.Value())
+		case *object.BaseNode:
+			if !ctx.Strict {
+				if i, err := strconv.ParseInt(rightVal.Text(), 0, 64); err == nil {
+					return NewBoolean(leftVal.Value() != int(i))
+				}
+				return object.FALSE
+			}
+		case *object.AttrNode:
+			if !ctx.Strict {
+				if i, err := strconv.ParseInt(rightVal.Text(), 0, 64); err == nil {
+					return NewBoolean(leftVal.Value() != int(i))
+				}
+				return object.FALSE
+			}
 		}
 	} else if leftVal, ok := left.(*object.Decimal); ok {
 		switch rightVal := right.(type) {
@@ -467,6 +588,20 @@ func IsNE(left, right object.Item) object.Item {
 			return NewBoolean(leftVal.Value() != rightVal.Value())
 		case *object.Double:
 			return NewBoolean(leftVal.Value() != rightVal.Value())
+		case *object.BaseNode:
+			if !ctx.Strict {
+				if i, err := strconv.ParseFloat(rightVal.Text(), 64); err == nil {
+					return NewBoolean(leftVal.Value() != i)
+				}
+				return object.FALSE
+			}
+		case *object.AttrNode:
+			if !ctx.Strict {
+				if i, err := strconv.ParseFloat(rightVal.Text(), 64); err == nil {
+					return NewBoolean(leftVal.Value() != i)
+				}
+				return object.FALSE
+			}
 		}
 	} else if leftVal, ok := left.(*object.Double); ok {
 		switch rightVal := right.(type) {
@@ -476,9 +611,44 @@ func IsNE(left, right object.Item) object.Item {
 			return NewBoolean(leftVal.Value() != rightVal.Value())
 		case *object.Double:
 			return NewBoolean(leftVal.Value() != rightVal.Value())
+		case *object.BaseNode:
+			if !ctx.Strict {
+				if i, err := strconv.ParseFloat(rightVal.Text(), 64); err == nil {
+					return NewBoolean(leftVal.Value() != i)
+				}
+				return object.FALSE
+			}
+		case *object.AttrNode:
+			if !ctx.Strict {
+				if i, err := strconv.ParseFloat(rightVal.Text(), 64); err == nil {
+					return NewBoolean(leftVal.Value() != i)
+				}
+				return object.FALSE
+			}
 		}
 	} else if leftVal, ok := left.(*object.String); ok {
 		switch rightVal := right.(type) {
+		case *object.Integer:
+			if !ctx.Strict {
+				if i, err := strconv.ParseInt(leftVal.Value(), 0, 64); err == nil {
+					return NewBoolean(int(i) != rightVal.Value())
+				}
+				return object.FALSE
+			}
+		case *object.Decimal:
+			if !ctx.Strict {
+				if i, err := strconv.ParseFloat(leftVal.Value(), 64); err == nil {
+					return NewBoolean(i != rightVal.Value())
+				}
+				return object.FALSE
+			}
+		case *object.Double:
+			if !ctx.Strict {
+				if i, err := strconv.ParseFloat(leftVal.Value(), 64); err == nil {
+					return NewBoolean(i != rightVal.Value())
+				}
+				return object.FALSE
+			}
 		case *object.String:
 			return NewBoolean(leftVal.Value() != rightVal.Value())
 		case *object.BaseNode:
@@ -488,28 +658,71 @@ func IsNE(left, right object.Item) object.Item {
 		}
 	} else if leftVal, ok := left.(*object.BaseNode); ok {
 		switch rightVal := right.(type) {
+		case *object.Integer:
+			if !ctx.Strict {
+				if i, err := strconv.ParseInt(leftVal.Text(), 0, 64); err == nil {
+					return NewBoolean(int(i) != rightVal.Value())
+				}
+				return object.FALSE
+			}
+		case *object.Decimal:
+			if !ctx.Strict {
+				if i, err := strconv.ParseFloat(leftVal.Text(), 64); err == nil {
+					return NewBoolean(i != rightVal.Value())
+				}
+				return object.FALSE
+			}
+		case *object.Double:
+			if !ctx.Strict {
+				if i, err := strconv.ParseFloat(leftVal.Text(), 64); err == nil {
+					return NewBoolean(i != rightVal.Value())
+				}
+				return object.FALSE
+			}
 		case *object.BaseNode:
 			return NewBoolean(leftVal.Text() != rightVal.Text())
 		case *object.AttrNode:
-			return object.TRUE
+			return NewBoolean(leftVal.Text() != rightVal.Text())
 		case *object.String:
 			return NewBoolean(leftVal.Text() != rightVal.Value())
 		}
 	} else if leftVal, ok := left.(*object.AttrNode); ok {
 		switch rightVal := right.(type) {
+		case *object.Integer:
+			if !ctx.Strict {
+				if i, err := strconv.ParseInt(leftVal.Text(), 0, 64); err == nil {
+					return NewBoolean(int(i) != rightVal.Value())
+				}
+				return object.FALSE
+			}
+		case *object.Decimal:
+			if !ctx.Strict {
+				if i, err := strconv.ParseFloat(leftVal.Text(), 64); err == nil {
+					return NewBoolean(i != rightVal.Value())
+				}
+				return object.FALSE
+			}
+		case *object.Double:
+			if !ctx.Strict {
+				if i, err := strconv.ParseFloat(leftVal.Text(), 64); err == nil {
+					return NewBoolean(i != rightVal.Value())
+				}
+				return object.FALSE
+			}
 		case *object.AttrNode:
 			return NewBoolean(leftVal.Text() != rightVal.Text())
 		case *object.BaseNode:
-			return object.TRUE
+			return NewBoolean(leftVal.Text() != rightVal.Text())
 		case *object.String:
 			return NewBoolean(leftVal.Text() != rightVal.Value())
 		}
 	}
-	return NewError("cannot compare types: %s, %s", left.Type(), right.Type())
+
+	return NewError("cannot compare: %s, %s", left.Inspect(), right.Inspect())
 }
 
 // IsLT ..
-func IsLT(left, right object.Item) object.Item {
+func IsLT(left, right object.Item, ctx *object.Context) object.Item {
 	if leftVal, ok := left.(*object.Integer); ok {
 		switch rightVal := right.(type) {
 		case *object.Integer:
@@ -518,6 +731,20 @@ func IsLT(left, right object.Item) object.Item {
 			return NewBoolean(float64(leftVal.Value()) < rightVal.Value())
 		case *object.Double:
 			return NewBoolean(float64(leftVal.Value()) < rightVal.Value())
+		case *object.BaseNode:
+			if !ctx.Strict {
+				if i, err := strconv.ParseInt(rightVal.Text(), 0, 64); err == nil {
+					return NewBoolean(leftVal.Value() < int(i))
+				}
+				return object.FALSE
+			}
+		case *object.AttrNode:
+			if !ctx.Strict {
+				if i, err := strconv.ParseInt(rightVal.Text(), 0, 64); err == nil {
+					return NewBoolean(leftVal.Value() < int(i))
+				}
+				return object.FALSE
+			}
 		}
 	} else if leftVal, ok := left.(*object.Decimal); ok {
 		switch rightVal := right.(type) {
@@ -527,6 +754,20 @@ func IsLT(left, right object.Item) object.Item {
 			return NewBoolean(leftVal.Value() < rightVal.Value())
 		case *object.Double:
 			return NewBoolean(leftVal.Value() < rightVal.Value())
+		case *object.BaseNode:
+			if !ctx.Strict {
+				if i, err := strconv.ParseFloat(rightVal.Text(), 64); err == nil {
+					return NewBoolean(leftVal.Value() < i)
+				}
+				return object.FALSE
+			}
+		case *object.AttrNode:
+			if !ctx.Strict {
+				if i, err := strconv.ParseFloat(rightVal.Text(), 64); err == nil {
+					return NewBoolean(leftVal.Value() < i)
+				}
+				return object.FALSE
+			}
 		}
 	} else if leftVal, ok := left.(*object.Double); ok {
 		switch rightVal := right.(type) {
@@ -536,9 +777,44 @@ func IsLT(left, right object.Item) object.Item {
 			return NewBoolean(leftVal.Value() < rightVal.Value())
 		case *object.Double:
 			return NewBoolean(leftVal.Value() < rightVal.Value())
+		case *object.BaseNode:
+			if !ctx.Strict {
+				if i, err := strconv.ParseFloat(rightVal.Text(), 64); err == nil {
+					return NewBoolean(leftVal.Value() < i)
+				}
+				return object.FALSE
+			}
+		case *object.AttrNode:
+			if !ctx.Strict {
+				if i, err := strconv.ParseFloat(rightVal.Text(), 64); err == nil {
+					return NewBoolean(leftVal.Value() < i)
+				}
+				return object.FALSE
+			}
 		}
 	} else if leftVal, ok := left.(*object.String); ok {
 		switch rightVal := right.(type) {
+		case *object.Integer:
+			if !ctx.Strict {
+				if i, err := strconv.ParseInt(leftVal.Value(), 0, 64); err == nil {
+					return NewBoolean(int(i) < rightVal.Value())
+				}
+				return object.FALSE
+			}
+		case *object.Decimal:
+			if !ctx.Strict {
+				if i, err := strconv.ParseFloat(leftVal.Value(), 64); err == nil {
+					return NewBoolean(i < rightVal.Value())
+				}
+				return object.FALSE
+			}
+		case *object.Double:
+			if !ctx.Strict {
+				if i, err := strconv.ParseFloat(leftVal.Value(), 64); err == nil {
+					return NewBoolean(i < rightVal.Value())
+				}
+				return object.FALSE
+			}
 		case *object.String:
 			return NewBoolean(leftVal.Value() < rightVal.Value())
 		case *object.BaseNode:
@@ -548,6 +824,27 @@ func IsLT(left, right object.Item) object.Item {
 		}
 	} else if leftVal, ok := left.(*object.BaseNode); ok {
 		switch rightVal := right.(type) {
+		case *object.Integer:
+			if !ctx.Strict {
+				if i, err := strconv.ParseInt(leftVal.Text(), 0, 64); err == nil {
+					return NewBoolean(int(i) < rightVal.Value())
+				}
+				return object.FALSE
+			}
+		case *object.Decimal:
+			if !ctx.Strict {
+				if i, err := strconv.ParseFloat(leftVal.Text(), 64); err == nil {
+					return NewBoolean(i < rightVal.Value())
+				}
+				return object.FALSE
+			}
+		case *object.Double:
+			if !ctx.Strict {
+				if i, err := strconv.ParseFloat(leftVal.Text(), 64); err == nil {
+					return NewBoolean(i < rightVal.Value())
+				}
+				return object.FALSE
+			}
 		case *object.BaseNode:
 			return NewBoolean(leftVal.Text() < rightVal.Text())
 		case *object.AttrNode:
@@ -557,6 +854,27 @@ func IsLT(left, right object.Item) object.Item {
 		}
 	} else if leftVal, ok := left.(*object.AttrNode); ok {
 		switch rightVal := right.(type) {
+		case *object.Integer:
+			if !ctx.Strict {
+				if i, err := strconv.ParseInt(leftVal.Text(), 0, 64); err == nil {
+					return NewBoolean(int(i) < rightVal.Value())
+				}
+				return object.FALSE
+			}
+		case *object.Decimal:
+			if !ctx.Strict {
+				if i, err := strconv.ParseFloat(leftVal.Text(), 64); err == nil {
+					return NewBoolean(i < rightVal.Value())
+				}
+				return object.FALSE
+			}
+		case *object.Double:
+			if !ctx.Strict {
+				if i, err := strconv.ParseFloat(leftVal.Text(), 64); err == nil {
+					return NewBoolean(i < rightVal.Value())
+				}
+				return object.FALSE
+			}
 		case *object.AttrNode:
 			return NewBoolean(leftVal.Text() < rightVal.Text())
 		case *object.BaseNode:
@@ -565,11 +883,12 @@ func IsLT(left, right object.Item) object.Item {
 			return NewBoolean(leftVal.Text() < rightVal.Value())
 		}
 	}
-	return NewError("cannot compare types: %s, %s", left.Type(), right.Type())
+
+	return NewError("cannot compare: %s, %s", left.Inspect(), right.Inspect())
 }
 
 // IsLE ..
-func IsLE(left, right object.Item) object.Item {
+func IsLE(left, right object.Item, ctx *object.Context) object.Item {
 	if leftVal, ok := left.(*object.Integer); ok {
 		switch rightVal := right.(type) {
 		case *object.Integer:
@@ -578,6 +897,20 @@ func IsLE(left, right object.Item) object.Item {
 			return NewBoolean(float64(leftVal.Value()) <= rightVal.Value())
 		case *object.Double:
 			return NewBoolean(float64(leftVal.Value()) <= rightVal.Value())
+		case *object.BaseNode:
+			if !ctx.Strict {
+				if i, err := strconv.ParseInt(rightVal.Text(), 0, 64); err == nil {
+					return NewBoolean(leftVal.Value() <= int(i))
+				}
+				return object.FALSE
+			}
+		case *object.AttrNode:
+			if !ctx.Strict {
+				if i, err := strconv.ParseInt(rightVal.Text(), 0, 64); err == nil {
+					return NewBoolean(leftVal.Value() <= int(i))
+				}
+				return object.FALSE
+			}
 		}
 	} else if leftVal, ok := left.(*object.Decimal); ok {
 		switch rightVal := right.(type) {
@@ -587,6 +920,20 @@ func IsLE(left, right object.Item) object.Item {
 			return NewBoolean(leftVal.Value() <= rightVal.Value())
 		case *object.Double:
 			return NewBoolean(leftVal.Value() <= rightVal.Value())
+		case *object.BaseNode:
+			if !ctx.Strict {
+				if i, err := strconv.ParseFloat(rightVal.Text(), 64); err == nil {
+					return NewBoolean(leftVal.Value() <= i)
+				}
+				return object.FALSE
+			}
+		case *object.AttrNode:
+			if !ctx.Strict {
+				if i, err := strconv.ParseFloat(rightVal.Text(), 64); err == nil {
+					return NewBoolean(leftVal.Value() <= i)
+				}
+				return object.FALSE
+			}
 		}
 	} else if leftVal, ok := left.(*object.Double); ok {
 		switch rightVal := right.(type) {
@@ -596,9 +943,44 @@ func IsLE(left, right object.Item) object.Item {
 			return NewBoolean(leftVal.Value() <= rightVal.Value())
 		case *object.Double:
 			return NewBoolean(leftVal.Value() <= rightVal.Value())
+		case *object.BaseNode:
+			if !ctx.Strict {
+				if i, err := strconv.ParseFloat(rightVal.Text(), 64); err == nil {
+					return NewBoolean(leftVal.Value() <= i)
+				}
+				return object.FALSE
+			}
+		case *object.AttrNode:
+			if !ctx.Strict {
+				if i, err := strconv.ParseFloat(rightVal.Text(), 64); err == nil {
+					return NewBoolean(leftVal.Value() <= i)
+				}
+				return object.FALSE
+			}
 		}
 	} else if leftVal, ok := left.(*object.String); ok {
 		switch rightVal := right.(type) {
+		case *object.Integer:
+			if !ctx.Strict {
+				if i, err := strconv.ParseInt(leftVal.Value(), 0, 64); err == nil {
+					return NewBoolean(int(i) <= rightVal.Value())
+				}
+				return object.FALSE
+			}
+		case *object.Decimal:
+			if !ctx.Strict {
+				if i, err := strconv.ParseFloat(leftVal.Value(), 64); err == nil {
+					return NewBoolean(i <= rightVal.Value())
+				}
+				return object.FALSE
+			}
+		case *object.Double:
+			if !ctx.Strict {
+				if i, err := strconv.ParseFloat(leftVal.Value(), 64); err == nil {
+					return NewBoolean(i <= rightVal.Value())
+				}
+				return object.FALSE
+			}
 		case *object.String:
 			return NewBoolean(leftVal.Value() <= rightVal.Value())
 		case *object.BaseNode:
@@ -608,6 +990,27 @@ func IsLE(left, right object.Item) object.Item {
 		}
 	} else if leftVal, ok := left.(*object.BaseNode); ok {
 		switch rightVal := right.(type) {
+		case *object.Integer:
+			if !ctx.Strict {
+				if i, err := strconv.ParseInt(leftVal.Text(), 0, 64); err == nil {
+					return NewBoolean(int(i) <= rightVal.Value())
+				}
+				return object.FALSE
+			}
+		case *object.Decimal:
+			if !ctx.Strict {
+				if i, err := strconv.ParseFloat(leftVal.Text(), 64); err == nil {
+					return NewBoolean(i <= rightVal.Value())
+				}
+				return object.FALSE
+			}
+		case *object.Double:
+			if !ctx.Strict {
+				if i, err := strconv.ParseFloat(leftVal.Text(), 64); err == nil {
+					return NewBoolean(i <= rightVal.Value())
+				}
+				return object.FALSE
+			}
 		case *object.BaseNode:
 			return NewBoolean(leftVal.Text() <= rightVal.Text())
 		case *object.AttrNode:
@@ -617,6 +1020,27 @@ func IsLE(left, right object.Item) object.Item {
 		}
 	} else if leftVal, ok := left.(*object.AttrNode); ok {
 		switch rightVal := right.(type) {
+		case *object.Integer:
+			if !ctx.Strict {
+				if i, err := strconv.ParseInt(leftVal.Text(), 0, 64); err == nil {
+					return NewBoolean(int(i) <= rightVal.Value())
+				}
+				return object.FALSE
+			}
+		case *object.Decimal:
+			if !ctx.Strict {
+				if i, err := strconv.ParseFloat(leftVal.Text(), 64); err == nil {
+					return NewBoolean(i <= rightVal.Value())
+				}
+				return object.FALSE
+			}
+		case *object.Double:
+			if !ctx.Strict {
+				if i, err := strconv.ParseFloat(leftVal.Text(), 64); err == nil {
+					return NewBoolean(i <= rightVal.Value())
+				}
+				return object.FALSE
+			}
 		case *object.AttrNode:
 			return NewBoolean(leftVal.Text() <= rightVal.Text())
 		case *object.BaseNode:
@@ -625,11 +1049,12 @@ func IsLE(left, right object.Item) object.Item {
 			return NewBoolean(leftVal.Text() <= rightVal.Value())
 		}
 	}
-	return NewError("cannot compare types: %s, %s", left.Type(), right.Type())
+
+	return NewError("cannot compare: %s, %s", left.Inspect(), right.Inspect())
 }
 
 // IsGT ..
-func IsGT(left, right object.Item) object.Item {
+func IsGT(left, right object.Item, ctx *object.Context) object.Item {
 	if leftVal, ok := left.(*object.Integer); ok {
 		switch rightVal := right.(type) {
 		case *object.Integer:
@@ -638,6 +1063,20 @@ func IsGT(left, right object.Item) object.Item {
 			return NewBoolean(float64(leftVal.Value()) > rightVal.Value())
 		case *object.Double:
 			return NewBoolean(float64(leftVal.Value()) > rightVal.Value())
+		case *object.BaseNode:
+			if !ctx.Strict {
+				if i, err := strconv.ParseInt(rightVal.Text(), 0, 64); err == nil {
+					return NewBoolean(leftVal.Value() > int(i))
+				}
+				return object.FALSE
+			}
+		case *object.AttrNode:
+			if !ctx.Strict {
+				if i, err := strconv.ParseInt(rightVal.Text(), 0, 64); err == nil {
+					return NewBoolean(leftVal.Value() > int(i))
+				}
+				return object.FALSE
+			}
 		}
 	} else if leftVal, ok := left.(*object.Decimal); ok {
 		switch rightVal := right.(type) {
@@ -647,6 +1086,20 @@ func IsGT(left, right object.Item) object.Item {
 			return NewBoolean(leftVal.Value() > rightVal.Value())
 		case *object.Double:
 			return NewBoolean(leftVal.Value() > rightVal.Value())
+		case *object.BaseNode:
+			if !ctx.Strict {
+				if i, err := strconv.ParseFloat(rightVal.Text(), 64); err == nil {
+					return NewBoolean(leftVal.Value() > i)
+				}
+				return object.FALSE
+			}
+		case *object.AttrNode:
+			if !ctx.Strict {
+				if i, err := strconv.ParseFloat(rightVal.Text(), 64); err == nil {
+					return NewBoolean(leftVal.Value() > i)
+				}
+				return object.FALSE
+			}
 		}
 	} else if leftVal, ok := left.(*object.Double); ok {
 		switch rightVal := right.(type) {
@@ -656,9 +1109,44 @@ func IsGT(left, right object.Item) object.Item {
 			return NewBoolean(leftVal.Value() > rightVal.Value())
 		case *object.Double:
 			return NewBoolean(leftVal.Value() > rightVal.Value())
+		case *object.BaseNode:
+			if !ctx.Strict {
+				if i, err := strconv.ParseFloat(rightVal.Text(), 64); err == nil {
+					return NewBoolean(leftVal.Value() > i)
+				}
+				return object.FALSE
+			}
+		case *object.AttrNode:
+			if !ctx.Strict {
+				if i, err := strconv.ParseFloat(rightVal.Text(), 64); err == nil {
+					return NewBoolean(leftVal.Value() > i)
+				}
+				return object.FALSE
+			}
 		}
 	} else if leftVal, ok := left.(*object.String); ok {
 		switch rightVal := right.(type) {
+		case *object.Integer:
+			if !ctx.Strict {
+				if i, err := strconv.ParseInt(leftVal.Value(), 0, 64); err == nil {
+					return NewBoolean(int(i) > rightVal.Value())
+				}
+				return object.FALSE
+			}
+		case *object.Decimal:
+			if !ctx.Strict {
+				if i, err := strconv.ParseFloat(leftVal.Value(), 64); err == nil {
+					return NewBoolean(i > rightVal.Value())
+				}
+				return object.FALSE
+			}
+		case *object.Double:
+			if !ctx.Strict {
+				if i, err := strconv.ParseFloat(leftVal.Value(), 64); err == nil {
+					return NewBoolean(i > rightVal.Value())
+				}
+				return object.FALSE
+			}
 		case *object.String:
 			return NewBoolean(leftVal.Value() > rightVal.Value())
 		case *object.BaseNode:
@@ -668,6 +1156,27 @@ func IsGT(left, right object.Item) object.Item {
 		}
 	} else if leftVal, ok := left.(*object.BaseNode); ok {
 		switch rightVal := right.(type) {
+		case *object.Integer:
+			if !ctx.Strict {
+				if i, err := strconv.ParseInt(leftVal.Text(), 0, 64); err == nil {
+					return NewBoolean(int(i) > rightVal.Value())
+				}
+				return object.FALSE
+			}
+		case *object.Decimal:
+			if !ctx.Strict {
+				if i, err := strconv.ParseFloat(leftVal.Text(), 64); err == nil {
+					return NewBoolean(i > rightVal.Value())
+				}
+				return object.FALSE
+			}
+		case *object.Double:
+			if !ctx.Strict {
+				if i, err := strconv.ParseFloat(leftVal.Text(), 64); err == nil {
+					return NewBoolean(i > rightVal.Value())
+				}
+				return object.FALSE
+			}
 		case *object.BaseNode:
 			return NewBoolean(leftVal.Text() > rightVal.Text())
 		case *object.AttrNode:
@@ -677,6 +1186,27 @@ func IsGT(left, right object.Item) object.Item {
 		}
 	} else if leftVal, ok := left.(*object.AttrNode); ok {
 		switch rightVal := right.(type) {
+		case *object.Integer:
+			if !ctx.Strict {
+				if i, err := strconv.ParseInt(leftVal.Text(), 0, 64); err == nil {
+					return NewBoolean(int(i) > rightVal.Value())
+				}
+				return object.FALSE
+			}
+		case *object.Decimal:
+			if !ctx.Strict {
+				if i, err := strconv.ParseFloat(leftVal.Text(), 64); err == nil {
+					return NewBoolean(i > rightVal.Value())
+				}
+				return object.FALSE
+			}
+		case *object.Double:
+			if !ctx.Strict {
+				if i, err := strconv.ParseFloat(leftVal.Text(), 64); err == nil {
+					return NewBoolean(i > rightVal.Value())
+				}
+				return object.FALSE
+			}
 		case *object.AttrNode:
 			return NewBoolean(leftVal.Text() > rightVal.Text())
 		case *object.BaseNode:
@@ -685,11 +1215,12 @@ func IsGT(left, right object.Item) object.Item {
 			return NewBoolean(leftVal.Text() > rightVal.Value())
 		}
 	}
-	return NewError("cannot compare types: %s, %s", left.Type(), right.Type())
+
+	return NewError("cannot compare: %s, %s", left.Inspect(), right.Inspect())
 }
 
 // IsGE ..
-func IsGE(left, right object.Item) object.Item {
+func IsGE(left, right object.Item, ctx *object.Context) object.Item {
 	if leftVal, ok := left.(*object.Integer); ok {
 		switch rightVal := right.(type) {
 		case *object.Integer:
@@ -698,6 +1229,20 @@ func IsGE(left, right object.Item) object.Item {
 			return NewBoolean(float64(leftVal.Value()) >= rightVal.Value())
 		case *object.Double:
 			return NewBoolean(float64(leftVal.Value()) >= rightVal.Value())
+		case *object.BaseNode:
+			if !ctx.Strict {
+				if i, err := strconv.ParseInt(rightVal.Text(), 0, 64); err == nil {
+					return NewBoolean(leftVal.Value() >= int(i))
+				}
+				return object.FALSE
+			}
+		case *object.AttrNode:
+			if !ctx.Strict {
+				if i, err := strconv.ParseInt(rightVal.Text(), 0, 64); err == nil {
+					return NewBoolean(leftVal.Value() >= int(i))
+				}
+				return object.FALSE
+			}
 		}
 	} else if leftVal, ok := left.(*object.Decimal); ok {
 		switch rightVal := right.(type) {
@@ -707,6 +1252,20 @@ func IsGE(left, right object.Item) object.Item {
 			return NewBoolean(leftVal.Value() >= rightVal.Value())
 		case *object.Double:
 			return NewBoolean(leftVal.Value() >= rightVal.Value())
+		case *object.BaseNode:
+			if !ctx.Strict {
+				if i, err := strconv.ParseFloat(rightVal.Text(), 64); err == nil {
+					return NewBoolean(leftVal.Value() >= i)
+				}
+				return object.FALSE
+			}
+		case *object.AttrNode:
+			if !ctx.Strict {
+				if i, err := strconv.ParseFloat(rightVal.Text(), 64); err == nil {
+					return NewBoolean(leftVal.Value() >= i)
+				}
+				return object.FALSE
+			}
 		}
 	} else if leftVal, ok := left.(*object.Double); ok {
 		switch rightVal := right.(type) {
@@ -716,9 +1275,44 @@ func IsGE(left, right object.Item) object.Item {
 			return NewBoolean(leftVal.Value() >= rightVal.Value())
 		case *object.Double:
 			return NewBoolean(leftVal.Value() >= rightVal.Value())
+		case *object.BaseNode:
+			if !ctx.Strict {
+				if i, err := strconv.ParseFloat(rightVal.Text(), 64); err == nil {
+					return NewBoolean(leftVal.Value() >= i)
+				}
+				return object.FALSE
+			}
+		case *object.AttrNode:
+			if !ctx.Strict {
+				if i, err := strconv.ParseFloat(rightVal.Text(), 64); err == nil {
+					return NewBoolean(leftVal.Value() >= i)
+				}
+				return object.FALSE
+			}
 		}
 	} else if leftVal, ok := left.(*object.String); ok {
 		switch rightVal := right.(type) {
+		case *object.Integer:
+			if !ctx.Strict {
+				if i, err := strconv.ParseInt(leftVal.Value(), 0, 64); err == nil {
+					return NewBoolean(int(i) >= rightVal.Value())
+				}
+				return object.FALSE
+			}
+		case *object.Decimal:
+			if !ctx.Strict {
+				if i, err := strconv.ParseFloat(leftVal.Value(), 64); err == nil {
+					return NewBoolean(i >= rightVal.Value())
+				}
+				return object.FALSE
+			}
+		case *object.Double:
+			if !ctx.Strict {
+				if i, err := strconv.ParseFloat(leftVal.Value(), 64); err == nil {
+					return NewBoolean(i >= rightVal.Value())
+				}
+				return object.FALSE
+			}
 		case *object.String:
 			return NewBoolean(leftVal.Value() >= rightVal.Value())
 		case *object.BaseNode:
@@ -728,6 +1322,27 @@ func IsGE(left, right object.Item) object.Item {
 		}
 	} else if leftVal, ok := left.(*object.BaseNode); ok {
 		switch rightVal := right.(type) {
+		case *object.Integer:
+			if !ctx.Strict {
+				if i, err := strconv.ParseInt(leftVal.Text(), 0, 64); err == nil {
+					return NewBoolean(int(i) >= rightVal.Value())
+				}
+				return object.FALSE
+			}
+		case *object.Decimal:
+			if !ctx.Strict {
+				if i, err := strconv.ParseFloat(leftVal.Text(), 64); err == nil {
+					return NewBoolean(i >= rightVal.Value())
+				}
+				return object.FALSE
+			}
+		case *object.Double:
+			if !ctx.Strict {
+				if i, err := strconv.ParseFloat(leftVal.Text(), 64); err == nil {
+					return NewBoolean(i >= rightVal.Value())
+				}
+				return object.FALSE
+			}
 		case *object.BaseNode:
 			return NewBoolean(leftVal.Text() >= rightVal.Text())
 		case *object.AttrNode:
@@ -737,6 +1352,27 @@ func IsGE(left, right object.Item) object.Item {
 		}
 	} else if leftVal, ok := left.(*object.AttrNode); ok {
 		switch rightVal := right.(type) {
+		case *object.Integer:
+			if !ctx.Strict {
+				if i, err := strconv.ParseInt(leftVal.Text(), 0, 64); err == nil {
+					return NewBoolean(int(i) >= rightVal.Value())
+				}
+				return object.FALSE
+			}
+		case *object.Decimal:
+			if !ctx.Strict {
+				if i, err := strconv.ParseFloat(leftVal.Text(), 64); err == nil {
+					return NewBoolean(i >= rightVal.Value())
+				}
+				return object.FALSE
+			}
+		case *object.Double:
+			if !ctx.Strict {
+				if i, err := strconv.ParseFloat(leftVal.Text(), 64); err == nil {
+					return NewBoolean(i >= rightVal.Value())
+				}
+				return object.FALSE
+			}
 		case *object.AttrNode:
 			return NewBoolean(leftVal.Text() >= rightVal.Text())
 		case *object.BaseNode:
@@ -745,7 +1381,8 @@ func IsGE(left, right object.Item) object.Item {
 			return NewBoolean(leftVal.Text() >= rightVal.Value())
 		}
 	}
-	return NewError("cannot compare types: %s, %s", left.Type(), right.Type())
+
+	return NewError("cannot compare: %s, %s", left.Inspect(), right.Inspect())
 }
 
 // IsKindMatch ..

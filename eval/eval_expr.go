@@ -120,6 +120,7 @@ func evalIfExpr(expr ast.ExprSingle, ctx *object.Context) object.Item {
 
 func evalForExpr(expr ast.ExprSingle, ctx *object.Context) object.Item {
 	fe := expr.(*ast.ForExpr)
+	enclosedCtx := object.NewEnclosedContext(ctx)
 	var items []object.Item
 
 	if len(fe.Bindings) > 1 {
@@ -132,13 +133,13 @@ func evalForExpr(expr ast.ExprSingle, ctx *object.Context) object.Item {
 		switch bval := bval.(type) {
 		case *object.Sequence:
 			for _, item := range bval.Items {
-				ctx.Set(b.VarName.Value(), item)
-				e := evalForExpr(nfe, ctx).(*object.Sequence)
+				enclosedCtx.Set(b.VarName.Value(), item)
+				e := evalForExpr(nfe, enclosedCtx).(*object.Sequence)
 				items = append(items, e.Items...)
 			}
 		default:
-			ctx.Set(b.VarName.Value(), bval)
-			e := evalForExpr(nfe, ctx).(*object.Sequence)
+			enclosedCtx.Set(b.VarName.Value(), bval)
+			e := evalForExpr(nfe, enclosedCtx).(*object.Sequence)
 			items = append(items, e.Items...)
 		}
 
@@ -146,18 +147,18 @@ func evalForExpr(expr ast.ExprSingle, ctx *object.Context) object.Item {
 	}
 
 	b := fe.Bindings[0]
-	bval := Eval(b.ExprSingle, ctx)
+	bval := Eval(b.ExprSingle, enclosedCtx)
 
 	switch bval := bval.(type) {
 	case *object.Sequence:
 		for _, item := range bval.Items {
-			ctx.Set(b.VarName.Value(), item)
-			e := Eval(fe.ExprSingle, ctx)
+			enclosedCtx.Set(b.VarName.Value(), item)
+			e := Eval(fe.ExprSingle, enclosedCtx)
 			items = append(items, e)
 		}
 	default:
-		ctx.Set(b.VarName.Value(), bval)
-		e := Eval(fe.ExprSingle, ctx)
+		enclosedCtx.Set(b.VarName.Value(), bval)
+		e := Eval(fe.ExprSingle, enclosedCtx)
 		items = append(items, e)
 	}
 
@@ -166,21 +167,23 @@ func evalForExpr(expr ast.ExprSingle, ctx *object.Context) object.Item {
 
 func evalLetExpr(expr ast.ExprSingle, ctx *object.Context) object.Item {
 	le := expr.(*ast.LetExpr)
+	enclosedCtx := object.NewEnclosedContext(ctx)
 
 	for _, b := range le.Bindings {
-		bval := Eval(b.ExprSingle, ctx)
-		ctx.Set(b.VarName.Value(), bval)
+		bval := Eval(b.ExprSingle, enclosedCtx)
+		enclosedCtx.Set(b.VarName.Value(), bval)
 	}
 
-	return Eval(le.ExprSingle, ctx)
+	return Eval(le.ExprSingle, enclosedCtx)
 }
 
 func evalQuantifiedExpr(expr ast.ExprSingle, ctx *object.Context) object.Item {
 	qe := expr.(*ast.QuantifiedExpr)
+	enclosedCtx := object.NewEnclosedContext(ctx)
 
 	if len(qe.Bindings) > 1 {
 		b := qe.Bindings[0]
-		bval := Eval(b.ExprSingle, ctx)
+		bval := Eval(b.ExprSingle, enclosedCtx)
 
 		nqe := &ast.QuantifiedExpr{ExprSingle: qe.ExprSingle, Token: qe.Token}
 		nqe.Bindings = qe.Bindings[1:]
@@ -188,8 +191,8 @@ func evalQuantifiedExpr(expr ast.ExprSingle, ctx *object.Context) object.Item {
 		switch bval := bval.(type) {
 		case *object.Sequence:
 			for _, item := range bval.Items {
-				ctx.Set(b.VarName.Value(), item)
-				e := evalQuantifiedExpr(nqe, ctx).(*object.Boolean)
+				enclosedCtx.Set(b.VarName.Value(), item)
+				e := evalQuantifiedExpr(nqe, enclosedCtx).(*object.Boolean)
 
 				if qe.Token.Type == token.EVERY && !e.Value() {
 					return object.FALSE
@@ -199,8 +202,8 @@ func evalQuantifiedExpr(expr ast.ExprSingle, ctx *object.Context) object.Item {
 				}
 			}
 		default:
-			ctx.Set(b.VarName.Value(), bval)
-			e := evalQuantifiedExpr(nqe, ctx).(*object.Boolean)
+			enclosedCtx.Set(b.VarName.Value(), bval)
+			e := evalQuantifiedExpr(nqe, enclosedCtx).(*object.Boolean)
 
 			if qe.Token.Type == token.EVERY && !e.Value() {
 				return object.FALSE
@@ -212,13 +215,13 @@ func evalQuantifiedExpr(expr ast.ExprSingle, ctx *object.Context) object.Item {
 	}
 
 	b := qe.Bindings[0]
-	bval := Eval(b.ExprSingle, ctx)
+	bval := Eval(b.ExprSingle, enclosedCtx)
 
 	switch bval := bval.(type) {
 	case *object.Sequence:
 		for _, item := range bval.Items {
-			ctx.Set(b.VarName.Value(), item)
-			e, ok := Eval(qe.ExprSingle, ctx).(*object.Boolean)
+			enclosedCtx.Set(b.VarName.Value(), item)
+			e, ok := Eval(qe.ExprSingle, enclosedCtx).(*object.Boolean)
 
 			if !ok {
 				builtin := bif.Builtins["fn:boolean"]
@@ -241,8 +244,8 @@ func evalQuantifiedExpr(expr ast.ExprSingle, ctx *object.Context) object.Item {
 			}
 		}
 	default:
-		ctx.Set(b.VarName.Value(), bval)
-		e, ok := Eval(qe.ExprSingle, ctx).(*object.Boolean)
+		enclosedCtx.Set(b.VarName.Value(), bval)
+		e, ok := Eval(qe.ExprSingle, enclosedCtx).(*object.Boolean)
 
 		if !ok {
 			builtin := bif.Builtins["fn:boolean"]

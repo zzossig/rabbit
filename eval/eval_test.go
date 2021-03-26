@@ -230,25 +230,30 @@ func TestPredicate(t *testing.T) {
 }
 
 func TestIfExpr(t *testing.T) {
-	tests := []struct {
-		input    string
-		expected interface{}
-	}{
-		{`if ("a") then 2 else 3`, 2},
+	seq := testEval("if ('a') then 2 else 3")
+	sequence := seq.(*object.Sequence)
+	if len(sequence.Items) != 1 {
+		t.Errorf("wrong number of items. got=%d, expected=1", len(sequence.Items))
+	}
+	item, ok := sequence.Items[0].(*object.Integer)
+	if !ok {
+		t.Errorf("item type should be integer")
+	}
+	if item.Value() != 2 {
+		t.Errorf("item value should be 2. got=%d", item.Value())
 	}
 
-	for _, tt := range tests {
-		seq := testEval(tt.input)
-		sequence := seq.(*object.Sequence)
-
-		for _, item := range sequence.Items {
-			switch item := item.(type) {
-			case *object.Integer:
-				if item.Value() != tt.expected {
-					t.Errorf("item has wrong value. got=%d, want=%d", item.Value(), tt.expected)
-				}
-			}
-		}
+	seq2 := testEvalXML2("if (/company/office[@location='Seoul']/employee[1]/age = 35) then 'is 35' else 'is not 35'")
+	sequence2 := seq2.(*object.Sequence)
+	if len(sequence2.Items) != 1 {
+		t.Errorf("wrong number of items. got=%d, expected=1", len(sequence2.Items))
+	}
+	item2, ok := sequence2.Items[0].(*object.String)
+	if !ok {
+		t.Errorf("item type should be string")
+	}
+	if item2.Value() != "is not 35" {
+		t.Errorf("item value should be 'is not 35'")
 	}
 }
 
@@ -267,6 +272,38 @@ func TestForExpr(t *testing.T) {
 		seq := testEval(tt.input)
 		sequence := seq.(*object.Sequence)
 		testSequenceObject(t, sequence, tt.expected)
+	}
+
+	seq2 := testEvalXML2("for $i in //company/office/employee return if ($i/age >= 30) then upper-case($i/last_name) else lower-case($i/last_name)")
+	sequence2 := seq2.(*object.Sequence)
+	if len(sequence2.Items) != 5 {
+		t.Errorf("wrong number of items. got=%d, expected=5", len(sequence2.Items))
+	}
+	expects2 := []string{"jack", "HWA", "BROWN", "CHI", "JI"}
+	for i, item := range sequence2.Items {
+		item, ok := item.(*object.String)
+		if !ok {
+			t.Errorf("item type should be string")
+		}
+		if item.Value() != expects2[i] {
+			t.Errorf("got=%s, expected: %s", item.Value(), expects2[i])
+		}
+	}
+
+	seq3 := testEvalXML2("for $i in //company/office/employee return if ($i/age >= 32) then upper-case($i/last_name) else lower-case($i/last_name)")
+	sequence3 := seq3.(*object.Sequence)
+	if len(sequence3.Items) != 5 {
+		t.Errorf("wrong number of items. got=%d, expected=5", len(sequence3.Items))
+	}
+	expects3 := []string{"jack", "hwa", "brown", "CHI", "JI"}
+	for i, item := range sequence3.Items {
+		item, ok := item.(*object.String)
+		if !ok {
+			t.Errorf("item type should be string")
+		}
+		if item.Value() != expects3[i] {
+			t.Errorf("got=%s, expected: %s", item.Value(), expects3[i])
+		}
 	}
 }
 
@@ -1112,6 +1149,17 @@ func TestPathPredicateExpr(t *testing.T) {
 	if len(sequence50.Items) != 1 {
 		t.Errorf("wrong number of items. got=%d, expected=1", len(sequence50.Items))
 	}
+	node50 := sequence50.Items[0].(*object.BaseNode)
+	if len(node50.Attr()) != 1 {
+		t.Errorf("wrong number of attrs. got=%d, expected=1", len(node50.Attr()))
+	}
+	attr50, ok := node50.Attr()[0].(*object.AttrNode)
+	if !ok {
+		t.Errorf("node type should be AttrNode")
+	}
+	if attr50.Key() != "category" || attr50.Inspect() != "1" {
+		t.Errorf("expected attr: %s='%s'", attr50.Key(), attr50.Inspect())
+	}
 }
 
 func TestKindTest(t *testing.T) {
@@ -1696,6 +1744,24 @@ func testEvalXML(input string) object.Item {
 	docFunc := bif.Builtins["fn:doc"]
 	str := &object.String{}
 	str.SetValue("testdata/company.xml")
+	docNode := docFunc(str)
+	if !bif.IsError(docNode) {
+		d := docNode.(*object.BaseNode)
+		ctx.Doc = object.Node(d)
+	}
+
+	return Eval(xpath, ctx)
+}
+
+func testEvalXML2(input string) object.Item {
+	l := lexer.New(input)
+	p := parser.New(l)
+	xpath := p.ParseXPath()
+	ctx := object.NewContext()
+
+	docFunc := bif.Builtins["fn:doc"]
+	str := &object.String{}
+	str.SetValue("testdata/company_2.xml")
 	docNode := docFunc(str)
 	if !bif.IsError(docNode) {
 		d := docNode.(*object.BaseNode)

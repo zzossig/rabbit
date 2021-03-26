@@ -49,7 +49,7 @@ func evalRelativePathExpr(expr ast.ExprSingle, ctx *object.Context) object.Item 
 
 	left := Eval(rpe.LeftExpr, ctx)
 	if !bif.IsNode(left) && !bif.IsNodeSeq(left) {
-		return bif.NewError("path expression cannot contain type %s except the last step", left.Type())
+		return bif.NewError("not a valid xpath expression")
 	}
 
 	if rpe.Token.Type == token.DSLASH {

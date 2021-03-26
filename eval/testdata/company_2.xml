@@ -1,0 +1,31 @@
+<company>
+  <office location="Seoul">
+    <employee>
+      <first_name>Choi</first_name>
+      <last_name>Jack</last_name>
+      <age>25</age>
+    </employee>
+    <employee>
+      <first_name>Lee</first_name>
+      <last_name>Hwa</last_name>
+      <age>30</age>
+    </employee>
+  </office>
+  <office location="Busan">
+    <employee>
+      <first_name>Park</first_name>
+      <last_name>Brown</last_name>
+      <age>30</age>
+    </employee>
+    <employee>
+      <first_name>Kim</first_name>
+      <last_name>Chi</last_name>
+      <age>34</age>
+    </employee>
+    <employee>
+      <first_name>Su</first_name>
+      <last_name>Ji</last_name>
+      <age>44</age>
+    </employee>
+  </office>
+</company>

@@ -66,8 +66,37 @@ func evalVarRef(expr ast.ExprSingle, ctx *object.Context) object.Item {
 	vr := expr.(*ast.VarRef)
 
 	if v, ok := ctx.Get(vr.VarName.Value()); ok {
+		var nodes []object.Node
+
+		if bif.IsNodeSeq(v) {
+			v := v.(*object.Sequence)
+
+			for _, item := range v.Items {
+				if item, ok := item.(*object.BaseNode); ok {
+					nodes = append(nodes, item)
+				}
+				if item, ok := item.(*object.AttrNode); ok {
+					nodes = append(nodes, item)
+				}
+			}
+		} else if bif.IsNode(v) {
+			if item, ok := v.(*object.BaseNode); ok {
+				nodes = append(nodes, item)
+			}
+			if item, ok := v.(*object.AttrNode); ok {
+				nodes = append(nodes, item)
+			}
+		}
+
+		if len(nodes) > 0 {
+			ctx.CNode = nodes
+			ctx.CSize = len(nodes)
+			ctx.CAxis = "child::"
+		}
+
 		return v
 	}
+
 	return &object.Varref{Name: vr.VarName}
 }
 

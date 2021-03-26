@@ -34,11 +34,23 @@ func upperCase(args ...object.Item) object.Item {
 	}
 
 	arg := args[0]
-	if arg.Type() != object.StringType {
-		return object.NIL
+	if item, ok := arg.(*object.String); ok {
+		return NewString(strings.ToUpper(item.Value()))
 	}
-	strItem := arg.(*object.String)
-	return NewString(strings.ToUpper(strItem.Value()))
+	if item, ok := arg.(*object.BaseNode); ok {
+		return NewString(strings.ToUpper(item.Text()))
+	}
+	if item, ok := arg.(*object.AttrNode); ok {
+		return NewString(strings.ToUpper(item.Text()))
+	}
+	if seq, ok := arg.(*object.Sequence); ok {
+		if len(seq.Items) != 1 {
+			return NewError("wrong number of sequence items. got=%d, want=1", len(args))
+		}
+		return upperCase(seq.Items[0])
+	}
+
+	return NewError("cannot match item type with required type")
 }
 
 func lowerCase(args ...object.Item) object.Item {
@@ -47,9 +59,21 @@ func lowerCase(args ...object.Item) object.Item {
 	}
 
 	arg := args[0]
-	if arg.Type() != object.StringType {
-		return object.NIL
+	if item, ok := arg.(*object.String); ok {
+		return NewString(strings.ToLower(item.Value()))
 	}
-	strItem := arg.(*object.String)
-	return NewString(strings.ToLower(strItem.Value()))
+	if item, ok := arg.(*object.BaseNode); ok {
+		return NewString(strings.ToLower(item.Text()))
+	}
+	if item, ok := arg.(*object.AttrNode); ok {
+		return NewString(strings.ToLower(item.Text()))
+	}
+	if seq, ok := arg.(*object.Sequence); ok {
+		if len(seq.Items) != 1 {
+			return NewError("wrong number of sequence items. got=%d, want=1", len(args))
+		}
+		return lowerCase(seq.Items[0])
+	}
+
+	return NewError("cannot match item type with required type")
 }
