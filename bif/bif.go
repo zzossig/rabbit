@@ -6,6 +6,7 @@ import (
 
 	"github.com/zzossig/xpath/ast"
 	"github.com/zzossig/xpath/object"
+	"github.com/zzossig/xpath/token"
 )
 
 // F ...
@@ -82,6 +83,14 @@ func IsError(item object.Item) bool {
 	return item.Type() == object.ErrorType
 }
 
+// IsItem ..
+func IsItem(item object.Item) bool {
+	if item == nil {
+		return false
+	}
+	return IsAnyAtomic(item) || IsNode(item) || IsFunc(item)
+}
+
 // IsSeq ..
 func IsSeq(item object.Item) bool {
 	if item == nil {
@@ -108,12 +117,14 @@ func IsNumeric(item object.Item) bool {
 		item.Type() == object.DoubleType
 }
 
-// IsFunction ..
-func IsFunction(item object.Item) bool {
+// IsFunc ..
+func IsFunc(item object.Item) bool {
 	if item == nil {
 		return false
 	}
-	return item.Type() == object.FuncType
+	return item.Type() == object.FuncType ||
+		item.Type() == object.ArrayType ||
+		item.Type() == object.MapType
 }
 
 // IsAnyAtomic ..
@@ -150,22 +161,6 @@ func IsNode(item object.Item) bool {
 		item.Type() == object.AttributeNodeType
 }
 
-// IsNodeSeq ..
-func IsNodeSeq(item object.Item) bool {
-	seq, ok := item.(*object.Sequence)
-	if !ok {
-		return false
-	}
-
-	for _, i := range seq.Items {
-		if !IsNode(i) {
-			return false
-		}
-	}
-
-	return true
-}
-
 // IsMap ..
 func IsMap(item object.Item) bool {
 	if item == nil {
@@ -196,6 +191,182 @@ func IsBoolean(item object.Item) bool {
 		return false
 	}
 	return item.Type() == object.BooleanType
+}
+
+// IsItemSeq ..
+func IsItemSeq(item object.Item) bool {
+	seq, ok := item.(*object.Sequence)
+	if !ok {
+		return false
+	}
+
+	for _, i := range seq.Items {
+		if !IsItem(i) {
+			return false
+		}
+	}
+
+	return true
+}
+
+// IsNodeSeq ..
+func IsNodeSeq(item object.Item) bool {
+	seq, ok := item.(*object.Sequence)
+	if !ok {
+		return false
+	}
+
+	for _, i := range seq.Items {
+		if !IsNode(i) {
+			return false
+		}
+	}
+
+	return true
+}
+
+// IsFuncSeq ..
+func IsFuncSeq(item object.Item) bool {
+	seq, ok := item.(*object.Sequence)
+	if !ok {
+		return false
+	}
+
+	for _, i := range seq.Items {
+		if !IsFunc(i) {
+			return false
+		}
+	}
+
+	return true
+}
+
+// IsMapSeq ..
+func IsMapSeq(item object.Item) bool {
+	seq, ok := item.(*object.Sequence)
+	if !ok {
+		return false
+	}
+
+	for _, i := range seq.Items {
+		if !IsMap(i) {
+			return false
+		}
+	}
+
+	return true
+}
+
+// IsArraySeq ..
+func IsArraySeq(item object.Item) bool {
+	seq, ok := item.(*object.Sequence)
+	if !ok {
+		return false
+	}
+
+	for _, i := range seq.Items {
+		if !IsArray(i) {
+			return false
+		}
+	}
+
+	return true
+}
+
+// IsAtomicSeq ..
+func IsAtomicSeq(item object.Item) bool {
+	seq, ok := item.(*object.Sequence)
+	if !ok {
+		return false
+	}
+
+	for _, i := range seq.Items {
+		if !IsAnyAtomic(i) {
+			return false
+		}
+	}
+
+	return true
+}
+
+// IsDocNodeSeq ..
+func IsDocNodeSeq(item object.Item) bool {
+	seq, ok := item.(*object.Sequence)
+	if !ok {
+		return false
+	}
+
+	for _, i := range seq.Items {
+		if i.Type() != object.DocumentNodeType {
+			return false
+		}
+	}
+
+	return true
+}
+
+// IsElemNodeSeq ..
+func IsElemNodeSeq(item object.Item) bool {
+	seq, ok := item.(*object.Sequence)
+	if !ok {
+		return false
+	}
+
+	for _, i := range seq.Items {
+		if i.Type() != object.ElementNodeType {
+			return false
+		}
+	}
+
+	return true
+}
+
+// IsAttrNodeSeq ..
+func IsAttrNodeSeq(item object.Item) bool {
+	seq, ok := item.(*object.Sequence)
+	if !ok {
+		return false
+	}
+
+	for _, i := range seq.Items {
+		if i.Type() != object.AttributeNodeType {
+			return false
+		}
+	}
+
+	return true
+}
+
+// IsCommNodeSeq ..
+func IsCommNodeSeq(item object.Item) bool {
+	seq, ok := item.(*object.Sequence)
+	if !ok {
+		return false
+	}
+
+	for _, i := range seq.Items {
+		if i.Type() != object.CommentNodeType {
+			return false
+		}
+	}
+
+	return true
+}
+
+// IsTextNodeSeq ..
+func IsTextNodeSeq(item object.Item) bool {
+	seq, ok := item.(*object.Sequence)
+	if !ok {
+		return false
+	}
+
+	for _, i := range seq.Items {
+		if i.Type() != object.TextNodeType {
+			return false
+		}
+	}
+
+	return true
 }
 
 // IsCastable ..
@@ -499,36 +670,6 @@ func CastType(tg object.Item, ty object.Type) object.Item {
 	}
 
 	return NewError("cannot convert %s with value %s to %s", tg.Type(), tg.Inspect(), ty)
-}
-
-// IsTypeMatch ..
-func IsTypeMatch(item object.Item, st *ast.SequenceType) object.Item {
-	switch st.TypeID {
-	case 1:
-		seq, ok := item.(*object.Sequence)
-		if !ok {
-			return object.FALSE
-		}
-		if seq.Items != nil {
-			return object.FALSE
-		}
-	case 2:
-		switch st.ItemType.TypeID {
-		case 1:
-			kt := st.ItemType.NodeTest.(*ast.KindTest)
-			switch kt.TypeID {
-			// case
-			}
-		case 2:
-		case 3:
-		case 4:
-		case 5:
-		case 6:
-		case 7:
-		}
-	}
-
-	return object.FALSE
 }
 
 // IsPrecede ..
@@ -1320,6 +1461,128 @@ func IsGE(left, right object.Item) object.Item {
 	}
 
 	return NewError("cannot compare: %s, %s", left.Inspect(), right.Inspect())
+}
+
+// IsOccurMatch ..
+func IsOccurMatch(item object.Item, t token.Token) bool {
+	seq, ok := item.(*object.Sequence)
+	if !ok {
+		return false
+	}
+
+	switch t.Type {
+	case token.QUESTION:
+		if seq.Items == nil || len(seq.Items) == 1 {
+			return true
+		}
+		return false
+	case token.ASTERISK:
+		return true
+	case token.PLUS:
+		if len(seq.Items) > 0 {
+			return true
+		}
+		return false
+	default:
+		if len(seq.Items) == 1 {
+			return true
+		}
+		return false
+	}
+}
+
+// IsTypeMatch ..
+func IsTypeMatch(item object.Item, st *ast.SequenceType) object.Item {
+	switch st.TypeID {
+	case 1:
+		seq, ok := item.(*object.Sequence)
+		if !ok {
+			return object.FALSE
+		}
+		if seq.Items != nil {
+			return object.FALSE
+		}
+		return object.TRUE
+	case 2:
+		oi := st.OccurrenceIndicator
+		it := st.NodeTest.(*ast.ItemType)
+
+		switch it.TypeID {
+		case 1:
+			kt := it.NodeTest.(*ast.KindTest)
+			switch kt.TypeID {
+			case 1:
+				if item.Type() == object.SequenceType {
+					return NewBoolean(IsOccurMatch(item, oi.Token) && IsDocNodeSeq(item))
+				}
+				return NewBoolean(item.Type() == object.DocumentNodeType)
+			case 2:
+				if item.Type() == object.SequenceType {
+					return NewBoolean(IsOccurMatch(item, oi.Token) && IsElemNodeSeq(item))
+				}
+				return NewBoolean(item.Type() == object.ElementNodeType)
+			case 3:
+				if item.Type() == object.SequenceType {
+					return NewBoolean(IsOccurMatch(item, oi.Token) && IsAttrNodeSeq(item))
+				}
+				return NewBoolean(item.Type() == object.AttributeNodeType)
+			case 7:
+				if item.Type() == object.SequenceType {
+					return NewBoolean(IsOccurMatch(item, oi.Token) && IsCommNodeSeq(item))
+				}
+				return NewBoolean(item.Type() == object.CommentNodeType)
+			case 8:
+				if item.Type() == object.SequenceType {
+					return NewBoolean(IsOccurMatch(item, oi.Token) && IsTextNodeSeq(item))
+				}
+				return NewBoolean(item.Type() == object.TextNodeType)
+			case 10:
+				if item.Type() == object.SequenceType {
+					return NewBoolean(IsOccurMatch(item, oi.Token) && IsNodeSeq(item))
+				}
+				return NewBoolean(IsNode(item))
+			case 4:
+				fallthrough
+			case 5:
+				fallthrough
+			case 6:
+				fallthrough
+			case 9:
+				return NewError("not supported kind test")
+			}
+		case 2:
+			if item.Type() == object.SequenceType {
+				return NewBoolean(IsOccurMatch(item, oi.Token) && IsItemSeq(item))
+			}
+			return NewBoolean(IsItem(item))
+		case 3:
+			if item.Type() == object.SequenceType {
+				return NewBoolean(IsOccurMatch(item, oi.Token) && IsFuncSeq(item))
+			}
+			return NewBoolean(IsFunc(item))
+		case 4:
+			if item.Type() == object.SequenceType {
+				return NewBoolean(IsOccurMatch(item, oi.Token) && IsMapSeq(item))
+			}
+			return NewBoolean(IsMap(item))
+		case 5:
+			if item.Type() == object.SequenceType {
+				return NewBoolean(IsOccurMatch(item, oi.Token) && IsArraySeq(item))
+			}
+			return NewBoolean(IsArray(item))
+		case 6:
+			if item.Type() == object.SequenceType {
+				return NewBoolean(IsOccurMatch(item, oi.Token) && IsAtomicSeq(item))
+			}
+			return NewBoolean(IsAnyAtomic(item))
+		case 7:
+			pit := it.NodeTest.(*ast.ParenthesizedItemType)
+			st.NodeTest = pit.NodeTest
+			return IsTypeMatch(item, st)
+		}
+	}
+
+	return object.FALSE
 }
 
 // IsKindMatch ..

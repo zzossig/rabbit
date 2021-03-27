@@ -77,7 +77,7 @@ func (at *ArrayTest) String() string {
 // SequenceType ::= ("empty-sequence" "(" ")") | (ItemType OccurrenceIndicator?)
 // TypeID ::= 			1													 | 2
 type SequenceType struct {
-	ItemType
+	NodeTest
 	OccurrenceIndicator
 	TypeID byte
 }
@@ -89,7 +89,7 @@ func (st *SequenceType) String() string {
 	case 1:
 		sb.WriteString("empty-sequence()")
 	case 2:
-		sb.WriteString(st.ItemType.String())
+		sb.WriteString(st.NodeTest.String())
 		sb.WriteString(st.OccurrenceIndicator.String())
 	default:
 		sb.WriteString("")

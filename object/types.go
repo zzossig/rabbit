@@ -8,12 +8,10 @@ type Type string
 
 // Item Types
 const (
-	NilType     Type = "nil"
-	ErrorType   Type = "error"
-	PholderType Type = "?"
-	VarrefType  Type = "$"
-
-	ItemType     Type = "item"
+	NilType      Type = "nil"
+	ErrorType    Type = "error"
+	PholderType  Type = "?"
+	VarrefType   Type = "$"
 	SequenceType Type = "sequence"
 
 	// function

@@ -430,6 +430,110 @@ func TestSequenceTypes(t *testing.T) {
 	if item4.Value() {
 		t.Errorf("the result value should be false")
 	}
+
+	seq5 := testEvalXML2("'5' instance of xs:string")
+	sequence5 := seq5.(*object.Sequence)
+	if len(sequence5.Items) != 1 {
+		t.Errorf("wrong number of items. got=%d, expected=1", len(sequence5.Items))
+	}
+	item5, ok := sequence5.Items[0].(*object.Boolean)
+	if !ok {
+		t.Errorf("the result type should be boolean")
+	}
+	if !item5.Value() {
+		t.Errorf("the result value should be true")
+	}
+
+	seq6 := testEvalXML2("5 instance of xs:decimal")
+	sequence6 := seq6.(*object.Sequence)
+	if len(sequence6.Items) != 1 {
+		t.Errorf("wrong number of items. got=%d, expected=1", len(sequence6.Items))
+	}
+	item6, ok := sequence6.Items[0].(*object.Boolean)
+	if !ok {
+		t.Errorf("the result type should be boolean")
+	}
+	if !item6.Value() {
+		t.Errorf("the result value should be true")
+	}
+
+	seq7 := testEvalXML2("('a') instance of xs:string")
+	sequence7 := seq7.(*object.Sequence)
+	if len(sequence7.Items) != 1 {
+		t.Errorf("wrong number of items. got=%d, expected=1", len(sequence7.Items))
+	}
+	item7, ok := sequence7.Items[0].(*object.Boolean)
+	if !ok {
+		t.Errorf("the result type should be boolean")
+	}
+	if !item7.Value() {
+		t.Errorf("the result value should be true")
+	}
+
+	seq8 := testEvalXML2("('a','b','c') instance of xs:string")
+	sequence8 := seq8.(*object.Sequence)
+	if len(sequence8.Items) != 1 {
+		t.Errorf("wrong number of items. got=%d, expected=1", len(sequence8.Items))
+	}
+	item8, ok := sequence8.Items[0].(*object.Boolean)
+	if !ok {
+		t.Errorf("the result type should be boolean")
+	}
+	if item8.Value() {
+		t.Errorf("the result value should be false")
+	}
+
+	seq9 := testEvalXML2("('a','b','c') instance of xs:string+")
+	sequence9 := seq9.(*object.Sequence)
+	if len(sequence9.Items) != 1 {
+		t.Errorf("wrong number of items. got=%d, expected=1", len(sequence9.Items))
+	}
+	item9, ok := sequence9.Items[0].(*object.Boolean)
+	if !ok {
+		t.Errorf("the result type should be boolean")
+	}
+	if !item9.Value() {
+		t.Errorf("the result value should be true")
+	}
+
+	seq10 := testEvalXML2("('a','b','c') instance of xs:string*")
+	sequence10 := seq10.(*object.Sequence)
+	if len(sequence10.Items) != 1 {
+		t.Errorf("wrong number of items. got=%d, expected=1", len(sequence10.Items))
+	}
+	item10, ok := sequence10.Items[0].(*object.Boolean)
+	if !ok {
+		t.Errorf("the result type should be boolean")
+	}
+	if !item10.Value() {
+		t.Errorf("the result value should be true")
+	}
+
+	seq11 := testEvalXML2("() instance of xs:string?")
+	sequence11 := seq11.(*object.Sequence)
+	if len(sequence11.Items) != 1 {
+		t.Errorf("wrong number of items. got=%d, expected=1", len(sequence11.Items))
+	}
+	item11, ok := sequence11.Items[0].(*object.Boolean)
+	if !ok {
+		t.Errorf("the result type should be boolean")
+	}
+	if !item11.Value() {
+		t.Errorf("the result value should be true")
+	}
+
+	seq12 := testEvalXML2("(1,2,3) instance of xs:integer+")
+	sequence12 := seq12.(*object.Sequence)
+	if len(sequence12.Items) != 1 {
+		t.Errorf("wrong number of items. got=%d, expected=1", len(sequence12.Items))
+	}
+	item12, ok := sequence12.Items[0].(*object.Boolean)
+	if !ok {
+		t.Errorf("the result type should be boolean")
+	}
+	if !item12.Value() {
+		t.Errorf("the result value should be true")
+	}
 }
 
 func TestDocNode(t *testing.T) {
