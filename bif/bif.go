@@ -11,6 +11,13 @@ import (
 
 // F ...
 var F = map[string]object.Func{
+	// 2
+	"fn:node-name": fnNodeName,
+	"fn:string":    fnString,
+	"fn:data":      fnData,
+	"fn:base-uri":  fnBaseURI,
+
+	// 4.2
 	"op:numeric-add":            numericAdd,
 	"op:numeric-subtract":       numericSubtract,
 	"op:numeric-multiply":       numericMultiply,
@@ -19,20 +26,28 @@ var F = map[string]object.Func{
 	"op:numeric-mod":            numericMod,
 	"op:numeric-unary-plus":     numericUnaryPlus,
 	"op:numeric-unary-minus":    numericUnaryMinus,
-	"op:numeric-equal":          numericEqual,
-	"op:numeric-less-than":      numericLessThan,
-	"op:numeric-greater-than":   numericGreaterThan,
 
-	"fn:doc":       fnDoc,
-	"fn:node-name": fnNodeName,
-	"fn:string":    fnString,
+	// 4.3
+	"op:numeric-equal":        numericEqual,
+	"op:numeric-less-than":    numericLessThan,
+	"op:numeric-greater-than": numericGreaterThan,
 
-	"fn:abs":           fnAbs,
-	"fn:concat":        fnConcat,
+	// 4.4
+	"fn:abs": fnAbs,
+
+	// 5.4
+	"fn:concat":     fnConcat,
+	"fn:upper-case": fnUpperCase,
+	"fn:lower-case": fnLowerCase,
+
+	// 7
+	"fn:boolean": fnBoolean,
+
+	// 14
+	"fn:doc": fnDoc,
+
+	// 16.2
 	"fn:for-each-pair": fnForEachPair,
-	"fn:upper-case":    fnUpperCase,
-	"fn:lower-case":    fnLowerCase,
-	"fn:boolean":       fnBoolean,
 }
 
 // NewError ..

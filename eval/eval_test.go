@@ -1901,20 +1901,52 @@ func TestPathWithTypes(t *testing.T) {
 }
 
 func TestBIF(t *testing.T) {
-	seq := testEvalXML2("//employee/node-name()")
-	sequence := seq.(*object.Sequence)
-	if len(sequence.Items) != 5 {
-		t.Errorf("wrong number of items. got=%d, expected=5", len(sequence.Items))
-	}
+	// seq := testEvalXML2("//employee/node-name()")
+	// sequence := seq.(*object.Sequence)
+	// if len(sequence.Items) != 5 {
+	// 	t.Errorf("wrong number of items. got=%d, expected=5", len(sequence.Items))
+	// }
 
-	seq2 := testEvalXML2("//employee/*/node-name()")
-	sequence2 := seq2.(*object.Sequence)
-	if len(sequence2.Items) != 15 {
-		t.Errorf("wrong number of items. got=%d, expected=15", len(sequence2.Items))
-	}
-	item2 := sequence2.Items[0].(*object.String)
-	if item2.Value() != "first_name" {
-		t.Errorf("node name should be first_name")
+	// seq2 := testEvalXML2("//employee/*/node-name()")
+	// sequence2 := seq2.(*object.Sequence)
+	// if len(sequence2.Items) != 15 {
+	// 	t.Errorf("wrong number of items. got=%d, expected=15", len(sequence2.Items))
+	// }
+	// item2 := sequence2.Items[0].(*object.String)
+	// if item2.Value() != "first_name" {
+	// 	t.Errorf("node name should be first_name")
+	// }
+
+	// seq3 := testEvalXML2("//employee/string()")
+	// sequence3 := seq3.(*object.Sequence)
+	// if len(sequence3.Items) != 5 {
+	// 	t.Errorf("wrong number of items. got=%d, expected=5", len(sequence3.Items))
+	// }
+
+	// seq4 := testEvalXML2("//employee/data()")
+	// sequence4 := seq4.(*object.Sequence)
+	// if len(sequence4.Items) != 5 {
+	// 	t.Errorf("wrong number of items. got=%d, expected=5", len(sequence4.Items))
+	// }
+	// item4 := sequence4.Items[0].(*object.String)
+	// if item4.Value() != "ChoiJack25" {
+	// 	t.Errorf("first item value should be ChoiJack25. got=%s", item4.Value())
+	// }
+
+	// seq5 := testEvalXML2("//employee/string('haha')")
+	// sequence5 := seq5.(*object.Sequence)
+	// if len(sequence5.Items) != 5 {
+	// 	t.Errorf("wrong number of items. got=%d, expected=5", len(sequence5.Items))
+	// }
+	// item5 := sequence5.Items[0].(*object.String)
+	// if item5.Value() != "haha" {
+	// 	t.Errorf("first item value should be haha. got=%s", item5.Value())
+	// }
+
+	seq6 := testEvalXML2("/base-uri()")
+	sequence6 := seq6.(*object.Sequence)
+	if len(sequence6.Items) != 1 {
+		t.Errorf("wrong number of items. got=%d, expected=1", len(sequence6.Items))
 	}
 }
 

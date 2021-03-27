@@ -8,6 +8,7 @@ type Context struct {
 	CNode []Node
 	CItem Item
 	Focus
+	Static
 }
 
 // Focus ...
@@ -15,6 +16,11 @@ type Focus struct {
 	CSize int
 	CPos  int
 	CAxis string
+}
+
+// Static ...
+type Static struct {
+	BaseURI string
 }
 
 // NewContext ...
@@ -33,6 +39,7 @@ func NewEnclosedContext(outer *Context) *Context {
 	ctx.CSize = outer.CSize
 	ctx.CAxis = outer.CAxis
 	ctx.CPos = outer.CPos
+	ctx.BaseURI = outer.BaseURI
 	return ctx
 }
 

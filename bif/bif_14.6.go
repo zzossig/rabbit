@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"net/http"
 	"os"
+	"path/filepath"
 
 	"github.com/zzossig/xpath/object"
 	"golang.org/x/net/html"
@@ -26,6 +27,12 @@ func fnDoc(ctx *object.Context, args ...object.Item) object.Item {
 
 		docNode.SetTree(parsedHTML)
 		ctx.Doc = docNode
+
+		path, err := os.Getwd()
+		if err != nil {
+			return NewError(err.Error())
+		}
+		ctx.BaseURI = filepath.Join(path, uri.Value())
 	}
 
 	if resp, err := http.Get(uri.Value()); err == nil {
@@ -40,6 +47,7 @@ func fnDoc(ctx *object.Context, args ...object.Item) object.Item {
 
 		docNode.SetTree(parsedHTML)
 		ctx.Doc = docNode
+		ctx.BaseURI = uri.Value()
 	}
 
 	if err != nil {
