@@ -628,3 +628,56 @@ func evalIntersectExceptExpr(expr ast.ExprSingle, ctx *object.Context) object.It
 
 	return seq
 }
+
+func evalInstanceofExpr(expr ast.ExprSingle, ctx *object.Context) object.Item {
+	ie := expr.(*ast.InstanceofExpr)
+	item := Eval(ie.ExprSingle, ctx)
+
+	return bif.IsTypeMatch(item, &ie.SequenceType)
+}
+
+func evalCastExpr(expr ast.ExprSingle, ctx *object.Context) object.Item {
+	ce := expr.(*ast.CastExpr)
+	item := Eval(ce.ExprSingle, ctx)
+
+	var ty object.Type
+	switch ce.SingleType.Value() {
+	case "xs:double":
+		ty = object.DoubleType
+	case "xs:decimal":
+		ty = object.DecimalType
+	case "xs:integer":
+		ty = object.IntegerType
+	case "xs:string":
+		ty = object.StringType
+	case "xs:boolean":
+		ty = object.BooleanType
+	}
+
+	return bif.CastType(item, ty)
+}
+
+func evalCastableExpr(expr ast.ExprSingle, ctx *object.Context) object.Item {
+	ce := expr.(*ast.CastableExpr)
+	item := Eval(ce.ExprSingle, ctx)
+
+	var ty object.Type
+	switch ce.SingleType.Value() {
+	case "xs:double":
+		ty = object.DoubleType
+	case "xs:decimal":
+		ty = object.DecimalType
+	case "xs:integer":
+		ty = object.IntegerType
+	case "xs:string":
+		ty = object.StringType
+	case "xs:boolean":
+		ty = object.BooleanType
+	}
+
+	return bif.IsCastable(item, ty)
+}
+
+func evalTreatExpr(expr ast.ExprSingle, ctx *object.Context) object.Item {
+	return bif.NewError("treat expression not supported")
+}

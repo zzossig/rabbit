@@ -2,7 +2,7 @@ package bif
 
 import "github.com/zzossig/xpath/object"
 
-func boolean(ctx *object.Context, args ...object.Item) object.Item {
+func fnBoolean(ctx *object.Context, args ...object.Item) object.Item {
 	if len(args) != 1 {
 		return NewError("%d arguments supplied, 1 expected", len(args))
 	}
@@ -16,7 +16,7 @@ func boolean(ctx *object.Context, args ...object.Item) object.Item {
 			return object.TRUE
 		}
 		if len(arg.Items) == 1 {
-			return boolean(ctx, arg.Items[0])
+			return fnBoolean(ctx, arg.Items[0])
 		}
 	case *object.Boolean:
 		return arg

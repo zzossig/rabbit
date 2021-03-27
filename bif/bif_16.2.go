@@ -2,7 +2,7 @@ package bif
 
 import "github.com/zzossig/xpath/object"
 
-func forEachPair(ctx *object.Context, args ...object.Item) object.Item {
+func fnForEachPair(ctx *object.Context, args ...object.Item) object.Item {
 	if len(args) != 3 {
 		return NewError("wrong number of arguments. got=%d, want=3", len(args))
 	}

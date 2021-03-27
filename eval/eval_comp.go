@@ -1,6 +1,8 @@
 package eval
 
 import (
+	"strconv"
+
 	"github.com/zzossig/xpath/ast"
 	"github.com/zzossig/xpath/bif"
 	"github.com/zzossig/xpath/object"
@@ -28,6 +30,10 @@ func evalComparisonExpr(expr ast.ExprSingle, ctx *object.Context) object.Item {
 		return compNodeString(op, left, right, ctx)
 	case bif.IsString(left) && bif.IsNode(right):
 		return compStringNode(op, left, right, ctx)
+	case bif.IsNode(left) && bif.IsNumeric(right):
+		return compNodeNumber(op, left, right, ctx)
+	case bif.IsNumeric(left) && bif.IsNode(right):
+		return compNumberNode(op, left, right, ctx)
 	case bif.IsNode(left) && bif.IsNode(right):
 		return compNodeNode(op, left, right, ctx)
 
@@ -1470,6 +1476,217 @@ func compStringNode(op token.Token, left, right object.Item, ctx *object.Context
 	}
 
 	return object.FALSE
+}
+
+func compNodeNumber(op token.Token, left, right object.Item, ctx *object.Context) object.Item {
+	var leftVal string
+
+	if leftNode, ok := left.(*object.BaseNode); ok {
+		leftVal = leftNode.Text()
+	}
+	if leftNode, ok := left.(*object.AttrNode); ok {
+		leftVal = leftNode.Text()
+	}
+
+	switch op.Type {
+	case token.EQ, token.EQV:
+		switch rightVal := right.(type) {
+		case *object.Double:
+			if l, err := strconv.ParseFloat(leftVal, 64); err == nil {
+				return bif.IsEQ(bif.NewDouble(l), rightVal)
+			}
+		case *object.Decimal:
+			if l, err := strconv.ParseFloat(leftVal, 64); err == nil {
+				return bif.IsEQ(bif.NewDecimal(l), rightVal)
+			}
+		case *object.Integer:
+			if l, err := strconv.ParseInt(leftVal, 0, 64); err == nil {
+				return bif.IsEQ(bif.NewInteger(int(l)), rightVal)
+			}
+		}
+	case token.NE, token.NEV:
+		switch rightVal := right.(type) {
+		case *object.Double:
+			if l, err := strconv.ParseFloat(leftVal, 64); err == nil {
+				return bif.IsNE(bif.NewDouble(l), rightVal)
+			}
+		case *object.Decimal:
+			if l, err := strconv.ParseFloat(leftVal, 64); err == nil {
+				return bif.IsNE(bif.NewDecimal(l), rightVal)
+			}
+		case *object.Integer:
+			if l, err := strconv.ParseInt(leftVal, 0, 64); err == nil {
+				return bif.IsNE(bif.NewInteger(int(l)), rightVal)
+			}
+		}
+	case token.LT, token.LTV:
+		switch rightVal := right.(type) {
+		case *object.Double:
+			if l, err := strconv.ParseFloat(leftVal, 64); err == nil {
+				return bif.IsLT(bif.NewDouble(l), rightVal)
+			}
+		case *object.Decimal:
+			if l, err := strconv.ParseFloat(leftVal, 64); err == nil {
+				return bif.IsLT(bif.NewDecimal(l), rightVal)
+			}
+		case *object.Integer:
+			if l, err := strconv.ParseInt(leftVal, 0, 64); err == nil {
+				return bif.IsLT(bif.NewInteger(int(l)), rightVal)
+			}
+		}
+	case token.LE, token.LEV:
+		switch rightVal := right.(type) {
+		case *object.Double:
+			if l, err := strconv.ParseFloat(leftVal, 64); err == nil {
+				return bif.IsLE(bif.NewDouble(l), rightVal)
+			}
+		case *object.Decimal:
+			if l, err := strconv.ParseFloat(leftVal, 64); err == nil {
+				return bif.IsLE(bif.NewDecimal(l), rightVal)
+			}
+		case *object.Integer:
+			if l, err := strconv.ParseInt(leftVal, 0, 64); err == nil {
+				return bif.IsLE(bif.NewInteger(int(l)), rightVal)
+			}
+		}
+	case token.GT, token.GTV:
+		switch rightVal := right.(type) {
+		case *object.Double:
+			if l, err := strconv.ParseFloat(leftVal, 64); err == nil {
+				return bif.IsGT(bif.NewDouble(l), rightVal)
+			}
+		case *object.Decimal:
+			if l, err := strconv.ParseFloat(leftVal, 64); err == nil {
+				return bif.IsGT(bif.NewDecimal(l), rightVal)
+			}
+		case *object.Integer:
+			if l, err := strconv.ParseInt(leftVal, 0, 64); err == nil {
+				return bif.IsGT(bif.NewInteger(int(l)), rightVal)
+			}
+		}
+	case token.GE, token.GEV:
+		switch rightVal := right.(type) {
+		case *object.Double:
+			if l, err := strconv.ParseFloat(leftVal, 64); err == nil {
+				return bif.IsGE(bif.NewDouble(l), rightVal)
+			}
+		case *object.Decimal:
+			if l, err := strconv.ParseFloat(leftVal, 64); err == nil {
+				return bif.IsGE(bif.NewDecimal(l), rightVal)
+			}
+		case *object.Integer:
+			if l, err := strconv.ParseInt(leftVal, 0, 64); err == nil {
+				return bif.IsGE(bif.NewInteger(int(l)), rightVal)
+			}
+		}
+	}
+
+	return bif.NewError("cannot compare")
+}
+
+func compNumberNode(op token.Token, left, right object.Item, ctx *object.Context) object.Item {
+	var rightVal string
+	if rightNode, ok := right.(*object.BaseNode); ok {
+		rightVal = rightNode.Text()
+	}
+	if rightNode, ok := right.(*object.AttrNode); ok {
+		rightVal = rightNode.Text()
+	}
+
+	switch op.Type {
+	case token.EQ, token.EQV:
+		switch leftVal := left.(type) {
+		case *object.Double:
+			if r, err := strconv.ParseFloat(rightVal, 64); err == nil {
+				return bif.IsEQ(leftVal, bif.NewDouble(r))
+			}
+		case *object.Decimal:
+			if r, err := strconv.ParseFloat(rightVal, 64); err == nil {
+				return bif.IsEQ(leftVal, bif.NewDecimal(r))
+			}
+		case *object.Integer:
+			if r, err := strconv.ParseInt(rightVal, 0, 64); err == nil {
+				return bif.IsEQ(leftVal, bif.NewInteger(int(r)))
+			}
+		}
+	case token.NE, token.NEV:
+		switch leftVal := left.(type) {
+		case *object.Double:
+			if r, err := strconv.ParseFloat(rightVal, 64); err == nil {
+				return bif.IsNE(leftVal, bif.NewDouble(r))
+			}
+		case *object.Decimal:
+			if r, err := strconv.ParseFloat(rightVal, 64); err == nil {
+				return bif.IsNE(leftVal, bif.NewDecimal(r))
+			}
+		case *object.Integer:
+			if r, err := strconv.ParseInt(rightVal, 0, 64); err == nil {
+				return bif.IsNE(leftVal, bif.NewInteger(int(r)))
+			}
+		}
+	case token.LT, token.LTV:
+		switch leftVal := left.(type) {
+		case *object.Double:
+			if r, err := strconv.ParseFloat(rightVal, 64); err == nil {
+				return bif.IsLT(leftVal, bif.NewDouble(r))
+			}
+		case *object.Decimal:
+			if r, err := strconv.ParseFloat(rightVal, 64); err == nil {
+				return bif.IsLT(leftVal, bif.NewDecimal(r))
+			}
+		case *object.Integer:
+			if r, err := strconv.ParseInt(rightVal, 0, 64); err == nil {
+				return bif.IsLT(leftVal, bif.NewInteger(int(r)))
+			}
+		}
+	case token.LE, token.LEV:
+		switch leftVal := left.(type) {
+		case *object.Double:
+			if r, err := strconv.ParseFloat(rightVal, 64); err == nil {
+				return bif.IsLE(leftVal, bif.NewDouble(r))
+			}
+		case *object.Decimal:
+			if r, err := strconv.ParseFloat(rightVal, 64); err == nil {
+				return bif.IsLE(leftVal, bif.NewDecimal(r))
+			}
+		case *object.Integer:
+			if r, err := strconv.ParseInt(rightVal, 0, 64); err == nil {
+				return bif.IsLE(leftVal, bif.NewInteger(int(r)))
+			}
+		}
+	case token.GT, token.GTV:
+		switch leftVal := left.(type) {
+		case *object.Double:
+			if r, err := strconv.ParseFloat(rightVal, 64); err == nil {
+				return bif.IsGT(leftVal, bif.NewDouble(r))
+			}
+		case *object.Decimal:
+			if r, err := strconv.ParseFloat(rightVal, 64); err == nil {
+				return bif.IsGT(leftVal, bif.NewDecimal(r))
+			}
+		case *object.Integer:
+			if r, err := strconv.ParseInt(rightVal, 0, 64); err == nil {
+				return bif.IsGT(leftVal, bif.NewInteger(int(r)))
+			}
+		}
+	case token.GE, token.GEV:
+		switch leftVal := left.(type) {
+		case *object.Double:
+			if r, err := strconv.ParseFloat(rightVal, 64); err == nil {
+				return bif.IsGE(leftVal, bif.NewDouble(r))
+			}
+		case *object.Decimal:
+			if r, err := strconv.ParseFloat(rightVal, 64); err == nil {
+				return bif.IsGE(leftVal, bif.NewDecimal(r))
+			}
+		case *object.Integer:
+			if r, err := strconv.ParseInt(rightVal, 0, 64); err == nil {
+				return bif.IsGE(leftVal, bif.NewInteger(int(r)))
+			}
+		}
+	}
+
+	return bif.NewError("cannot compare")
 }
 
 func compNodeNode(op token.Token, left, right object.Item, ctx *object.Context) object.Item {

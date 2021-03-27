@@ -15,7 +15,6 @@ const (
 
 	ItemType     Type = "item"
 	SequenceType Type = "sequence"
-	EmptySeqType Type = "empty-sequence"
 
 	// function
 	MapType   Type = "map"
@@ -38,9 +37,4 @@ const (
 	IntegerType Type = "xs:integer"
 	StringType  Type = "xs:string"
 	BooleanType Type = "xs:boolean"
-
-	// abstract
-	NodeType      Type = "node"
-	NumericType   Type = "xs:numeric"
-	AnyAtomicType Type = "xs:anyAtomic"
 )

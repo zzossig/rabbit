@@ -225,7 +225,7 @@ func evalPredicateList(plist *ast.PredicateList, ii *int, ctx *object.Context) o
 		}
 
 		ctx.CNode = cnode
-		bif.ReplaceFocus(focus, ctx)
+		bif.ReplaceFocus(ctx, focus)
 
 		p := Eval(&p.Expr, ctx)
 		seq := p.(*object.Sequence)

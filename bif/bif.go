@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strconv"
 
+	"github.com/zzossig/xpath/ast"
 	"github.com/zzossig/xpath/object"
 )
 
@@ -21,15 +22,16 @@ var F = map[string]object.Func{
 	"op:numeric-less-than":      numericLessThan,
 	"op:numeric-greater-than":   numericGreaterThan,
 
-	"fn:doc":       doc,
-	"fn:node-name": nodeName,
+	"fn:doc":       fnDoc,
+	"fn:node-name": fnNodeName,
+	"fn:string":    fnString,
 
-	"fn:abs":           abs,
-	"fn:concat":        concat,
-	"fn:for-each-pair": forEachPair,
-	"fn:upper-case":    upperCase,
-	"fn:lower-case":    lowerCase,
-	"fn:boolean":       boolean,
+	"fn:abs":           fnAbs,
+	"fn:concat":        fnConcat,
+	"fn:for-each-pair": fnForEachPair,
+	"fn:upper-case":    fnUpperCase,
+	"fn:lower-case":    fnLowerCase,
+	"fn:boolean":       fnBoolean,
 }
 
 // NewError ..
@@ -194,6 +196,339 @@ func IsBoolean(item object.Item) bool {
 		return false
 	}
 	return item.Type() == object.BooleanType
+}
+
+// IsCastable ..
+func IsCastable(tg object.Item, ty object.Type) object.Item {
+	switch tg := tg.(type) {
+	case *object.Sequence:
+		if len(tg.Items) != 1 {
+			return NewError("wrong number of sequence items. got=%d, expected=1", len(tg.Items))
+		}
+		return IsCastable(tg.Items[0], ty)
+	case *object.Double:
+		switch ty {
+		case object.DoubleType:
+			fallthrough
+		case object.DecimalType:
+			fallthrough
+		case object.IntegerType:
+			fallthrough
+		case object.StringType:
+			fallthrough
+		case object.BooleanType:
+			return object.TRUE
+		}
+		return object.FALSE
+	case *object.Decimal:
+		switch ty {
+		case object.DoubleType:
+			fallthrough
+		case object.DecimalType:
+			fallthrough
+		case object.IntegerType:
+			fallthrough
+		case object.StringType:
+			fallthrough
+		case object.BooleanType:
+			return object.TRUE
+		}
+		return object.FALSE
+	case *object.Integer:
+		switch ty {
+		case object.DoubleType:
+			fallthrough
+		case object.DecimalType:
+			fallthrough
+		case object.IntegerType:
+			fallthrough
+		case object.StringType:
+			fallthrough
+		case object.BooleanType:
+			return object.TRUE
+		}
+		return object.FALSE
+	case *object.String:
+		switch ty {
+		case object.DoubleType:
+			fallthrough
+		case object.DecimalType:
+			if _, err := strconv.ParseFloat(tg.Value(), 64); err == nil {
+				return object.TRUE
+			}
+			return object.FALSE
+		case object.IntegerType:
+			if _, err := strconv.ParseInt(tg.Value(), 0, 64); err == nil {
+				return object.TRUE
+			}
+			return object.FALSE
+		case object.StringType:
+			return object.TRUE
+		case object.BooleanType:
+			if tg.Value() == "1" ||
+				tg.Value() == "true" ||
+				tg.Value() == "0" ||
+				tg.Value() == "false" {
+				return object.TRUE
+			}
+			return object.FALSE
+		}
+		return object.FALSE
+	case *object.Boolean:
+		switch ty {
+		case object.DoubleType:
+			fallthrough
+		case object.DecimalType:
+			fallthrough
+		case object.IntegerType:
+			fallthrough
+		case object.StringType:
+			fallthrough
+		case object.BooleanType:
+			return object.TRUE
+		}
+		return object.FALSE
+	case *object.BaseNode:
+		switch ty {
+		case object.DoubleType:
+			fallthrough
+		case object.DecimalType:
+			if _, err := strconv.ParseFloat(tg.Text(), 64); err == nil {
+				return object.TRUE
+			}
+			return object.FALSE
+		case object.IntegerType:
+			if _, err := strconv.ParseInt(tg.Text(), 0, 64); err == nil {
+				return object.TRUE
+			}
+			return object.FALSE
+		case object.StringType:
+			return object.TRUE
+		case object.BooleanType:
+			if tg.Text() == "1" ||
+				tg.Text() == "true" ||
+				tg.Text() == "0" ||
+				tg.Text() == "false" {
+				return object.TRUE
+			}
+			return object.FALSE
+		}
+		return object.FALSE
+	case *object.AttrNode:
+		switch ty {
+		case object.DoubleType:
+			fallthrough
+		case object.DecimalType:
+			if _, err := strconv.ParseFloat(tg.Text(), 64); err == nil {
+				return object.TRUE
+			}
+			return object.FALSE
+		case object.IntegerType:
+			if _, err := strconv.ParseInt(tg.Text(), 0, 64); err == nil {
+				return object.TRUE
+			}
+			return object.FALSE
+		case object.StringType:
+			return object.TRUE
+		case object.BooleanType:
+			if tg.Text() == "1" ||
+				tg.Text() == "true" ||
+				tg.Text() == "0" ||
+				tg.Text() == "false" {
+				return object.TRUE
+			}
+			return object.FALSE
+		}
+		return object.FALSE
+	}
+
+	return object.FALSE
+}
+
+// CastType ..
+func CastType(tg object.Item, ty object.Type) object.Item {
+	bl := IsCastable(tg, ty)
+	if IsError(bl) {
+		return bl
+	}
+
+	blObj := bl.(*object.Boolean)
+	if !blObj.Value() {
+		return NewError("cannot convert %s with value %s to %s", tg.Type(), tg.Inspect(), ty)
+	}
+
+	switch tg := tg.(type) {
+	case *object.Sequence:
+		return CastType(tg.Items[0], ty)
+	case *object.Double:
+		switch ty {
+		case object.DoubleType:
+			return tg
+		case object.DecimalType:
+			return NewDecimal(tg.Value())
+		case object.IntegerType:
+			return NewInteger(int(tg.Value()))
+		case object.StringType:
+			return NewString(strconv.FormatFloat(tg.Value(), 'f', -1, 64))
+		case object.BooleanType:
+			return NewBoolean(tg.Value() != 0)
+		}
+	case *object.Decimal:
+		switch ty {
+		case object.DoubleType:
+			return NewDouble(tg.Value())
+		case object.DecimalType:
+			return tg
+		case object.IntegerType:
+			return NewInteger(int(tg.Value()))
+		case object.StringType:
+			return NewString(strconv.FormatFloat(tg.Value(), 'f', -1, 64))
+		case object.BooleanType:
+			return NewBoolean(tg.Value() != 0)
+		}
+	case *object.Integer:
+		switch ty {
+		case object.DoubleType:
+			return NewDouble(float64(tg.Value()))
+		case object.DecimalType:
+			return NewDecimal(float64(tg.Value()))
+		case object.IntegerType:
+			return tg
+		case object.StringType:
+			return NewString(fmt.Sprintf("%d", tg.Value()))
+		case object.BooleanType:
+			return NewBoolean(tg.Value() != 0)
+		}
+	case *object.String:
+		switch ty {
+		case object.DoubleType:
+			if i, err := strconv.ParseFloat(tg.Value(), 64); err == nil {
+				return NewDouble(i)
+			}
+		case object.DecimalType:
+			if i, err := strconv.ParseFloat(tg.Value(), 64); err == nil {
+				return NewDecimal(i)
+			}
+		case object.IntegerType:
+			if i, err := strconv.ParseInt(tg.Value(), 0, 64); err == nil {
+				return NewInteger(int(i))
+			}
+		case object.StringType:
+			return tg
+		case object.BooleanType:
+			if tg.Value() == "0" || tg.Value() == "false" {
+				return object.FALSE
+			}
+			if tg.Value() == "1" || tg.Value() == "true" {
+				return object.TRUE
+			}
+		}
+	case *object.Boolean:
+		switch ty {
+		case object.DoubleType:
+			if tg.Value() {
+				return NewDouble(1)
+			}
+			return NewDouble(0)
+		case object.DecimalType:
+			if tg.Value() {
+				return NewDecimal(1)
+			}
+			return NewDecimal(0)
+		case object.IntegerType:
+			if tg.Value() {
+				return NewInteger(1)
+			}
+			return NewInteger(0)
+		case object.StringType:
+			if tg.Value() {
+				return NewString("true")
+			}
+			return NewString("false")
+		case object.BooleanType:
+			return tg
+		}
+	case *object.BaseNode:
+		switch ty {
+		case object.DoubleType:
+			if i, err := strconv.ParseFloat(tg.Text(), 64); err == nil {
+				return NewDouble(i)
+			}
+		case object.DecimalType:
+			if i, err := strconv.ParseFloat(tg.Text(), 64); err == nil {
+				return NewDecimal(i)
+			}
+		case object.IntegerType:
+			if i, err := strconv.ParseInt(tg.Text(), 0, 64); err == nil {
+				return NewInteger(int(i))
+			}
+		case object.StringType:
+			return NewString(tg.Text())
+		case object.BooleanType:
+			if tg.Text() == "0" || tg.Text() == "false" {
+				return object.FALSE
+			}
+			if tg.Text() == "1" || tg.Text() == "true" {
+				return object.TRUE
+			}
+		}
+	case *object.AttrNode:
+		switch ty {
+		case object.DoubleType:
+			if i, err := strconv.ParseFloat(tg.Text(), 64); err == nil {
+				return NewDouble(i)
+			}
+		case object.DecimalType:
+			if i, err := strconv.ParseFloat(tg.Text(), 64); err == nil {
+				return NewDecimal(i)
+			}
+		case object.IntegerType:
+			if i, err := strconv.ParseInt(tg.Text(), 0, 64); err == nil {
+				return NewInteger(int(i))
+			}
+		case object.StringType:
+			return NewString(tg.Text())
+		case object.BooleanType:
+			if tg.Text() == "0" || tg.Text() == "false" {
+				return object.FALSE
+			}
+			if tg.Text() == "1" || tg.Text() == "true" {
+				return object.TRUE
+			}
+		}
+	}
+
+	return NewError("cannot convert %s with value %s to %s", tg.Type(), tg.Inspect(), ty)
+}
+
+// IsTypeMatch ..
+func IsTypeMatch(item object.Item, st *ast.SequenceType) object.Item {
+	switch st.TypeID {
+	case 1:
+		seq, ok := item.(*object.Sequence)
+		if !ok {
+			return object.FALSE
+		}
+		if seq.Items != nil {
+			return object.FALSE
+		}
+	case 2:
+		switch st.ItemType.TypeID {
+		case 1:
+			kt := st.ItemType.NodeTest.(*ast.KindTest)
+			switch kt.TypeID {
+			// case
+			}
+		case 2:
+		case 3:
+		case 4:
+		case 5:
+		case 6:
+		case 7:
+		}
+	}
+
+	return object.FALSE
 }
 
 // IsPrecede ..
@@ -1060,7 +1395,7 @@ func CopyFocus(ctx *object.Context) *object.Focus {
 }
 
 // ReplaceFocus ..
-func ReplaceFocus(focus *object.Focus, ctx *object.Context) {
+func ReplaceFocus(ctx *object.Context, focus *object.Focus) {
 	ctx.CSize = focus.CSize
 	ctx.CAxis = focus.CAxis
 	ctx.CPos = focus.CPos

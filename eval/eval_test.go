@@ -378,6 +378,60 @@ func TestQuantifiedExpr(t *testing.T) {
 	}
 }
 
+func TestSequenceTypes(t *testing.T) {
+	seq := testEval("5 cast as xs:string")
+	sequence := seq.(*object.Sequence)
+	if len(sequence.Items) != 1 {
+		t.Errorf("wrong number of items. got=%d, expected=1", len(sequence.Items))
+	}
+	item, ok := sequence.Items[0].(*object.String)
+	if !ok {
+		t.Errorf("casted item type should be string")
+	}
+	if item.Value() != "5" {
+		t.Errorf("casted item value should be 5. got=%s", item.Value())
+	}
+
+	seq2 := testEval("1.23 cast as xs:string")
+	sequence2 := seq2.(*object.Sequence)
+	if len(sequence2.Items) != 1 {
+		t.Errorf("wrong number of items. got=%d, expected=1", len(sequence2.Items))
+	}
+	item2, ok := sequence2.Items[0].(*object.String)
+	if !ok {
+		t.Errorf("casted item type should be string")
+	}
+	if item2.Value() != "1.23" {
+		t.Errorf("casted item value should be 1.23. got=%s", item2.Value())
+	}
+
+	seq3 := testEval("'1' castable as xs:boolean")
+	sequence3 := seq3.(*object.Sequence)
+	if len(sequence3.Items) != 1 {
+		t.Errorf("wrong number of items. got=%d, expected=1", len(sequence3.Items))
+	}
+	item3, ok := sequence3.Items[0].(*object.Boolean)
+	if !ok {
+		t.Errorf("the result type should be boolean")
+	}
+	if !item3.Value() {
+		t.Errorf("the result value should be true")
+	}
+
+	seq4 := testEvalXML2("//age[.=25] castable as xs:boolean")
+	sequence4 := seq4.(*object.Sequence)
+	if len(sequence4.Items) != 1 {
+		t.Errorf("wrong number of items. got=%d, expected=1", len(sequence4.Items))
+	}
+	item4, ok := sequence4.Items[0].(*object.Boolean)
+	if !ok {
+		t.Errorf("the result type should be boolean")
+	}
+	if item4.Value() {
+		t.Errorf("the result value should be false")
+	}
+}
+
 func TestDocNode(t *testing.T) {
 	tests := []string{
 		"/",
@@ -1160,6 +1214,31 @@ func TestPathPredicateExpr(t *testing.T) {
 	if attr50.Key() != "category" || attr50.Inspect() != "1" {
 		t.Errorf("expected attr: %s='%s'", attr50.Key(), attr50.Inspect())
 	}
+
+	seq51 := testEvalXML2("//age[.=25]")
+	sequence51 := seq51.(*object.Sequence)
+	if len(sequence51.Items) != 1 {
+		t.Errorf("wrong number of items. got=%d, expected=1", len(sequence51.Items))
+	}
+	item51, ok := sequence51.Items[0].(*object.BaseNode)
+	if !ok {
+		t.Errorf("node type should be BaseNode")
+	}
+	if item51.Text() != "25" {
+		t.Errorf("node text should be 25. got=%s", item51.Text())
+	}
+
+	seq52 := testEvalXML2("//age[.>'25']")
+	sequence52 := seq52.(*object.Sequence)
+	if len(sequence52.Items) != 4 {
+		t.Errorf("wrong number of items. got=%d, expected=4", len(sequence52.Items))
+	}
+
+	seq53 := testEvalXML2("//age[.>25]")
+	sequence53 := seq53.(*object.Sequence)
+	if len(sequence53.Items) != 4 {
+		t.Errorf("wrong number of items. got=%d, expected=4", len(sequence53.Items))
+	}
 }
 
 func TestKindTest(t *testing.T) {
@@ -1717,6 +1796,24 @@ func TestPathWithTypes(t *testing.T) {
 	}
 }
 
+func TestBIF(t *testing.T) {
+	seq := testEvalXML2("//employee/node-name()")
+	sequence := seq.(*object.Sequence)
+	if len(sequence.Items) != 5 {
+		t.Errorf("wrong number of items. got=%d, expected=5", len(sequence.Items))
+	}
+
+	seq2 := testEvalXML2("//employee/*/node-name()")
+	sequence2 := seq2.(*object.Sequence)
+	if len(sequence2.Items) != 15 {
+		t.Errorf("wrong number of items. got=%d, expected=15", len(sequence2.Items))
+	}
+	item2 := sequence2.Items[0].(*object.String)
+	if item2.Value() != "first_name" {
+		t.Errorf("node name should be first_name")
+	}
+}
+
 func testEval(input string) object.Item {
 	l := lexer.New(input)
 	p := parser.New(l)
@@ -1724,9 +1821,7 @@ func testEval(input string) object.Item {
 	ctx := object.NewContext()
 
 	docFunc := bif.F["fn:doc"]
-	str := &object.String{}
-	str.SetValue("testdata/quotes-1.html")
-	err := docFunc(ctx, str)
+	err := docFunc(ctx, bif.NewString("testdata/quotes-1.html"))
 	if err != nil {
 		return err
 	}
@@ -1741,9 +1836,7 @@ func testEvalXML(input string) object.Item {
 	ctx := object.NewContext()
 
 	docFunc := bif.F["fn:doc"]
-	str := &object.String{}
-	str.SetValue("testdata/company.xml")
-	err := docFunc(ctx, str)
+	err := docFunc(ctx, bif.NewString("testdata/company.xml"))
 	if err != nil {
 		return err
 	}
@@ -1758,9 +1851,7 @@ func testEvalXML2(input string) object.Item {
 	ctx := object.NewContext()
 
 	docFunc := bif.F["fn:doc"]
-	str := &object.String{}
-	str.SetValue("testdata/company_2.xml")
-	err := docFunc(ctx, str)
+	err := docFunc(ctx, bif.NewString("testdata/company_2.xml"))
 	if err != nil {
 		return err
 	}

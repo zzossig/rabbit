@@ -88,9 +88,13 @@ func Eval(expr ast.ExprSingle, ctx *object.Context) object.Item {
 	case *ast.Wildcard:
 		return evalWildcard(expr, ctx)
 	case *ast.InstanceofExpr:
+		return evalInstanceofExpr(expr, ctx)
 	case *ast.CastExpr:
+		return evalCastExpr(expr, ctx)
 	case *ast.CastableExpr:
+		return evalCastableExpr(expr, ctx)
 	case *ast.TreatExpr:
+		return evalTreatExpr(expr, ctx)
 	}
 
 	return bif.NewError("not a valid xpath expression")

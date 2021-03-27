@@ -9,7 +9,7 @@ import (
 	"golang.org/x/net/html"
 )
 
-func doc(ctx *object.Context, args ...object.Item) object.Item {
+func fnDoc(ctx *object.Context, args ...object.Item) object.Item {
 	uri := args[0].(*object.String)
 	docNode := &object.BaseNode{}
 	var err error
