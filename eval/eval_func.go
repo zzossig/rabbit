@@ -10,9 +10,20 @@ import (
 func evalFunctionLiteral(expr ast.ExprSingle, ctx *object.Context) object.Item {
 	switch expr := expr.(type) {
 	case *ast.NamedFunctionRef:
-		return &object.FuncNamed{Name: expr.EQName, Num: expr.IntegerLiteral.Value}
+		if expr.EQName.Prefix() == "" {
+			expr.EQName.SetPrefix("fn")
+		}
+
+		builtin, ok := bif.F[expr.EQName.Value()]
+		if !ok {
+			return bif.NewError("function not found: %s", expr.EQName.Value())
+		}
+
+		return &object.FuncNamed{Name: expr.EQName, Num: expr.IntegerLiteral.Value, Func: &builtin}
 	case *ast.InlineFunctionExpr:
-		return &object.FuncInline{Body: &expr.FunctionBody, PL: &expr.ParamList}
+		fi := &object.FuncInline{Body: &expr.FunctionBody, PL: &expr.ParamList}
+		fi.Fn = Eval
+		return fi
 	}
 	return object.NIL
 }
@@ -31,7 +42,7 @@ func evalFunctionCall(expr ast.ExprSingle, ctx *object.Context) object.Item {
 
 	builtin, ok := bif.F[fc.EQName.Value()]
 	if !ok {
-		return bif.NewError("function not found: " + fc.EQName.Value())
+		return bif.NewError("function not found: %s", fc.EQName.Value())
 	}
 
 	pcnt := 0
@@ -49,6 +60,7 @@ func evalFunctionCall(expr ast.ExprSingle, ctx *object.Context) object.Item {
 		fp.Name = fc.EQName
 		fp.Args = args
 		fp.PCnt = pcnt
+		fp.Context = ctx
 
 		return fp
 	}

@@ -33,12 +33,40 @@ var F = map[string]object.Func{
 	"op:numeric-greater-than": numericGreaterThan,
 
 	// 4.4
-	"fn:abs": fnAbs,
+	"fn:abs":                fnAbs,
+	"fn:ceiling":            fnCeiling,
+	"fn:floor":              fnFloor,
+	"fn:round":              fnRound,
+	"fn:round-half-to-even": fnRoundHTE,
+
+	// 4.5
+	"fn:number": fnNumber,
+
+	// 4.8
+	"math:pi":    mathPI,
+	"math:exp":   mathExp,
+	"math:exp2":  mathExp2,
+	"math:log":   mathLog,
+	"math:log2":  mathLog2,
+	"math:log10": mathLog10,
+	"math:pow":   mathPow,
+	"math:sqrt":  mathSqrt,
+	"math:sin":   mathSin,
+	"math:cos":   mathCos,
+	"math:tan":   mathTan,
+	"math:asin":  mathAsin,
+	"math:acos":  mathAcos,
+	"math:atan":  mathAtan,
+	"math:atan2": mathAtan2,
 
 	// 5.4
-	"fn:concat":     fnConcat,
-	"fn:upper-case": fnUpperCase,
-	"fn:lower-case": fnLowerCase,
+	"fn:concat":          fnConcat,
+	"fn:string-join":     fnStringJoin,
+	"fn:substring":       fnSubstring,
+	"fn:string-length":   fnStringLength,
+	"fn:normalize-space": fnNormalizeSpace,
+	"fn:upper-case":      fnUpperCase,
+	"fn:lower-case":      fnLowerCase,
 
 	// 7
 	"fn:boolean": fnBoolean,
@@ -103,7 +131,7 @@ func IsItem(item object.Item) bool {
 	if item == nil {
 		return false
 	}
-	return IsAnyAtomic(item) || IsNode(item) || IsFunc(item)
+	return IsAnyAtomic(item) || IsNode(item) || IsAnyFunc(item)
 }
 
 // IsSeq ..
@@ -137,9 +165,7 @@ func IsFunc(item object.Item) bool {
 	if item == nil {
 		return false
 	}
-	return item.Type() == object.FuncType ||
-		item.Type() == object.ArrayType ||
-		item.Type() == object.MapType
+	return item.Type() == object.FuncType
 }
 
 // IsAnyAtomic ..
@@ -240,15 +266,15 @@ func IsNodeSeq(item object.Item) bool {
 	return true
 }
 
-// IsFuncSeq ..
-func IsFuncSeq(item object.Item) bool {
+// IsAnyFuncSeq ..
+func IsAnyFuncSeq(item object.Item) bool {
 	seq, ok := item.(*object.Sequence)
 	if !ok {
 		return false
 	}
 
 	for _, i := range seq.Items {
-		if !IsFunc(i) {
+		if !IsAnyFunc(i) {
 			return false
 		}
 	}
@@ -581,7 +607,7 @@ func CastType(tg object.Item, ty object.Type) object.Item {
 		case object.IntegerType:
 			return tg
 		case object.StringType:
-			return NewString(fmt.Sprintf("%d", tg.Value()))
+			return NewString(strconv.FormatInt(int64(tg.Value()), 10))
 		case object.BooleanType:
 			return NewBoolean(tg.Value() != 0)
 		}
@@ -1572,9 +1598,9 @@ func IsTypeMatch(item object.Item, st *ast.SequenceType) object.Item {
 			return NewBoolean(IsItem(item))
 		case 3:
 			if item.Type() == object.SequenceType {
-				return NewBoolean(IsOccurMatch(item, oi.Token) && IsFuncSeq(item))
+				return NewBoolean(IsOccurMatch(item, oi.Token) && IsAnyFuncSeq(item))
 			}
-			return NewBoolean(IsFunc(item))
+			return NewBoolean(IsAnyFunc(item))
 		case 4:
 			if item.Type() == object.SequenceType {
 				return NewBoolean(IsOccurMatch(item, oi.Token) && IsMapSeq(item))
@@ -1677,4 +1703,20 @@ func ReplaceFocus(ctx *object.Context, focus *object.Focus) {
 	ctx.CSize = focus.CSize
 	ctx.CAxis = focus.CAxis
 	ctx.CPos = focus.CPos
+}
+
+// UnwrapSeq ..
+func UnwrapSeq(item object.Item) []object.Item {
+	if seq, ok := item.(*object.Sequence); ok {
+		var items []object.Item
+		for _, it := range seq.Items {
+			if it.Type() == object.SequenceType {
+				items = append(items, UnwrapSeq(it)...)
+			} else {
+				items = append(items, it)
+			}
+		}
+		return items
+	}
+	return []object.Item{item}
 }

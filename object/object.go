@@ -150,6 +150,7 @@ type FuncNamed struct {
 	Name ast.EQName
 	Num  int
 	*Context
+	*Func
 }
 
 func (fn *FuncNamed) Type() Type      { return FuncType }
@@ -159,6 +160,7 @@ func (fn *FuncNamed) Inspect() string { return fmt.Sprintf("%s#%d", fn.Name.Valu
 type FuncInline struct {
 	PL   *ast.ParamList
 	Body *ast.EnclosedExpr
+	Fn   Ev
 	*Context
 }
 

@@ -43,13 +43,6 @@ func fnString(ctx *object.Context, args ...object.Item) object.Item {
 		return seq
 	}
 
-	if ctx.Doc != nil {
-		texts := collectText(nil, ctx.Doc)
-		str := combineTexts(texts)
-		seq.Items = append(seq.Items, NewString(str))
-		return seq
-	}
-
 	return NewError("context node is not defined")
 }
 

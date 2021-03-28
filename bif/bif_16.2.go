@@ -40,7 +40,34 @@ func fnForEachPair(ctx *object.Context, args ...object.Item) object.Item {
 
 	switch action := action.(type) {
 	case *object.FuncNamed:
+		f := *action.Func
+
+		if action.Num != 2 {
+			return NewError("wrong number of parameters. got=#%d, expected=#2", action.Num)
+		}
+
+		for i := 0; i < minLen; i++ {
+			a := []object.Item{}
+			for j := 0; j < action.Num; j++ {
+				a = append(a, seq[j].Items[i])
+			}
+
+			result.Items = append(result.Items, f(ctx, a...))
+		}
 	case *object.FuncInline:
+		if len(action.PL.Params) != 2 {
+			return NewError("wrong number of parameters. got=%d, expected=2", len(action.PL.Params))
+		}
+
+		enclosedCtx := object.NewEnclosedContext(ctx)
+		for i := 0; i < minLen; i++ {
+			for j, param := range action.PL.Params {
+				enclosedCtx.Set(param.Value(), seq[j].Items[i])
+			}
+
+			a := action.Fn(action.Body, enclosedCtx)
+			result.Items = append(result.Items, a)
+		}
 	case *object.FuncPartial:
 		f := *action.Func
 
@@ -63,7 +90,7 @@ func fnForEachPair(ctx *object.Context, args ...object.Item) object.Item {
 				case object.StringType:
 					a = append(a, arg)
 				case object.VarrefType:
-					it, ok := action.Context.Get(arg.Inspect())
+					it, ok := ctx.Get(arg.Inspect())
 					if !ok {
 						return NewError("variable not defined: $%s", arg.Inspect())
 					}
@@ -76,9 +103,8 @@ func fnForEachPair(ctx *object.Context, args ...object.Item) object.Item {
 
 			result.Items = append(result.Items, f(ctx, a...))
 		}
-
 	default:
-		return NewError("not supported type in for-each-pair, got %v", action.Type())
+		return NewError("not supported type in for-each-pair, got %s", action.Type())
 	}
 
 	return &result

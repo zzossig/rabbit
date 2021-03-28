@@ -2,6 +2,7 @@ package eval
 
 import (
 	"fmt"
+	"math"
 	"strings"
 	"testing"
 
@@ -105,6 +106,34 @@ func TestFunctionCall(t *testing.T) {
 		{
 			`for-each-pair( (1 to 2), ( 'A', 'B', 'C' ), concat( ?,  ?, '--' ) )`,
 			[]interface{}{"1A--", "2B--"},
+		},
+		{
+			"fn:for-each-pair(('a', 'b', 'c'), ('x', 'y', 'z'), concat#2)",
+			[]interface{}{"ax", "by", "cz"},
+		},
+		{
+			"fn:for-each-pair(1 to 5, 1 to 5, function($a, $b){10*$a + $b})",
+			[]interface{}{11, 22, 33, 44, 55},
+		},
+		{
+			"fn:concat(1,2,3)",
+			[]interface{}{"123"},
+		},
+		{
+			"fn:concat(1,2,3,'a')",
+			[]interface{}{"123a"},
+		},
+		{
+			"string-join((1,2,3),'a')",
+			[]interface{}{"1a2a3"},
+		},
+		{
+			"string-join(1 to 5)",
+			[]interface{}{"12345"},
+		},
+		{
+			"fn:string-join(1 to 5, ', ')",
+			[]interface{}{"1, 2, 3, 4, 5"},
 		},
 	}
 
@@ -1901,52 +1930,146 @@ func TestPathWithTypes(t *testing.T) {
 }
 
 func TestBIF(t *testing.T) {
-	// seq := testEvalXML2("//employee/node-name()")
-	// sequence := seq.(*object.Sequence)
-	// if len(sequence.Items) != 5 {
-	// 	t.Errorf("wrong number of items. got=%d, expected=5", len(sequence.Items))
-	// }
+	seq := testEvalXML2("//employee/node-name()")
+	sequence := seq.(*object.Sequence)
+	if len(sequence.Items) != 5 {
+		t.Errorf("wrong number of items. got=%d, expected=5", len(sequence.Items))
+	}
 
-	// seq2 := testEvalXML2("//employee/*/node-name()")
-	// sequence2 := seq2.(*object.Sequence)
-	// if len(sequence2.Items) != 15 {
-	// 	t.Errorf("wrong number of items. got=%d, expected=15", len(sequence2.Items))
-	// }
-	// item2 := sequence2.Items[0].(*object.String)
-	// if item2.Value() != "first_name" {
-	// 	t.Errorf("node name should be first_name")
-	// }
+	seq2 := testEvalXML2("//employee/*/node-name()")
+	sequence2 := seq2.(*object.Sequence)
+	if len(sequence2.Items) != 15 {
+		t.Errorf("wrong number of items. got=%d, expected=15", len(sequence2.Items))
+	}
+	item2 := sequence2.Items[0].(*object.String)
+	if item2.Value() != "first_name" {
+		t.Errorf("node name should be first_name")
+	}
 
-	// seq3 := testEvalXML2("//employee/string()")
-	// sequence3 := seq3.(*object.Sequence)
-	// if len(sequence3.Items) != 5 {
-	// 	t.Errorf("wrong number of items. got=%d, expected=5", len(sequence3.Items))
-	// }
+	seq3 := testEvalXML2("//employee/string()")
+	sequence3 := seq3.(*object.Sequence)
+	if len(sequence3.Items) != 5 {
+		t.Errorf("wrong number of items. got=%d, expected=5", len(sequence3.Items))
+	}
 
-	// seq4 := testEvalXML2("//employee/data()")
-	// sequence4 := seq4.(*object.Sequence)
-	// if len(sequence4.Items) != 5 {
-	// 	t.Errorf("wrong number of items. got=%d, expected=5", len(sequence4.Items))
-	// }
-	// item4 := sequence4.Items[0].(*object.String)
-	// if item4.Value() != "ChoiJack25" {
-	// 	t.Errorf("first item value should be ChoiJack25. got=%s", item4.Value())
-	// }
+	seq4 := testEvalXML2("//employee/data()")
+	sequence4 := seq4.(*object.Sequence)
+	if len(sequence4.Items) != 5 {
+		t.Errorf("wrong number of items. got=%d, expected=5", len(sequence4.Items))
+	}
+	item4 := sequence4.Items[0].(*object.String)
+	if item4.Value() != "ChoiJack25" {
+		t.Errorf("first item value should be ChoiJack25. got=%s", item4.Value())
+	}
 
-	// seq5 := testEvalXML2("//employee/string('haha')")
-	// sequence5 := seq5.(*object.Sequence)
-	// if len(sequence5.Items) != 5 {
-	// 	t.Errorf("wrong number of items. got=%d, expected=5", len(sequence5.Items))
-	// }
-	// item5 := sequence5.Items[0].(*object.String)
-	// if item5.Value() != "haha" {
-	// 	t.Errorf("first item value should be haha. got=%s", item5.Value())
-	// }
+	seq5 := testEvalXML2("//employee/string('haha')")
+	sequence5 := seq5.(*object.Sequence)
+	if len(sequence5.Items) != 5 {
+		t.Errorf("wrong number of items. got=%d, expected=5", len(sequence5.Items))
+	}
+	item5 := sequence5.Items[0].(*object.String)
+	if item5.Value() != "haha" {
+		t.Errorf("first item value should be haha. got=%s", item5.Value())
+	}
 
 	seq6 := testEvalXML2("/base-uri()")
 	sequence6 := seq6.(*object.Sequence)
 	if len(sequence6.Items) != 1 {
 		t.Errorf("wrong number of items. got=%d, expected=1", len(sequence6.Items))
+	}
+
+	seq7 := testEvalXML2("fn:ceiling(1.1)")
+	item7 := seq7.(*object.Sequence).Items[0].(*object.Decimal)
+	if item7.Value() != 2 {
+		t.Errorf("result value should be 2. got=%f", item7.Value())
+	}
+
+	seq8 := testEvalXML2("floor(1.8e0)")
+	item8 := seq8.(*object.Sequence).Items[0].(*object.Double)
+	if item8.Value() != 1 {
+		t.Errorf("result value should be 1. got=%f", item8.Value())
+	}
+
+	seq9 := testEvalXML2("fn:round(1.5)")
+	item9 := seq9.(*object.Sequence).Items[0].(*object.Decimal)
+	if item9.Value() != 2 {
+		t.Errorf("result value should be 2. got=%f", item9.Value())
+	}
+
+	seq10 := testEvalXML2("round-half-to-even(12.5)")
+	item10 := seq10.(*object.Sequence).Items[0].(*object.Decimal)
+	if item10.Value() != 12 {
+		t.Errorf("result value should be 12. got=%f", item10.Value())
+	}
+
+	seq11 := testEvalXML2("/number()")
+	sequence11 := seq11.(*object.Sequence)
+	if len(sequence11.Items) != 1 {
+		t.Errorf("wrong number of items. got=%d, expected=1", len(sequence11.Items))
+	}
+	item11 := sequence11.Items[0].(*object.Double)
+	if !math.IsNaN(item11.Value()) {
+		t.Errorf("item value should be NaN")
+	}
+
+	seq12 := testEvalXML2("//employee/fn:number(1)")
+	sequence12 := seq12.(*object.Sequence)
+	if len(sequence12.Items) != 5 {
+		t.Errorf("wrong number of items. got=%d, expected=5", len(sequence12.Items))
+	}
+	item12 := sequence12.Items[0].(*object.Double)
+	if item12.Value() != 1 {
+		t.Errorf("first item value should be 1")
+	}
+
+	seq13 := testEvalXML2("//age/number()")
+	sequence13 := seq13.(*object.Sequence)
+	if len(sequence13.Items) != 5 {
+		t.Errorf("wrong number of items. got=%d, expected=5", len(sequence13.Items))
+	}
+	item13 := sequence13.Items[0].(*object.Double)
+	if item13.Value() != 25 {
+		t.Errorf("first item value should be 25")
+	}
+
+	seq14 := testEvalXML2("(//age/number(), number(1))")
+	sequence14 := seq14.(*object.Sequence)
+	if len(sequence14.Items) != 6 {
+		t.Errorf("wrong number of items. got=%d, expected=6", len(sequence14.Items))
+	}
+	item14_1 := sequence14.Items[0].(*object.Double)
+	if item14_1.Value() != 25 {
+		t.Errorf("first item value should be 25")
+	}
+	item14_2 := sequence14.Items[5].(*object.Double)
+	if item14_2.Value() != 1 {
+		t.Errorf("last item value should be 1")
+	}
+
+	seq15 := testEvalXML2("(//age/number(), number(1), (5,6, (7,8)))")
+	sequence15 := seq15.(*object.Sequence)
+	if len(sequence15.Items) != 10 {
+		t.Errorf("wrong number of items. got=%d, expected=10", len(sequence15.Items))
+	}
+
+	seq16 := testEvalXML2("(//age/number(), number(1), //employee/number())")
+	sequence16 := seq16.(*object.Sequence)
+	if len(sequence16.Items) != 11 {
+		t.Errorf("wrong number of items. got=%d, expected=11", len(sequence16.Items))
+	}
+	item16_1 := sequence16.Items[5].(*object.Double)
+	if item16_1.Value() != 1 {
+		t.Errorf("item value should be 1")
+	}
+	item16_2 := sequence16.Items[10].(*object.Double)
+	if !math.IsNaN(item16_2.Value()) {
+		t.Errorf("item value should be nan")
+	}
+
+	seq17 := testEvalXML2("math:sqrt(2)")
+	item17 := seq17.(*object.Sequence).Items[0].(*object.Double)
+	if fmt.Sprintf("%.3f", item17.Value()) != "1.414" {
+		t.Errorf("item value should be 1.414. got=%.3f", item17.Value())
 	}
 }
 

@@ -15,7 +15,14 @@ func evalXPath(expr *ast.XPath, ctx *object.Context) object.Item {
 
 		switch item := item.(type) {
 		case *object.Sequence:
-			xpath.Items = append(xpath.Items, item.Items...)
+			for _, it := range item.Items {
+				if bif.IsSeq(it) {
+					xpath.Items = append(xpath.Items, bif.UnwrapSeq(it)...)
+				} else {
+					xpath.Items = append(xpath.Items, it)
+				}
+			}
+
 		default:
 			xpath.Items = append(xpath.Items, item)
 		}

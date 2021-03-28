@@ -1,31 +1,82 @@
 package bif
 
 import (
-	"strconv"
 	"strings"
 
 	"github.com/zzossig/xpath/object"
 )
 
 func fnConcat(ctx *object.Context, args ...object.Item) object.Item {
-	var sb strings.Builder
-	for _, arg := range args {
-		switch arg := arg.(type) {
-		case *object.Integer:
-			val := strconv.FormatInt(int64(arg.Value()), 10)
-			sb.WriteString(val)
-		case *object.Decimal:
-			val := strconv.FormatFloat(arg.Value(), 'f', -1, 64)
-			sb.WriteString(val)
-		case *object.Double:
-			val := strconv.FormatFloat(arg.Value(), 'f', -1, 64)
-			sb.WriteString(val)
-		default:
-			sb.WriteString(arg.Inspect())
-		}
-
+	if len(args) < 2 {
+		return NewError("too few parameters for function call: fn:concat")
 	}
-	return NewString(sb.String())
+
+	seq := &object.Sequence{}
+	seq.Items = append(seq.Items, args...)
+	return fnStringJoin(ctx, seq)
+}
+
+func fnStringJoin(ctx *object.Context, args ...object.Item) object.Item {
+	if len(args) == 0 {
+		return NewError("too few parameters for function call: fn:string-join")
+	}
+	if len(args) > 2 {
+		return NewError("too many parameters for function call: fn:string-join")
+	}
+
+	if len(args) == 1 {
+		if IsSeq(args[0]) {
+			var sb strings.Builder
+			seq := args[0].(*object.Sequence)
+
+			for _, item := range seq.Items {
+				str := CastType(item, object.StringType)
+				if IsError(str) {
+					return str
+				}
+				strObj := str.(*object.String)
+				sb.WriteString(strObj.Value())
+			}
+
+			return NewString(sb.String())
+		} else {
+			return CastType(args[0], object.StringType)
+		}
+	}
+
+	if args[1].Type() != object.StringType {
+		return NewError("cannot match item type with required type")
+	}
+	if !IsSeq(args[0]) {
+		return CastType(args[0], object.StringType)
+	}
+
+	var elems []string
+	sep := args[1].(*object.String)
+
+	seq := args[0].(*object.Sequence)
+	for _, item := range seq.Items {
+		str := CastType(item, object.StringType)
+		if IsError(str) {
+			return str
+		}
+		strObj := str.(*object.String)
+		elems = append(elems, strObj.Value())
+	}
+
+	return NewString(strings.Join(elems, sep.Value()))
+}
+
+func fnSubstring(ctx *object.Context, args ...object.Item) object.Item {
+	return nil
+}
+
+func fnStringLength(ctx *object.Context, args ...object.Item) object.Item {
+	return nil
+}
+
+func fnNormalizeSpace(ctx *object.Context, args ...object.Item) object.Item {
+	return nil
 }
 
 func fnUpperCase(ctx *object.Context, args ...object.Item) object.Item {

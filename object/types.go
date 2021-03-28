@@ -1,7 +1,12 @@
 package object
 
+import "github.com/zzossig/xpath/ast"
+
 // Func represents function type
 type Func func(ctx *Context, args ...Item) Item
+
+// Ev represents Eval function
+type Ev func(expr ast.ExprSingle, ctx *Context) Item
 
 // Type represents Item Type
 type Type string
