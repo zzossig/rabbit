@@ -95,8 +95,19 @@ var F = map[string]object.Func{
 	"fn:reverse":       fnReverse,
 	"fn:subsequence":   fnSubsequence,
 
+	// 14.4
+	"fn:count": fnCount,
+	"fn:avg":   fnAvg,
+	"fn:max":   fnMax,
+	"fn:min":   fnMin,
+	"fn:sum":   fnSum,
+
 	// 14
 	"fn:doc": fnDoc,
+
+	// 15
+	"fn:position": fnPosition,
+	"fn:last":     fnLast,
 
 	// 16.2
 	"fn:for-each-pair": fnForEachPair,
@@ -260,6 +271,17 @@ func IsArray(item object.Item) bool {
 		return false
 	}
 	return item.Type() == object.ArrayType
+}
+
+// IsArrayEmpty ..
+func IsArrayEmpty(item object.Item) bool {
+	if item == nil {
+		return false
+	}
+	if item.Type() != object.ArrayType {
+		return false
+	}
+	return item.Inspect() == "[]"
 }
 
 // IsString ..

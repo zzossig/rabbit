@@ -143,10 +143,12 @@ func evalPredicate(it object.Item, pred *ast.Predicate, ctx *object.Context) obj
 	default:
 		src = append(src, it)
 	}
+	ctx.CSize = len(src)
 
 	var items []object.Item
 	for i, s := range src {
 		ctx.CItem = s
+		ctx.CPos = i + 1
 
 		evaled := Eval(&pred.Expr, ctx).(*object.Sequence)
 		if len(evaled.Items) != 1 {

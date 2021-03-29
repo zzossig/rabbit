@@ -93,6 +93,32 @@ func TestFunctionCall(t *testing.T) {
 		input    string
 		expected []interface{}
 	}{
+		{"(1 to 20)[fn:position() = 20]", []interface{}{20}},
+		{"(1 to 20)[fn:position() = 1]", []interface{}{1}},
+		{"(1 to 20)[fn:last() - 1]", []interface{}{19}},
+		{"fn:min([true(), false()])", []interface{}{false}},
+		{"fn:min((7.5,1.0,9.9))", []interface{}{1.0}},
+		{"fn:min(('c','b','a','z'))", []interface{}{"a"}},
+		{"fn:min((1,2,3,4,5))", []interface{}{1}},
+		{"fn:max([true(), false()])", []interface{}{true}},
+		{"fn:max((7.5,1.0,9.9))", []interface{}{9.9}},
+		{"fn:max(('c','b','a','z'))", []interface{}{"z"}},
+		{"fn:max((1,2,3,4,5))", []interface{}{5}},
+		{"fn:avg(())", []interface{}{}},
+		{"fn:avg((1,2.9,3))", []interface{}{2.3}},
+		{"fn:avg((1,2,3))", []interface{}{2}},
+		{"fn:avg((1.1, 2.2, 3.3))", []interface{}{2.2}},
+		{"fn:sum((1.1, 2.2, 3.3))", []interface{}{6.6}},
+		{"fn:sum(1 to 3)", []interface{}{6}},
+		{"fn:sum(())", []interface{}{0}},
+		{"fn:sum((1,2,3))", []interface{}{6}},
+		{"fn:sum([1,2,3])", []interface{}{6}},
+		{"fn:count([1,2,3])", []interface{}{1}},
+		{"fn:count([])", []interface{}{1}},
+		{"let $seq2 := (98.5, 98.3, 98.9) return fn:count($seq2[. > 100])", []interface{}{0}},
+		{"let $seq2 := (98.5, 98.3, 98.9) return fn:count($seq2)", []interface{}{3}},
+		{"let $seq3 := () return fn:count($seq3)", []interface{}{0}},
+		{"let $seq1 := ($item1, $item2) return fn:count($seq1)", []interface{}{2}},
 		{"let $seq := ('item1', 'item2', 'item3', 'item4', 'item5') return subsequence($seq,-2,-1)", []interface{}{}},
 		{"let $seq := ('item1', 'item2', 'item3', 'item4', 'item5') return subsequence($seq,-2,0)", []interface{}{}},
 		{"let $seq := ('item1', 'item2', 'item3', 'item4', 'item5') return subsequence($seq,-2,5)", []interface{}{"item1", "item2"}},
@@ -2253,6 +2279,28 @@ func TestBIF(t *testing.T) {
 	item25 := sequence25.Items[0].(*object.String)
 	if item25.Value() != "Choi Jack 25 Lee Hwa 30" {
 		t.Errorf("the result value should be 'Choi Jack 25 Lee Hwa 30'. got=%s", item25.Value())
+	}
+
+	seq26 := testEvalXML2("//last()")
+	sequence26 := seq26.(*object.Sequence)
+	if len(sequence26.Items) != 72 {
+		t.Errorf("wrong number of items. got=%d, expected=72", len(sequence26.Items))
+	}
+
+	seq27 := testEvalXML2("//age/last()")
+	sequence27 := seq27.(*object.Sequence)
+	if len(sequence27.Items) != 5 {
+		t.Errorf("wrong number of items. got=%d, expected=5", len(sequence27.Items))
+	}
+	item27 := sequence27.Items[0].(*object.Integer)
+	if item27.Value() != 5 {
+		t.Errorf("first item value should be 5")
+	}
+
+	seq28 := testEvalXML2("//age[position()=1]")
+	sequence28 := seq28.(*object.Sequence)
+	if len(sequence28.Items) != 5 {
+		t.Errorf("wrong number of items. got=%d, expected=5", len(sequence28.Items))
 	}
 }
 

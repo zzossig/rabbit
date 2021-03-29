@@ -15,6 +15,7 @@ func evalPathExpr(expr ast.ExprSingle, ctx *object.Context) object.Item {
 	pe := expr.(*ast.PathExpr)
 	ctx.CNode = []object.Node{ctx.Doc}
 	ctx.CItem = ctx.Doc
+	ctx.CSize = 1
 
 	if pe.Token.Type == token.DSLASH {
 		nodes := []object.Node{ctx.Doc}
@@ -26,6 +27,7 @@ func evalPathExpr(expr ast.ExprSingle, ctx *object.Context) object.Item {
 		}
 
 		ctx.CNode = nodes
+		ctx.CSize = len(nodes)
 		ctx.CAxis = "child::"
 	} else {
 		ctx.CAxis = "child::"
@@ -65,6 +67,7 @@ func evalRelativePathExpr(expr ast.ExprSingle, ctx *object.Context) object.Item 
 		}
 
 		ctx.CNode = nodes
+		ctx.CSize = len(nodes)
 		ctx.CAxis = "child::"
 	} else {
 		ctx.CAxis = "child::"
