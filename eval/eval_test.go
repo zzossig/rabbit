@@ -93,6 +93,73 @@ func TestFunctionCall(t *testing.T) {
 		input    string
 		expected []interface{}
 	}{
+		{"let $seq := ('item1', 'item2', 'item3', 'item4', 'item5') return subsequence($seq,-2,-1)", []interface{}{}},
+		{"let $seq := ('item1', 'item2', 'item3', 'item4', 'item5') return subsequence($seq,-2,0)", []interface{}{}},
+		{"let $seq := ('item1', 'item2', 'item3', 'item4', 'item5') return subsequence($seq,-2,5)", []interface{}{"item1", "item2"}},
+		{"let $seq := ('item1', 'item2', 'item3', 'item4', 'item5') return subsequence($seq,1,5)", []interface{}{"item1", "item2", "item3", "item4", "item5"}},
+		{"let $seq := ('item1', 'item2', 'item3', 'item4', 'item5') return subsequence($seq,0,5)", []interface{}{"item1", "item2", "item3", "item4"}},
+		{"let $seq := ('item1', 'item2', 'item3', 'item4', 'item5') return subsequence($seq, -1)", []interface{}{"item1", "item2", "item3", "item4", "item5"}},
+		{"let $seq := ('item1', 'item2', 'item3', 'item4', 'item5') return subsequence($seq, 4)", []interface{}{"item4", "item5"}},
+		{"let $seq := ('item1', 'item2', 'item3', 'item4', 'item5') return subsequence($seq, 3, 2)", []interface{}{"item3", "item4"}},
+		{"let $abc := ('a', 'b', 'c') return reverse(([1,2,3],[4,5,6]))", []interface{}{[]int{4, 5, 6}, []int{1, 2, 3}}},
+		{"let $abc := ('a', 'b', 'c') return fn:reverse([1,2,3])", []interface{}{[]int{1, 2, 3}}},
+		{"let $abc := ('a', 'b', 'c') return fn:reverse(())", []interface{}{}},
+		{"let $abc := ('a', 'b', 'c') return reverse(('hello'))", []interface{}{"hello"}},
+		{"let $abc := ('a', 'b', 'c') return fn:reverse($abc)", []interface{}{"c", "b", "a"}},
+		{"let $abc := ('a', 'b', 'c') return fn:insert-before($abc, 4, 'z')", []interface{}{"a", "b", "c", "z"}},
+		{"let $abc := ('a', 'b', 'c') return fn:insert-before($abc, 3, 'z')", []interface{}{"a", "b", "z", "c"}},
+		{"let $abc := ('a', 'b', 'c') return fn:insert-before($abc, 2, 'z')", []interface{}{"a", "z", "b", "c"}},
+		{"let $abc := ('a', 'b', 'c') return fn:insert-before($abc, 0, 'z')", []interface{}{"z", "a", "b", "c"}},
+		{"let $abc := ('a', 'b', 'c') return fn:insert-before($abc, 1, 'z')", []interface{}{"z", "a", "b", "c"}},
+		{"fn:tail([1,2,3])", []interface{}{}},
+		{"fn:tail(())", []interface{}{}},
+		{"fn:tail('a')", []interface{}{}},
+		{"fn:tail(('a', 'b', 'c'))", []interface{}{"b", "c"}},
+		{"fn:tail(1 to 5)", []interface{}{2, 3, 4, 5}},
+		{"fn:head([1,2,3])", []interface{}{[]int{1, 2, 3}}},
+		{"fn:head(())", []interface{}{}},
+		{"fn:head(('a', 'b', 'c'))", []interface{}{"a"}},
+		{"fn:head(1 to 5)", []interface{}{1}},
+		{"fn:exists('')", []interface{}{true}},
+		{"fn:exists(map{})", []interface{}{true}},
+		{"fn:exists([])", []interface{}{true}},
+		{"fn:exists(fn:remove(('hello', 'world'), 1))", []interface{}{true}},
+		{"fn:exists(fn:remove(('hello'), 1))", []interface{}{false}},
+		{"let $abc := ('a', 'b', 'c') return fn:remove((), 3)", []interface{}{}},
+		{"let $abc := ('a', 'b', 'c') return fn:remove($abc, 6)", []interface{}{"a", "b", "c"}},
+		{"let $abc := ('a', 'b', 'c') return remove($abc, 1)", []interface{}{"b", "c"}},
+		{"let $abc := ('a', 'b', 'c') return fn:remove($abc, 0)", []interface{}{"a", "b", "c"}},
+		{"empty('')", []interface{}{false}},
+		{"fn:empty(fn:remove(('hello', 'world'), 1))", []interface{}{false}},
+		{"fn:empty(map{})", []interface{}{false}},
+		{"fn:empty([])", []interface{}{false}},
+		{"fn:empty((1,2,3)[10])", []interface{}{true}},
+		{"fn:substring-after('abcdcba', 'abc')", []interface{}{"dcba"}},
+		{"fn:substring-before((), ())", []interface{}{""}},
+		{"substring-before('tattoo', 'tatto')", []interface{}{""}},
+		{"substring-before('tattoo', 'ttoo')", []interface{}{"ta"}},
+		{"fn:ends-with((), ())", []interface{}{true}},
+		{"ends-with('tattoo', 'attoo')", []interface{}{true}},
+		{"ends-with('tattoo', 'tattoo')", []interface{}{true}},
+		{"fn:starts-with((), ())", []interface{}{true}},
+		{"fn:starts-with('tattoo' 'att')", []interface{}{false}},
+		{"fn:starts-with('tattoo' 'tat')", []interface{}{true}},
+		{"fn:contains((), '')", []interface{}{true}},
+		{"fn:contains((), ())", []interface{}{true}},
+		{"fn:contains('', ())", []interface{}{true}},
+		{"fn:contains('tattoo', 'ttt')", []interface{}{false}},
+		{"fn:contains('tattoo', 't')", []interface{}{true}},
+		{"fn:normalize-space('  \t\nabc\t\n')", []interface{}{"abc"}},
+		{"fn:string-length(())", []interface{}{0}},
+		{"fn:string-length('Harp not on that string, madam; that is past.')", []interface{}{45}},
+		{"fn:string-join(1 to 5, ', ')", []interface{}{"1, 2, 3, 4, 5"}},
+		{"fn:string-join((), 'separator')", []interface{}{""}},
+		{"fn:string-join(('Blow, ', 'blow, ', 'thou ', 'winter ', 'wind!'), '')", []interface{}{"Blow, blow, thou winter wind!"}},
+		{"fn:string-join(('Now', 'is', 'the', 'time', '...'), ' ')", []interface{}{"Now is the time ..."}},
+		{"fn:string-join(1 to 9)", []interface{}{"123456789"}},
+		{"fn:not('false')", []interface{}{false}},
+		{`fn:not(fn:true())`, []interface{}{false}},
+		{`fn:not(())`, []interface{}{true}},
 		{`abs(-2.5)`, []interface{}{2.5}},
 		{`abs(-2)`, []interface{}{2}},
 		{
@@ -124,16 +191,72 @@ func TestFunctionCall(t *testing.T) {
 			[]interface{}{"123a"},
 		},
 		{
+			"fn:concat('un', 'grateful')",
+			[]interface{}{"ungrateful"},
+		},
+		{
+			"fn:concat('Thy ', (), 'old ', 'groans', '', ' ring', ' yet', ' in', ' my', ' ancient',' ears.')",
+			[]interface{}{"Thy old groans ring yet in my ancient ears."},
+		},
+		{
+			"fn:concat('Ciao!',())",
+			[]interface{}{"Ciao!"},
+		},
+		{
+			"fn:concat('Ingratitude, ', 'thou ', 'marble-hearted', ' fiend!')",
+			[]interface{}{"Ingratitude, thou marble-hearted fiend!"},
+		},
+		{
+			"fn:concat(01, 02, 03, 04, true())",
+			[]interface{}{"1234true"},
+		},
+		{
 			"string-join((1,2,3),'a')",
 			[]interface{}{"1a2a3"},
 		},
 		{
-			"string-join(1 to 5)",
+			"fn:substring('motor car', 6)",
+			[]interface{}{" car"},
+		},
+		{
+			"substring('metadata', 4, 3)",
+			[]interface{}{"ada"},
+		},
+		{
+			"substring('12345', 1.5, 2.6)",
+			[]interface{}{"234"},
+		},
+		{
+			"substring('12345', 0, 3)",
+			[]interface{}{"12"},
+		},
+		{
+			"substring('12345', 5, -3)",
+			[]interface{}{""},
+		},
+		{
+			"substring('12345', -3, 5)",
+			[]interface{}{"1"},
+		},
+		{
+			"substring('12345', 0 div 0E0, 3)",
+			[]interface{}{""},
+		},
+		{
+			"substring('12345', 1, 0 div 0E0)",
+			[]interface{}{""},
+		},
+		{
+			"substring((), 1, 3)",
+			[]interface{}{""},
+		},
+		{
+			"substring('12345', -42, 1 div 0e0)",
 			[]interface{}{"12345"},
 		},
 		{
-			"fn:string-join(1 to 5, ', ')",
-			[]interface{}{"1, 2, 3, 4, 5"},
+			"substring('12345', -1 div 0E0, 1 div 0e0)",
+			[]interface{}{""},
 		},
 	}
 
@@ -154,6 +277,7 @@ func TestStringConcat(t *testing.T) {
 		{`1 ||1.5`, "11.5"},
 		{`1.2 || 1.5`, "1.21.5"},
 		{`1.2 || "A" || 1.5`, "1.2A1.5"},
+		{`10 || '/' || 6`, "10/6"},
 	}
 
 	for _, tt := range tests {
@@ -236,25 +360,23 @@ func TestArrowExpr(t *testing.T) {
 func TestPredicate(t *testing.T) {
 	tests := []struct {
 		input    string
-		expected interface{}
+		expected []interface{}
 	}{
-		{`(1,2,3,4)[1]`, 1},
-		{`(1,2,3,4)[1+1]`, 2},
-		{`(2,1,3,4)[.=2]`, 2},
+		{`(1,2,3,4)[1]`, []interface{}{1}},
+		{`(1,2,3,4)[1+1]`, []interface{}{2}},
+		{`(2,1,3,4)[.=2]`, []interface{}{2}},
 	}
 
 	for _, tt := range tests {
 		seq := testEval(tt.input)
 		sequence := seq.(*object.Sequence)
+		testSequenceObject(t, sequence, tt.expected)
+	}
 
-		for _, item := range sequence.Items {
-			switch item := item.(type) {
-			case *object.Integer:
-				if item.Value() != tt.expected {
-					t.Errorf("item has wrong value. got=%d, want=%d", item.Value(), tt.expected)
-				}
-			}
-		}
+	seq2 := testEval("(1,2,3)[4]")
+	sequence2 := seq2.(*object.Sequence)
+	if sequence2.Items != nil {
+		t.Errorf("the result should be empty sequence")
 	}
 }
 
@@ -2071,6 +2193,67 @@ func TestBIF(t *testing.T) {
 	if fmt.Sprintf("%.3f", item17.Value()) != "1.414" {
 		t.Errorf("item value should be 1.414. got=%.3f", item17.Value())
 	}
+
+	seq18 := testEvalXML2("let $abc := ('a', 'b', '') return fn:boolean($abc)")
+	item18 := seq18.(*object.Sequence).Items[0]
+	if !bif.IsError(item18) {
+		t.Errorf("the result should be error")
+	}
+
+	seq19 := testEvalXML2("let $abc := ('a', 'b', '') return fn:boolean([])")
+	item19 := seq19.(*object.Sequence).Items[0]
+	if !bif.IsError(item19) {
+		t.Errorf("the result should be error")
+	}
+
+	seq20 := testEvalXML2("let $abc := ('a', 'b', '') return fn:boolean($abc[1])")
+	item20, ok := seq20.(*object.Sequence).Items[0].(*object.Boolean)
+	if !ok {
+		t.Errorf("the result type should be boolean")
+	}
+	if !item20.Value() {
+		t.Errorf("the result value should be true")
+	}
+
+	seq21 := testEvalXML2("let $abc := ('a', 'b', '') return fn:boolean($abc[0])")
+	item21, ok := seq21.(*object.Sequence).Items[0].(*object.Boolean)
+	if !ok {
+		t.Errorf("the result type should be boolean")
+	}
+	if item21.Value() {
+		t.Errorf("the result value should be false")
+	}
+
+	seq22 := testEvalXML2("let $abc := ('a', 'b', '') return fn:boolean($abc[3])")
+	item22, ok := seq22.(*object.Sequence).Items[0].(*object.Boolean)
+	if !ok {
+		t.Errorf("the result type should be boolean")
+	}
+	if item22.Value() {
+		t.Errorf("the result value should be false")
+	}
+
+	seq23 := testEvalXML2("//office/string-length()")
+	sequence23 := seq23.(*object.Sequence)
+	if len(sequence23.Items) != 2 {
+		t.Errorf("wrong number of items. got=%d, expected=2", len(sequence23.Items))
+	}
+
+	seq24 := testEvalXML2("//age/string-length()")
+	sequence24 := seq24.(*object.Sequence)
+	if len(sequence24.Items) != 5 {
+		t.Errorf("wrong number of items. got=%d, expected=5", len(sequence24.Items))
+	}
+
+	seq25 := testEvalXML2("//office/normalize-space()")
+	sequence25 := seq25.(*object.Sequence)
+	if len(sequence25.Items) != 2 {
+		t.Errorf("wrong number of items. got=%d, expected=2", len(sequence25.Items))
+	}
+	item25 := sequence25.Items[0].(*object.String)
+	if item25.Value() != "Choi Jack 25 Lee Hwa 30" {
+		t.Errorf("the result value should be 'Choi Jack 25 Lee Hwa 30'. got=%s", item25.Value())
+	}
 }
 
 func testEval(input string) object.Item {
@@ -2152,6 +2335,57 @@ func testStringObject(t *testing.T, item object.Item, expected interface{}) {
 	}
 }
 
+func testArrayObject(t *testing.T, item object.Item, expected interface{}) {
+	itemArr, ok := item.(*object.Array)
+	if !ok {
+		t.Errorf("item type should be object.Array")
+	}
+
+	switch e := expected.(type) {
+	case []int:
+		if len(e) != len(itemArr.Items) {
+			t.Errorf("array length not match. got=%d, expected=%d", len(itemArr.Items), len(e))
+		}
+		for i, it := range itemArr.Items {
+			it, ok := it.(*object.Integer)
+			if !ok {
+				t.Errorf("item type should be integer")
+			}
+			if e[i] != it.Value() {
+				t.Errorf("item value not match. got=%d, expected=%d", it.Value(), e[i])
+			}
+		}
+	case []string:
+		if len(e) != len(itemArr.Items) {
+			t.Errorf("array length not match. got=%d, expected=%d", len(itemArr.Items), len(e))
+		}
+		for i, it := range itemArr.Items {
+			it, ok := it.(*object.String)
+			if !ok {
+				t.Errorf("item type should be string")
+			}
+			if e[i] != it.Value() {
+				t.Errorf("item value not match. got=%s, expected=%s", it.Value(), e[i])
+			}
+		}
+	case []float64:
+		if len(e) != len(itemArr.Items) {
+			t.Errorf("array length not match. got=%d, expected=%d", len(itemArr.Items), len(e))
+		}
+		for i, it := range itemArr.Items {
+			it, ok := it.(*object.Decimal)
+			if !ok {
+				t.Errorf("item type should be decimal")
+			}
+			if e[i] != it.Value() {
+				t.Errorf("item value not match. got=%f, expected=%f", it.Value(), e[i])
+			}
+		}
+	default:
+		t.Errorf("cannot compare array")
+	}
+}
+
 func testSequenceObject(t *testing.T, item object.Item, expected []interface{}) {
 	switch item := item.(type) {
 	case *object.Sequence:
@@ -2159,17 +2393,23 @@ func testSequenceObject(t *testing.T, item object.Item, expected []interface{}) 
 			t.Errorf("length of the item must be the same. got=%d, want=%d", len(item.Items), len(expected))
 		}
 		for i := 0; i < len(item.Items); i++ {
-			switch item.Items[i].(type) {
+			switch it := item.Items[i].(type) {
 			case *object.Integer:
-				testNumberObject(t, item.Items[i], expected[i])
+				testNumberObject(t, it, expected[i])
 			case *object.Decimal:
-				testNumberObject(t, item.Items[i], expected[i])
+				testNumberObject(t, it, expected[i])
 			case *object.Double:
-				testNumberObject(t, item.Items[i], expected[i])
+				testNumberObject(t, it, expected[i])
 			case *object.String:
-				testStringObject(t, item.Items[i], expected[i])
+				testStringObject(t, it, expected[i])
+			case *object.Boolean:
+				if it.Value() != expected[i] {
+					t.Errorf("got=%t, expected=%t", it.Value(), expected[i])
+				}
+			case *object.Array:
+				testArrayObject(t, it, expected[i])
 			default:
-				t.Errorf("Unkown item type. got=%s", item.Items[i].Type())
+				t.Errorf("Unkown item type. got=%s, %s", it.Type(), it.Inspect())
 			}
 		}
 	default:

@@ -212,7 +212,7 @@ func evalNodeTest(test ast.NodeTest, plist *ast.PredicateList, ctx *object.Conte
 
 // ii param is used when len(plist.PL.Params) > 1
 func evalPredicateList(plist *ast.PredicateList, ii *int, ctx *object.Context) object.Item {
-	result := object.FALSE
+	result := bif.NewBoolean(false)
 	cnode := ctx.CNode
 	focus := bif.CopyFocus(ctx)
 
@@ -231,7 +231,7 @@ func evalPredicateList(plist *ast.PredicateList, ii *int, ctx *object.Context) o
 		seq := p.(*object.Sequence)
 
 		if len(seq.Items) == 0 {
-			return object.FALSE
+			return bif.NewBoolean(false)
 		}
 		if len(seq.Items) > 1 {
 			return bif.NewError("too many items in predicate expression")
@@ -241,23 +241,23 @@ func evalPredicateList(plist *ast.PredicateList, ii *int, ctx *object.Context) o
 		case *object.Boolean:
 			if item.Value() {
 				*ii++
-				result = object.TRUE
+				result = bif.NewBoolean(true)
 			} else {
-				return object.FALSE
+				return bif.NewBoolean(false)
 			}
 		case *object.Integer:
 			if i > 0 {
 				if *ii == item.Value() {
-					result = object.TRUE
+					result = bif.NewBoolean(true)
 				} else {
-					return object.FALSE
+					return bif.NewBoolean(false)
 				}
 			} else {
 				if ctx.CPos == item.Value() {
 					*ii++
-					result = object.TRUE
+					result = bif.NewBoolean(true)
 				} else {
-					return object.FALSE
+					return bif.NewBoolean(false)
 				}
 			}
 		default:
@@ -266,9 +266,9 @@ func evalPredicateList(plist *ast.PredicateList, ii *int, ctx *object.Context) o
 
 			if boolObj.Value() {
 				*ii++
-				result = object.TRUE
+				result = bif.NewBoolean(true)
 			} else {
-				return object.FALSE
+				return bif.NewBoolean(false)
 			}
 		}
 	}

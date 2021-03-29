@@ -106,3 +106,14 @@ func combineTextsTrim(texts []string) string {
 	}
 	return sb.String()
 }
+
+func combineTextsNormalize(texts []string) string {
+	var trimedTexts []string
+	for _, text := range texts {
+		str := strings.TrimSpace(text)
+		if str != "" {
+			trimedTexts = append(trimedTexts, str)
+		}
+	}
+	return strings.Join(trimedTexts, " ")
+}

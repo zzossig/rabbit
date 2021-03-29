@@ -31,9 +31,7 @@ type Node interface {
 
 // predefined
 var (
-	NIL   = &Nil{}
-	TRUE  = &Boolean{true}
-	FALSE = &Boolean{false}
+	NIL = &Nil{}
 )
 
 // Nil ..

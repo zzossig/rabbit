@@ -28,9 +28,9 @@ var F = map[string]object.Func{
 	"op:numeric-unary-minus":    numericUnaryMinus,
 
 	// 4.3
-	"op:numeric-equal":        numericEqual,
-	"op:numeric-less-than":    numericLessThan,
-	"op:numeric-greater-than": numericGreaterThan,
+	"op:numeric-equal":        opNumericEqual,
+	"op:numeric-less-than":    opNumericLessThan,
+	"op:numeric-greater-than": opNumericGreaterThan,
 
 	// 4.4
 	"fn:abs":                fnAbs,
@@ -68,8 +68,32 @@ var F = map[string]object.Func{
 	"fn:upper-case":      fnUpperCase,
 	"fn:lower-case":      fnLowerCase,
 
+	// 5.5
+	"fn:contains":         fnContains,
+	"fn:starts-with":      fnStartsWith,
+	"fn:ends-with":        fnEndsWith,
+	"fn:substring-before": fnSubstringBefore,
+	"fn:substring-after":  fnSubstringAfter,
+
 	// 7
+	"fn:true":    fnTrue,
+	"fn:false":   fnFalse,
 	"fn:boolean": fnBoolean,
+	"fn:not":     fnNot,
+
+	"op:boolean-equal":        opBooleanEqual,
+	"op:boolean-less-than":    opBooleanLessThan,
+	"op:boolean-greater-than": opBooleanGreaterThan,
+
+	// 14.1
+	"fn:empty":         fnEmpty,
+	"fn:exists":        fnExists,
+	"fn:head":          fnHead,
+	"fn:tail":          fnTail,
+	"fn:insert-before": fnInsertBefore,
+	"fn:remove":        fnRemove,
+	"fn:reverse":       fnReverse,
+	"fn:subsequence":   fnSubsequence,
 
 	// 14
 	"fn:doc": fnDoc,
@@ -118,6 +142,15 @@ func NewDouble(d float64) *object.Double {
 	return double
 }
 
+// NewSequence ..
+func NewSequence(items ...object.Item) *object.Sequence {
+	seq := &object.Sequence{}
+	if len(items) > 0 {
+		seq.Items = append(seq.Items, items...)
+	}
+	return seq
+}
+
 // IsError ..
 func IsError(item object.Item) bool {
 	if item == nil {
@@ -140,6 +173,17 @@ func IsSeq(item object.Item) bool {
 		return false
 	}
 	return item.Type() == object.SequenceType
+}
+
+// IsSeqEmpty ..
+func IsSeqEmpty(item object.Item) bool {
+	if item == nil {
+		return false
+	}
+	if item.Type() != object.SequenceType {
+		return false
+	}
+	return item.Inspect() == "()"
 }
 
 // IsPlaceholder ..
@@ -429,9 +473,9 @@ func IsCastable(tg object.Item, ty object.Type) object.Item {
 		case object.StringType:
 			fallthrough
 		case object.BooleanType:
-			return object.TRUE
+			return NewBoolean(true)
 		}
-		return object.FALSE
+		return NewBoolean(false)
 	case *object.Decimal:
 		switch ty {
 		case object.DoubleType:
@@ -443,9 +487,9 @@ func IsCastable(tg object.Item, ty object.Type) object.Item {
 		case object.StringType:
 			fallthrough
 		case object.BooleanType:
-			return object.TRUE
+			return NewBoolean(true)
 		}
-		return object.FALSE
+		return NewBoolean(false)
 	case *object.Integer:
 		switch ty {
 		case object.DoubleType:
@@ -457,35 +501,35 @@ func IsCastable(tg object.Item, ty object.Type) object.Item {
 		case object.StringType:
 			fallthrough
 		case object.BooleanType:
-			return object.TRUE
+			return NewBoolean(true)
 		}
-		return object.FALSE
+		return NewBoolean(false)
 	case *object.String:
 		switch ty {
 		case object.DoubleType:
 			fallthrough
 		case object.DecimalType:
 			if _, err := strconv.ParseFloat(tg.Value(), 64); err == nil {
-				return object.TRUE
+				return NewBoolean(true)
 			}
-			return object.FALSE
+			return NewBoolean(false)
 		case object.IntegerType:
 			if _, err := strconv.ParseInt(tg.Value(), 0, 64); err == nil {
-				return object.TRUE
+				return NewBoolean(true)
 			}
-			return object.FALSE
+			return NewBoolean(false)
 		case object.StringType:
-			return object.TRUE
+			return NewBoolean(true)
 		case object.BooleanType:
 			if tg.Value() == "1" ||
 				tg.Value() == "true" ||
 				tg.Value() == "0" ||
 				tg.Value() == "false" {
-				return object.TRUE
+				return NewBoolean(true)
 			}
-			return object.FALSE
+			return NewBoolean(false)
 		}
-		return object.FALSE
+		return NewBoolean(false)
 	case *object.Boolean:
 		switch ty {
 		case object.DoubleType:
@@ -497,64 +541,64 @@ func IsCastable(tg object.Item, ty object.Type) object.Item {
 		case object.StringType:
 			fallthrough
 		case object.BooleanType:
-			return object.TRUE
+			return NewBoolean(true)
 		}
-		return object.FALSE
+		return NewBoolean(false)
 	case *object.BaseNode:
 		switch ty {
 		case object.DoubleType:
 			fallthrough
 		case object.DecimalType:
 			if _, err := strconv.ParseFloat(tg.Text(), 64); err == nil {
-				return object.TRUE
+				return NewBoolean(true)
 			}
-			return object.FALSE
+			return NewBoolean(false)
 		case object.IntegerType:
 			if _, err := strconv.ParseInt(tg.Text(), 0, 64); err == nil {
-				return object.TRUE
+				return NewBoolean(true)
 			}
-			return object.FALSE
+			return NewBoolean(false)
 		case object.StringType:
-			return object.TRUE
+			return NewBoolean(true)
 		case object.BooleanType:
 			if tg.Text() == "1" ||
 				tg.Text() == "true" ||
 				tg.Text() == "0" ||
 				tg.Text() == "false" {
-				return object.TRUE
+				return NewBoolean(true)
 			}
-			return object.FALSE
+			return NewBoolean(false)
 		}
-		return object.FALSE
+		return NewBoolean(false)
 	case *object.AttrNode:
 		switch ty {
 		case object.DoubleType:
 			fallthrough
 		case object.DecimalType:
 			if _, err := strconv.ParseFloat(tg.Text(), 64); err == nil {
-				return object.TRUE
+				return NewBoolean(true)
 			}
-			return object.FALSE
+			return NewBoolean(false)
 		case object.IntegerType:
 			if _, err := strconv.ParseInt(tg.Text(), 0, 64); err == nil {
-				return object.TRUE
+				return NewBoolean(true)
 			}
-			return object.FALSE
+			return NewBoolean(false)
 		case object.StringType:
-			return object.TRUE
+			return NewBoolean(true)
 		case object.BooleanType:
 			if tg.Text() == "1" ||
 				tg.Text() == "true" ||
 				tg.Text() == "0" ||
 				tg.Text() == "false" {
-				return object.TRUE
+				return NewBoolean(true)
 			}
-			return object.FALSE
+			return NewBoolean(false)
 		}
-		return object.FALSE
+		return NewBoolean(false)
 	}
 
-	return object.FALSE
+	return NewBoolean(false)
 }
 
 // CastType ..
@@ -629,10 +673,10 @@ func CastType(tg object.Item, ty object.Type) object.Item {
 			return tg
 		case object.BooleanType:
 			if tg.Value() == "0" || tg.Value() == "false" {
-				return object.FALSE
+				return NewBoolean(false)
 			}
 			if tg.Value() == "1" || tg.Value() == "true" {
-				return object.TRUE
+				return NewBoolean(true)
 			}
 		}
 	case *object.Boolean:
@@ -678,10 +722,10 @@ func CastType(tg object.Item, ty object.Type) object.Item {
 			return NewString(tg.Text())
 		case object.BooleanType:
 			if tg.Text() == "0" || tg.Text() == "false" {
-				return object.FALSE
+				return NewBoolean(false)
 			}
 			if tg.Text() == "1" || tg.Text() == "true" {
-				return object.TRUE
+				return NewBoolean(true)
 			}
 		}
 	case *object.AttrNode:
@@ -702,10 +746,10 @@ func CastType(tg object.Item, ty object.Type) object.Item {
 			return NewString(tg.Text())
 		case object.BooleanType:
 			if tg.Text() == "0" || tg.Text() == "false" {
-				return object.FALSE
+				return NewBoolean(false)
 			}
 			if tg.Text() == "1" || tg.Text() == "true" {
-				return object.TRUE
+				return NewBoolean(true)
 			}
 		}
 	}
@@ -725,10 +769,10 @@ func IsPrecede(n1, n2 object.Node, src *object.BaseNode) object.Item {
 			for _, a := range src.Attr() {
 				a := a.(*object.AttrNode)
 				if n1.Tree() == a.Tree() && n1.Key() == a.Key() {
-					return object.TRUE
+					return NewBoolean(true)
 				}
 				if n2.Tree() == a.Tree() && n2.Key() == a.Key() {
-					return object.FALSE
+					return NewBoolean(false)
 				}
 			}
 		} else if n1.Type() == object.AttributeNodeType {
@@ -738,9 +782,9 @@ func IsPrecede(n1, n2 object.Node, src *object.BaseNode) object.Item {
 				a := a.(*object.AttrNode)
 				if n1.Tree() == a.Tree() && n1.Key() == a.Key() {
 					if n1.Tree() != n2.Tree() {
-						return object.TRUE
+						return NewBoolean(true)
 					} else {
-						return object.FALSE
+						return NewBoolean(false)
 					}
 
 				}
@@ -752,19 +796,19 @@ func IsPrecede(n1, n2 object.Node, src *object.BaseNode) object.Item {
 				a := a.(*object.AttrNode)
 				if n2.Tree() == a.Tree() && n2.Key() == a.Key() {
 					if n1.Tree() != n2.Tree() {
-						return object.FALSE
+						return NewBoolean(false)
 					} else {
-						return object.TRUE
+						return NewBoolean(true)
 					}
 
 				}
 			}
 		} else {
 			if n2.Tree() == c.Tree() {
-				return object.FALSE
+				return NewBoolean(false)
 			}
 			if n1.Tree() == c.Tree() {
-				return object.TRUE
+				return NewBoolean(true)
 			}
 		}
 
@@ -1538,12 +1582,12 @@ func IsTypeMatch(item object.Item, st *ast.SequenceType) object.Item {
 	case 1:
 		seq, ok := item.(*object.Sequence)
 		if !ok {
-			return object.FALSE
+			return NewBoolean(false)
 		}
 		if seq.Items != nil {
-			return object.FALSE
+			return NewBoolean(false)
 		}
-		return object.TRUE
+		return NewBoolean(true)
 	case 2:
 		oi := st.OccurrenceIndicator
 		it := st.NodeTest.(*ast.ItemType)
@@ -1623,7 +1667,7 @@ func IsTypeMatch(item object.Item, st *ast.SequenceType) object.Item {
 		}
 	}
 
-	return object.FALSE
+	return NewBoolean(false)
 }
 
 // IsKindMatch ..

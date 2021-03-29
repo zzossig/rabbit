@@ -2,7 +2,7 @@ package bif
 
 import "github.com/zzossig/xpath/object"
 
-func numericEqual(ctx *object.Context, args ...object.Item) object.Item {
+func opNumericEqual(ctx *object.Context, args ...object.Item) object.Item {
 	arg1 := args[0]
 	arg2 := args[1]
 
@@ -48,7 +48,7 @@ func numericEqual(ctx *object.Context, args ...object.Item) object.Item {
 	return object.NIL
 }
 
-func numericLessThan(ctx *object.Context, args ...object.Item) object.Item {
+func opNumericLessThan(ctx *object.Context, args ...object.Item) object.Item {
 	arg1 := args[0]
 	arg2 := args[1]
 
@@ -94,7 +94,7 @@ func numericLessThan(ctx *object.Context, args ...object.Item) object.Item {
 	return object.NIL
 }
 
-func numericGreaterThan(ctx *object.Context, args ...object.Item) object.Item {
+func opNumericGreaterThan(ctx *object.Context, args ...object.Item) object.Item {
 	arg1 := args[0]
 	arg2 := args[1]
 

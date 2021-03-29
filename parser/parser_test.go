@@ -12,6 +12,14 @@ func TestArithmeticExpr(t *testing.T) {
 		expected string
 	}{
 		{
+			"01",
+			"1",
+		},
+		{
+			"001",
+			"1",
+		},
+		{
 			"2 + 2",
 			"(2 + 2)",
 		},

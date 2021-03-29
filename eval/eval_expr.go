@@ -194,10 +194,10 @@ func evalQuantifiedExpr(expr ast.ExprSingle, ctx *object.Context) object.Item {
 				e := evalQuantifiedExpr(nqe, enclosedCtx).(*object.Boolean)
 
 				if qe.Token.Type == token.EVERY && !e.Value() {
-					return object.FALSE
+					return bif.NewBoolean(false)
 				}
 				if qe.Token.Type == token.SOME && e.Value() {
-					return object.TRUE
+					return bif.NewBoolean(true)
 				}
 			}
 		default:
@@ -205,10 +205,10 @@ func evalQuantifiedExpr(expr ast.ExprSingle, ctx *object.Context) object.Item {
 			e := evalQuantifiedExpr(nqe, enclosedCtx).(*object.Boolean)
 
 			if qe.Token.Type == token.EVERY && !e.Value() {
-				return object.FALSE
+				return bif.NewBoolean(false)
 			}
 			if qe.Token.Type == token.SOME && e.Value() {
-				return object.TRUE
+				return bif.NewBoolean(true)
 			}
 		}
 	}
@@ -228,18 +228,18 @@ func evalQuantifiedExpr(expr ast.ExprSingle, ctx *object.Context) object.Item {
 
 				boolObj := bl.(*object.Boolean)
 				if qe.Token.Type == token.EVERY && !boolObj.Value() {
-					return object.FALSE
+					return bif.NewBoolean(false)
 				}
 				if qe.Token.Type == token.SOME && boolObj.Value() {
-					return object.TRUE
+					return bif.NewBoolean(true)
 				}
 			}
 
 			if qe.Token.Type == token.EVERY && !e.Value() {
-				return object.FALSE
+				return bif.NewBoolean(false)
 			}
 			if qe.Token.Type == token.SOME && e.Value() {
-				return object.TRUE
+				return bif.NewBoolean(true)
 			}
 		}
 	default:
@@ -252,25 +252,25 @@ func evalQuantifiedExpr(expr ast.ExprSingle, ctx *object.Context) object.Item {
 
 			boolObj := bl.(*object.Boolean)
 			if qe.Token.Type == token.EVERY && !boolObj.Value() {
-				return object.FALSE
+				return bif.NewBoolean(false)
 			}
 			if qe.Token.Type == token.SOME && boolObj.Value() {
-				return object.TRUE
+				return bif.NewBoolean(true)
 			}
 		}
 
 		if qe.Token.Type == token.EVERY && !e.Value() {
-			return object.FALSE
+			return bif.NewBoolean(false)
 		}
 		if qe.Token.Type == token.SOME && e.Value() {
-			return object.TRUE
+			return bif.NewBoolean(true)
 		}
 	}
 
 	if qe.Token.Type == token.EVERY {
-		return object.TRUE
+		return bif.NewBoolean(true)
 	}
-	return object.FALSE
+	return bif.NewBoolean(false)
 }
 
 func evalAdditiveExpr(expr ast.ExprSingle, ctx *object.Context) object.Item {
