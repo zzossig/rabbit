@@ -59,6 +59,10 @@ var F = map[string]object.Func{
 	"math:atan":  mathAtan,
 	"math:atan2": mathAtan2,
 
+	// 5.2
+	"fn:codepoints-to-string": fnCodepointsToString,
+	"fn:string-to-codepoints": fnStringToCodepoints,
+
 	// 5.4
 	"fn:concat":          fnConcat,
 	"fn:string-join":     fnStringJoin,
@@ -110,7 +114,16 @@ var F = map[string]object.Func{
 	"fn:last":     fnLast,
 
 	// 16.2
+	"fn:for-each":      fnForEach,
 	"fn:for-each-pair": fnForEachPair,
+	"fn:filter":        fnFilter,
+
+	// 19
+	"xs:integer": xsInteger,
+	"xs:decimal": xsDecimal,
+	"xs:double":  xsDouble,
+	"xs:string":  xsString,
+	"xs:boolean": xsBoolean,
 }
 
 // NewError ..

@@ -93,6 +93,19 @@ func TestFunctionCall(t *testing.T) {
 		input    string
 		expected []interface{}
 	}{
+		{"filter((1, 2), fn:empty#1)", []interface{}{}},
+		{"fn:filter((4, 5), fn:exists(?))", []interface{}{4, 5}},
+		{"fn:filter((1, 2), fn:exists#1)", []interface{}{1, 2}},
+		{"fn:filter(1 to 10, function($a) {$a mod 2 = 0})", []interface{}{2, 4, 6, 8, 10}},
+		{"fn:codepoints-to-string(())", []interface{}{""}},
+		{"fn:codepoints-to-string((2309, 2358, 2378, 2325))", []interface{}{"अशॊक"}},
+		{"fn:codepoints-to-string((66, 65, 67, 72))", []interface{}{"BACH"}},
+		{"fn:string-to-codepoints('Thérèse')", []interface{}{84, 104, 233, 114, 232, 115, 101}},
+		{"fn:for-each(('john','jane'), fn:string-to-codepoints#1)", []interface{}{106, 111, 104, 110, 106, 97, 110, 101}},
+		{"fn:for-each(1 to 5, function($a) { $a * $a })", []interface{}{1, 4, 9, 16, 25}},
+		{"fn:for-each(('a','b','c'), xs:string(?))", []interface{}{"a", "b", "c"}},
+		{"fn:for-each(('23', '29'), xs:integer#1)", []interface{}{23, 29}},
+		{"fn:for-each(('23', '29'), xs:integer(?))", []interface{}{23, 29}},
 		{"(1 to 20)[fn:position() = 20]", []interface{}{20}},
 		{"(1 to 20)[fn:position() = 1]", []interface{}{1}},
 		{"(1 to 20)[fn:last() - 1]", []interface{}{19}},
@@ -180,7 +193,10 @@ func TestFunctionCall(t *testing.T) {
 		{"fn:string-length('Harp not on that string, madam; that is past.')", []interface{}{45}},
 		{"fn:string-join(1 to 5, ', ')", []interface{}{"1, 2, 3, 4, 5"}},
 		{"fn:string-join((), 'separator')", []interface{}{""}},
-		{"fn:string-join(('Blow, ', 'blow, ', 'thou ', 'winter ', 'wind!'), '')", []interface{}{"Blow, blow, thou winter wind!"}},
+		{
+			"fn:string-join(('Blow, ', 'blow, ', 'thou ', 'winter ', 'wind!'), '')",
+			[]interface{}{"Blow, blow, thou winter wind!"},
+		},
 		{"fn:string-join(('Now', 'is', 'the', 'time', '...'), ' ')", []interface{}{"Now is the time ..."}},
 		{"fn:string-join(1 to 9)", []interface{}{"123456789"}},
 		{"fn:not('false')", []interface{}{false}},
@@ -208,82 +224,31 @@ func TestFunctionCall(t *testing.T) {
 			"fn:for-each-pair(1 to 5, 1 to 5, function($a, $b){10*$a + $b})",
 			[]interface{}{11, 22, 33, 44, 55},
 		},
-		{
-			"fn:concat(1,2,3)",
-			[]interface{}{"123"},
-		},
-		{
-			"fn:concat(1,2,3,'a')",
-			[]interface{}{"123a"},
-		},
-		{
-			"fn:concat('un', 'grateful')",
-			[]interface{}{"ungrateful"},
-		},
+		{"fn:concat(1,2,3)", []interface{}{"123"}},
+		{"fn:concat(1,2,3,'a')", []interface{}{"123a"}},
+		{"fn:concat('un', 'grateful')", []interface{}{"ungrateful"}},
 		{
 			"fn:concat('Thy ', (), 'old ', 'groans', '', ' ring', ' yet', ' in', ' my', ' ancient',' ears.')",
 			[]interface{}{"Thy old groans ring yet in my ancient ears."},
 		},
-		{
-			"fn:concat('Ciao!',())",
-			[]interface{}{"Ciao!"},
-		},
+		{"fn:concat('Ciao!',())", []interface{}{"Ciao!"}},
 		{
 			"fn:concat('Ingratitude, ', 'thou ', 'marble-hearted', ' fiend!')",
 			[]interface{}{"Ingratitude, thou marble-hearted fiend!"},
 		},
-		{
-			"fn:concat(01, 02, 03, 04, true())",
-			[]interface{}{"1234true"},
-		},
-		{
-			"string-join((1,2,3),'a')",
-			[]interface{}{"1a2a3"},
-		},
-		{
-			"fn:substring('motor car', 6)",
-			[]interface{}{" car"},
-		},
-		{
-			"substring('metadata', 4, 3)",
-			[]interface{}{"ada"},
-		},
-		{
-			"substring('12345', 1.5, 2.6)",
-			[]interface{}{"234"},
-		},
-		{
-			"substring('12345', 0, 3)",
-			[]interface{}{"12"},
-		},
-		{
-			"substring('12345', 5, -3)",
-			[]interface{}{""},
-		},
-		{
-			"substring('12345', -3, 5)",
-			[]interface{}{"1"},
-		},
-		{
-			"substring('12345', 0 div 0E0, 3)",
-			[]interface{}{""},
-		},
-		{
-			"substring('12345', 1, 0 div 0E0)",
-			[]interface{}{""},
-		},
-		{
-			"substring((), 1, 3)",
-			[]interface{}{""},
-		},
-		{
-			"substring('12345', -42, 1 div 0e0)",
-			[]interface{}{"12345"},
-		},
-		{
-			"substring('12345', -1 div 0E0, 1 div 0e0)",
-			[]interface{}{""},
-		},
+		{"fn:concat(01, 02, 03, 04, true())", []interface{}{"1234true"}},
+		{"string-join((1,2,3),'a')", []interface{}{"1a2a3"}},
+		{"fn:substring('motor car', 6)", []interface{}{" car"}},
+		{"substring('metadata', 4, 3)", []interface{}{"ada"}},
+		{"substring('12345', 1.5, 2.6)", []interface{}{"234"}},
+		{"substring('12345', 0, 3)", []interface{}{"12"}},
+		{"substring('12345', 5, -3)", []interface{}{""}},
+		{"substring('12345', -3, 5)", []interface{}{"1"}},
+		{"substring('12345', 0 div 0E0, 3)", []interface{}{""}},
+		{"substring('12345', 1, 0 div 0E0)", []interface{}{""}},
+		{"substring((), 1, 3)", []interface{}{""}},
+		{"substring('12345', -42, 1 div 0e0)", []interface{}{"12345"}},
+		{"substring('12345', -1 div 0E0, 1 div 0e0)", []interface{}{""}},
 	}
 
 	for _, tt := range tests {
