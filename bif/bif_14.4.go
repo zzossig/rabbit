@@ -78,13 +78,7 @@ func fnMax(ctx *object.Context, args ...object.Item) object.Item {
 	}
 
 	src := &object.Sequence{}
-
-	if seq, ok := args[0].(*object.Sequence); ok {
-		src.Items = seq.Items
-	}
-	if arr, ok := args[0].(*object.Array); ok {
-		src.Items = arr.Items
-	}
+	src.Items = UnwrapArr(args[0])
 
 	switch {
 	case IsNumeric(src.Items[0]):
@@ -170,13 +164,7 @@ func fnMin(ctx *object.Context, args ...object.Item) object.Item {
 	}
 
 	src := &object.Sequence{}
-
-	if seq, ok := args[0].(*object.Sequence); ok {
-		src.Items = seq.Items
-	}
-	if arr, ok := args[0].(*object.Array); ok {
-		src.Items = arr.Items
-	}
+	src.Items = UnwrapArr(args[0])
 
 	switch {
 	case IsNumeric(src.Items[0]):
@@ -259,13 +247,7 @@ func fnSum(ctx *object.Context, args ...object.Item) object.Item {
 	}
 
 	src := &object.Sequence{}
-
-	if seq, ok := args[0].(*object.Sequence); ok {
-		src.Items = seq.Items
-	}
-	if arr, ok := args[0].(*object.Array); ok {
-		src.Items = arr.Items
-	}
+	src.Items = UnwrapArr(args[0])
 
 	sum := 0.0
 	ty := object.IntegerType
