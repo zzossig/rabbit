@@ -51,6 +51,41 @@ func TestEvalArray(t *testing.T) {
 		input    string
 		expected []interface{}
 	}{
+		{`array:join((["a", "b"], ["c", "d"], [["e", "f"]]))`, []interface{}{"a", "b", "c", "d", []interface{}{"e", "f"}}},
+		{`array:join((["a", "b"], ["c", "d"], [ ]))`, []interface{}{"a", "b", "c", "d"}},
+		{`array:join((["a", "b"], ["c", "d"]))`, []interface{}{"a", "b", "c", "d"}},
+		{`array:join([1, 2, 3])`, []interface{}{1, 2, 3}},
+		{`array:join(())`, []interface{}{}},
+		{`array:reverse([])`, []interface{}{}},
+		{`array:reverse([(1 to 5)])`, []interface{}{[]interface{}{1, 2, 3, 4, 5}}},
+		{`array:reverse([("a", "b"), ("c", "d")])`, []interface{}{[]interface{}{"c", "d"}, []interface{}{"a", "b"}}},
+		{`array:reverse(["a", "b", "c", "d"])`, []interface{}{"d", "c", "b", "a"}},
+		{`array:tail([5])`, []interface{}{}},
+		{`array:tail([5, 6, 7, 8])`, []interface{}{6, 7, 8}},
+		{`array:head([["a", "b"], ["c", "d"]])`, []interface{}{"a", "b"}},
+		{`array:insert-before(["a", "b", "c", "d"], 3, ["x", "y"])`, []interface{}{"a", "b", []interface{}{"x", "y"}, "c", "d"}},
+		{`array:insert-before(["a", "b", "c", "d"], 5, ("x", "y"))`, []interface{}{"a", "b", "c", "d", []interface{}{"x", "y"}}},
+		{`array:insert-before(["a", "b", "c", "d"], 3, ("x", "y"))`, []interface{}{"a", "b", []interface{}{"x", "y"}, "c", "d"}},
+		{`array:remove(["a", "b", "c", "d"], ())`, []interface{}{"a", "b", "c", "d"}},
+		{`array:remove(["a", "b", "c", "d"], 1 to 3)`, []interface{}{"d"}},
+		{`array:remove(["a"], 1)`, []interface{}{}},
+		{`array:remove(["a", "b", "c", "d"], 2)`, []interface{}{"a", "c", "d"}},
+		{`array:remove(["a", "b", "c", "d"], 1)`, []interface{}{"b", "c", "d"}},
+		{`array:subarray([ ], 1, 0)`, []interface{}{}},
+		{`array:subarray(["a", "b", "c", "d"], 5, 0)`, []interface{}{}},
+		{`array:subarray(["a", "b", "c", "d"], 2, 3)`, []interface{}{"b", "c", "d"}},
+		{`array:subarray(["a", "b", "c", "d"], 2, 2)`, []interface{}{"b", "c"}},
+		{`array:subarray(["a", "b", "c", "d"], 2, 1)`, []interface{}{"b"}},
+		{`array:subarray(["a", "b", "c", "d"], 2, 0)`, []interface{}{}},
+		{`array:subarray(["a", "b", "c", "d"], 5)`, []interface{}{}},
+		{`array:subarray(["a", "b", "c", "d"], 2)`, []interface{}{"b", "c", "d"}},
+		{`array:append(["a", "b", "c"], ["d", "e"])`, []interface{}{"a", "b", "c", []interface{}{"d", "e"}}},
+		{`array:append(["a", "b", "c"], ("d", "e"))`, []interface{}{"a", "b", "c", []interface{}{"d", "e"}}},
+		{`array:append(["a", "b", "c"], "d")`, []interface{}{"a", "b", "c", "d"}},
+		{`array:put(["a", "b", "c"], 2, ("d", "e"))`, []interface{}{"a", []interface{}{"d", "e"}, "c"}},
+		{`array:put(["a", "b", "c"], 2, "d")`, []interface{}{"a", "d", "c"}},
+		{`["a", ["b", "c"]] => array:get(2)`, []interface{}{"b", "c"}},
+		{`array:size(["a", "b", "c"])`, []interface{}{3}},
 		{"array{1,2,3}", []interface{}{1, 2, 3}},
 		{"array{1*2,2+3,3-4,5 idiv 5, 5 div 5}", []interface{}{2, 5, -1, 1, 1.0}},
 		{"[3 mod 2, 'a', 'b', 1.1]", []interface{}{1, "a", "b", 1.1}},
@@ -62,12 +97,16 @@ func TestEvalArray(t *testing.T) {
 
 		for _, item := range sequence.Items {
 			switch item := item.(type) {
+			case *object.Integer:
+			case *object.Decimal:
+			case *object.Double:
+			case *object.String:
 			case *object.Array:
 				if len(item.Items) != len(tt.expected) {
 					t.Errorf("Array lenth not match with the expected one. got=%d, want=%d", len(item.Items), len(tt.expected))
 				}
 				for i, v := range item.Items {
-					switch v.(type) {
+					switch vv := v.(type) {
 					case *object.Integer:
 						testNumberObject(t, v, tt.expected[i])
 					case *object.Decimal:
@@ -76,6 +115,64 @@ func TestEvalArray(t *testing.T) {
 						testNumberObject(t, v, tt.expected[i])
 					case *object.String:
 						testStringObject(t, v, tt.expected[i])
+					case *object.Sequence:
+						s := tt.expected[i].([]interface{})
+						if len(vv.Items) != len(s) {
+							t.Errorf("sequence length not match")
+						}
+						for j, it := range vv.Items {
+							switch it := it.(type) {
+							case *object.Integer:
+								if it.Value() != s[j] {
+									t.Errorf("sequence value not match. got=%d, expected=%d", it.Value(), s[j])
+								}
+							case *object.Decimal:
+								if it.Value() != s[j] {
+									t.Errorf("sequence value not match. got=%f, expected=%f", it.Value(), s[j])
+								}
+							case *object.Double:
+								if it.Value() != s[j] {
+									t.Errorf("sequence value not match. got=%f, expected=%f", it.Value(), s[j])
+								}
+							case *object.String:
+								if it.Value() != s[j] {
+									t.Errorf("sequence value not match. got=%s, expected=%s", it.Value(), s[j])
+								}
+							case *object.Boolean:
+								if it.Value() != s[j] {
+									t.Errorf("sequence value not match. got=%v, expected=%v", it.Value(), s[j])
+								}
+							}
+						}
+					case *object.Array:
+						s := tt.expected[i].([]interface{})
+						if len(vv.Items) != len(s) {
+							t.Errorf("sequence length not match")
+						}
+						for j, it := range vv.Items {
+							switch it := it.(type) {
+							case *object.Integer:
+								if it.Value() != s[j] {
+									t.Errorf("sequence value not match. got=%d, expected=%d", it.Value(), s[j])
+								}
+							case *object.Decimal:
+								if it.Value() != s[j] {
+									t.Errorf("sequence value not match. got=%f, expected=%f", it.Value(), s[j])
+								}
+							case *object.Double:
+								if it.Value() != s[j] {
+									t.Errorf("sequence value not match. got=%f, expected=%f", it.Value(), s[j])
+								}
+							case *object.String:
+								if it.Value() != s[j] {
+									t.Errorf("sequence value not match. got=%s, expected=%s", it.Value(), s[j])
+								}
+							case *object.Boolean:
+								if it.Value() != s[j] {
+									t.Errorf("sequence value not match. got=%v, expected=%v", it.Value(), s[j])
+								}
+							}
+						}
 					default:
 						t.Errorf("Unkown item type. got=%s", item.Type())
 					}
@@ -85,6 +182,30 @@ func TestEvalArray(t *testing.T) {
 				t.Errorf("Unkown item type. got=%s", item.Type())
 			}
 		}
+	}
+}
+
+func TestEvalArray2(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected []interface{}
+	}{
+		{`array:flatten([(1,0), (1,1), (0,1), (0,0)])`, []interface{}{1, 0, 1, 1, 0, 1, 0, 0}},
+		{`array:flatten(([1, 2, 5], [[10, 11], 12], [], 13))`, []interface{}{1, 2, 5, 10, 11, 12, 13}},
+		{`array:flatten([1, 4, 6, 5, 3])`, []interface{}{1, 4, 6, 5, 3}},
+		{`array:head([("a", "b"), ("c", "d")])`, []interface{}{"a", "b"}},
+		{`array:head([5, 6, 7, 8])`, []interface{}{5}},
+		{`["a", "b", "c"] => array:get(2)`, []interface{}{"b"}},
+		{`array:size([[ ]])`, []interface{}{1}},
+		{`array:size([ ])`, []interface{}{0}},
+		{`array:size(["a", ["b", "c"]])`, []interface{}{2}},
+		{`array:size(["a", "b", "c"])`, []interface{}{3}},
+	}
+
+	for _, tt := range tests {
+		seq := testEval(tt.input)
+		sequence := seq.(*object.Sequence)
+		testSequenceObject(t, sequence, tt.expected)
 	}
 }
 
