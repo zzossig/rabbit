@@ -486,6 +486,32 @@ func TestMapExpr(t *testing.T) {
 		input    string
 		expected []interface{}
 	}{
+		{`map:contains(map{"abc":23, "xyz":()}, "xyz")`, []interface{}{true}},
+		{`map:contains(map{"xyz":23}, "xyz")`, []interface{}{true}},
+		{`map:contains(map{}, "xyz")`, []interface{}{false}},
+		{
+			`let $week := map{0:"Sonntag", 1:"Montag", 2:"Dienstag", 3:"Mittwoch", 4:"Donnerstag", 5:"Freitag", 6:"Samstag"} return map:contains($week, 9)`,
+			[]interface{}{false},
+		},
+		{
+			`let $week := map{0:"Sonntag", 1:"Montag", 2:"Dienstag", 3:"Mittwoch", 4:"Donnerstag", 5:"Freitag", 6:"Samstag"} return map:contains($week, 2)`,
+			[]interface{}{true},
+		},
+		{
+			`let $week := map{0:"Sonntag", 1:"Montag", 2:"Dienstag", 3:"Mittwoch", 4:"Donnerstag", 5:"Freitag", 6:"Samstag"} return map:get($week, 9)`,
+			[]interface{}{},
+		},
+		{
+			`let $week := map{0:"Sonntag", 1:"Montag", 2:"Dienstag", 3:"Mittwoch", 4:"Donnerstag", 5:"Freitag", 6:"Samstag"} return map:get($week, 4)`,
+			[]interface{}{"Donnerstag"},
+		},
+		{`map:keys(map{1.5:"yes"})`, []interface{}{1.5}},
+		{`map:keys(map{true():"yes"})`, []interface{}{true}},
+		{`map:keys(map{"do":"yes"})`, []interface{}{"do"}},
+		{`map:keys(map{1:"yes"})`, []interface{}{1}},
+		{`map:size(((map{})))`, []interface{}{0}},
+		{`map:size(map{"true":1, "false":0})`, []interface{}{2}},
+		{`map:size(map{})`, []interface{}{0}},
 		{`map{"a":1}?a`, []interface{}{1}},
 		{`map{"a":1,"b":2,"c":3}?("a","b")`, []interface{}{1, 2}},
 	}
@@ -494,6 +520,82 @@ func TestMapExpr(t *testing.T) {
 		seq := testEval(tt.input)
 		sequence := seq.(*object.Sequence)
 		testSequenceObject(t, sequence, tt.expected)
+	}
+}
+
+func TestMapExpr2(t *testing.T) {
+	tests := []struct {
+		input    string
+		keys     []interface{}
+		expected []interface{}
+	}{
+		{
+			`let $week := map{0:"Sonntag", 1:"Montag", 2:"Dienstag", 3:"Mittwoch", 4:"Donnerstag", 5:"Freitag", 6:"Samstag"} return map:merge(($week, map{6:"Sonnabend"}), map{"duplicates":"combine"})`,
+			[]interface{}{0, 1, 2, 3, 4, 5, 6},
+			[]interface{}{"Sonntag", "Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", []interface{}{"Samstag", "Sonnabend"}},
+		},
+		{
+			`let $week := map{0:"Sonntag", 1:"Montag", 2:"Dienstag", 3:"Mittwoch", 4:"Donnerstag", 5:"Freitag", 6:"Samstag"} return map:merge(($week, map{6:"Sonnabend"}), map{"duplicates":"use-first"})`,
+			[]interface{}{0, 1, 2, 3, 4, 5, 6},
+			[]interface{}{"Sonntag", "Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag"},
+		},
+		{
+			`let $week := map{0:"Sonntag", 1:"Montag", 2:"Dienstag", 3:"Mittwoch", 4:"Donnerstag", 5:"Freitag", 6:"Samstag"} return map:merge(($week, map{6:"Sonnabend"}), map{"duplicates":"use-last"})`,
+			[]interface{}{0, 1, 2, 3, 4, 5, 6},
+			[]interface{}{"Sonntag", "Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Sonnabend"},
+		},
+		{
+			`let $week := map{0:"Sonntag", 1:"Montag", 2:"Dienstag", 3:"Mittwoch", 4:"Donnerstag", 5:"Freitag", 6:"Samstag"} return map:merge(($week, map{7:"Unbekannt"}))`,
+			[]interface{}{0, 1, 2, 3, 4, 5, 6, 7},
+			[]interface{}{"Sonntag", "Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag", "Unbekannt"},
+		},
+		{
+			`map:merge((map:entry(0, "no"), map:entry(1, "yes")))`,
+			[]interface{}{0, 1},
+			[]interface{}{"no", "yes"},
+		},
+		{
+			`map:merge(())`,
+			[]interface{}{},
+			[]interface{}{},
+		},
+		{
+			`let $week := map{0:"Sonntag", 1:"Montag", 2:"Dienstag", 3:"Mittwoch", 4:"Donnerstag", 5:"Freitag", 6:"Samstag"} return map:remove($week, (0, 6 to 7))`,
+			[]interface{}{1, 2, 3, 4, 5},
+			[]interface{}{"Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag"},
+		},
+		{
+			`let $week := map{0:"Sonntag", 1:"Montag", 2:"Dienstag", 3:"Mittwoch", 4:"Donnerstag", 5:"Freitag", 6:"Samstag"} return map:remove($week, 4)`,
+			[]interface{}{0, 1, 2, 3, 5, 6},
+			[]interface{}{"Sonntag", "Montag", "Dienstag", "Mittwoch", "Freitag", "Samstag"},
+		},
+		{
+			`let $week := map{0:"Sonntag", 1:"Montag", 2:"Dienstag", 3:"Mittwoch", 4:"Donnerstag", 5:"Freitag", 6:"Samstag"} return map:remove($week,23)`,
+			[]interface{}{0, 1, 2, 3, 4, 5, 6},
+			[]interface{}{"Sonntag", "Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag"},
+		},
+		{
+			`map:entry("Su", "Sunday"),`,
+			[]interface{}{"Su"},
+			[]interface{}{"Sunday"},
+		},
+		{
+			`let $week := map{0:"Sonntag", 1:"Montag", 2:"Dienstag", 3:"Mittwoch", 4:"Donnerstag", 5:"Freitag", 6:"Samstag"} return map:put($week, -1, "Unbekannt")`,
+			[]interface{}{0, 1, 2, 3, 4, 5, 6, -1},
+			[]interface{}{"Sonntag", "Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag", "Unbekannt"},
+		},
+		{
+			`let $week := map{0:"Sonntag", 1:"Montag", 2:"Dienstag", 3:"Mittwoch", 4:"Donnerstag", 5:"Freitag", 6:"Samstag"} return map:put($week, 6, "Sonnabend")`,
+			[]interface{}{0, 1, 2, 3, 4, 5, 6},
+			[]interface{}{"Sonntag", "Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Sonnabend"},
+		},
+	}
+
+	for _, tt := range tests {
+		seq := testEval(tt.input)
+		sequence := seq.(*object.Sequence)
+		m := sequence.Items[0].(*object.Map)
+		testMapObject(t, m, tt.keys, tt.expected)
 	}
 }
 
@@ -2345,6 +2447,111 @@ func testStringObject(t *testing.T, item object.Item, expected interface{}) {
 		}
 	default:
 		t.Errorf("item type must object.String. got=%s", item.Type())
+	}
+}
+
+// just checking map value, map key should be one type of primitive
+func testMapObject(t *testing.T, m *object.Map, key, expected interface{}) {
+	ex := expected.([]interface{})
+
+	switch ke := key.(type) {
+	case []interface{}:
+		for i, it := range ke {
+			switch e := it.(type) {
+			case int:
+				key := bif.NewInteger(e).HashKey()
+				pair, ok := m.Pairs[key]
+				if !ok {
+					t.Errorf("key [%d] doesn't exiest in map", e)
+				}
+
+				if exi, ok := ex[i].([]interface{}); ok {
+					if !bif.IsSeq(pair.Value) {
+						t.Errorf("value should be sequence type")
+					}
+					seq := pair.Value.(*object.Sequence)
+					if len(seq.Items) != len(exi) {
+						t.Errorf("wrong number of items")
+					}
+					for j, eexi := range exi {
+						if !bif.IsSameAtomic(seq.Items[j], eexi) {
+							t.Errorf("value doesn't match: got=%v, expected=%v", seq.Items[j], ex[i])
+						}
+					}
+				} else if !bif.IsSameAtomic(pair.Value, ex[i]) {
+					t.Errorf("value doesn't match: got=%v, expected=%v", pair.Value, ex[i])
+				}
+			case float64:
+				key := bif.NewDecimal(e).HashKey()
+				pair, ok := m.Pairs[key]
+				if !ok {
+					t.Errorf("key [%f] doesn't exiest in map", e)
+				}
+
+				if exi, ok := ex[i].([]interface{}); ok {
+					if !bif.IsSeq(pair.Value) {
+						t.Errorf("value should be sequence type")
+					}
+					seq := pair.Value.(*object.Sequence)
+					if len(seq.Items) != len(exi) {
+						t.Errorf("wrong number of items")
+					}
+					for j, eexi := range exi {
+						if !bif.IsSameAtomic(seq.Items[j], eexi) {
+							t.Errorf("value doesn't match: got=%v, expected=%v", seq.Items[j], ex[i])
+						}
+					}
+				} else if !bif.IsSameAtomic(pair.Value, ex[i]) {
+					t.Errorf("value doesn't match: got=%v, expected=%v", pair.Value, ex[i])
+				}
+			case string:
+				key := bif.NewString(e).HashKey()
+				pair, ok := m.Pairs[key]
+				if !ok {
+					t.Errorf("key [%s] doesn't exiest in map", e)
+				}
+
+				if exi, ok := ex[i].([]interface{}); ok {
+					if !bif.IsSeq(pair.Value) {
+						t.Errorf("value should be sequence type")
+					}
+					seq := pair.Value.(*object.Sequence)
+					if len(seq.Items) != len(exi) {
+						t.Errorf("wrong number of items")
+					}
+					for j, eexi := range exi {
+						if !bif.IsSameAtomic(seq.Items[j], eexi) {
+							t.Errorf("value doesn't match: got=%v, expected=%v", seq.Items[j], ex[i])
+						}
+					}
+				} else if !bif.IsSameAtomic(pair.Value, ex[i]) {
+					t.Errorf("value doesn't match: got=%v, expected=%v", pair.Value, ex[i])
+				}
+			case bool:
+				key := bif.NewBoolean(e).HashKey()
+				pair, ok := m.Pairs[key]
+				if !ok {
+					t.Errorf("key [%v] doesn't exiest in map", e)
+				}
+
+				if exi, ok := ex[i].([]interface{}); ok {
+					if !bif.IsSeq(pair.Value) {
+						t.Errorf("value should be sequence type")
+					}
+					seq := pair.Value.(*object.Sequence)
+					if len(seq.Items) != len(exi) {
+						t.Errorf("wrong number of items")
+					}
+					for j, eexi := range exi {
+						if !bif.IsSameAtomic(seq.Items[j], eexi) {
+							t.Errorf("value doesn't match: got=%v, expected=%v", seq.Items[j], ex[i])
+						}
+					}
+				} else if !bif.IsSameAtomic(pair.Value, ex[i]) {
+					t.Errorf("value doesn't match: got=%v, expected=%v", pair.Value, ex[i])
+				}
+			}
+		}
 	}
 }
 

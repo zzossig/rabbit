@@ -118,6 +118,35 @@ var F = map[string]object.Func{
 	"fn:for-each-pair": fnForEachPair,
 	"fn:filter":        fnFilter,
 
+	// 17.1
+	"map:size":     mapSize,
+	"map:keys":     mapKeys,
+	"map:contains": mapContains,
+	"map:get":      mapGet,
+	"map:put":      mapPut,
+	"map:entry":    mapEntry,
+	"map:remove":   mapRemove,
+	"map:merge":    mapMerge,
+	"map:for-each": mapForEach,
+
+	// 17.3
+	"array:size":          arrSize,
+	"array:get":           arrGet,
+	"array:put":           arrPut,
+	"array:append":        arrAppend,
+	"array:subarray":      arrSubarray,
+	"array:remove":        arrRemove,
+	"array:insert-before": arrInsertBefore,
+	"array:head":          arrHead,
+	"array:tail":          arrTail,
+	"array:reverse":       arrReverse,
+	"array:join":          arrJoin,
+	"array:for-each":      arrForEach,
+	"array:filter":        arrFilter,
+	"array:for-each-pair": arrForEachPair,
+	"array:sort":          arrSort,
+	"array:flatten":       arrFlatten,
+
 	// 19
 	"xs:integer": xsInteger,
 	"xs:decimal": xsDecimal,
@@ -855,6 +884,43 @@ func IsPrecede(n1, n2 object.Node, src *object.BaseNode) object.Item {
 		}
 	}
 	return object.NIL
+}
+
+// IsSameAtomic ..
+func IsSameAtomic(item object.Item, val interface{}) bool {
+	switch val := val.(type) {
+	case int:
+		if i, ok := item.(*object.Integer); ok {
+			if i.Value() == val {
+				return true
+			}
+		}
+	case float64:
+		if i, ok := item.(*object.Decimal); ok {
+			if i.Value() == val {
+				return true
+			}
+		}
+		if i, ok := item.(*object.Double); ok {
+			if i.Value() == val {
+				return true
+			}
+		}
+	case string:
+		if i, ok := item.(*object.String); ok {
+			if i.Value() == val {
+				return true
+			}
+		}
+	case bool:
+		if i, ok := item.(*object.Boolean); ok {
+			if i.Value() == val {
+				return true
+			}
+		}
+	}
+
+	return false
 }
 
 // IsEQ ..
@@ -1797,5 +1863,37 @@ func UnwrapSeq(item object.Item) []object.Item {
 		}
 		return items
 	}
+
+	return []object.Item{item}
+}
+
+// UnwrapArr ..
+func UnwrapArr(item object.Item) []object.Item {
+	if arr, ok := item.(*object.Array); ok {
+		var items []object.Item
+		for _, it := range arr.Items {
+			switch it.Type() {
+			case object.ArrayType, object.SequenceType:
+				items = append(items, UnwrapArr(it)...)
+			default:
+				items = append(items, it)
+			}
+		}
+		return items
+	}
+
+	if seq, ok := item.(*object.Sequence); ok {
+		var items []object.Item
+		for _, it := range seq.Items {
+			switch it.Type() {
+			case object.ArrayType, object.SequenceType:
+				items = append(items, UnwrapArr(it)...)
+			default:
+				items = append(items, it)
+			}
+		}
+		return items
+	}
+
 	return []object.Item{item}
 }

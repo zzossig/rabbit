@@ -26,9 +26,14 @@ func TestBooleanHashKey(t *testing.T) {
 	true2 := &Boolean{true}
 	false1 := &Boolean{false}
 	false2 := &Boolean{false}
+	num1 := &Integer{1}
 
 	if true1.HashKey() != true2.HashKey() {
-		t.Errorf("trues do not have same hash key")
+		t.Errorf("trues should have same hash key")
+	}
+
+	if num1.HashKey() == true1.HashKey() {
+		t.Errorf("num1 and true1 should not have same hash key")
 	}
 
 	if false1.HashKey() != false2.HashKey() {

@@ -60,7 +60,7 @@ func fnStringToCodepoints(ctx *object.Context, args ...object.Item) object.Item 
 		return NewSequence()
 	}
 
-	var r []rune
+	var str string
 
 	switch arg := args[0].(type) {
 	case *object.Sequence:
@@ -74,15 +74,15 @@ func fnStringToCodepoints(ctx *object.Context, args ...object.Item) object.Item 
 		}
 		return fnStringToCodepoints(ctx, arg.Items[0])
 	case *object.String:
-		r = []rune(arg.Value())
+		str = arg.Value()
 	default:
 		return NewError("cannot match item type with required type")
 	}
 
 	result := &object.Sequence{}
 
-	for _, rr := range r {
-		result.Items = append(result.Items, NewInteger(int(rr)))
+	for _, r := range str {
+		result.Items = append(result.Items, NewInteger(int(r)))
 	}
 
 	return result

@@ -22,7 +22,6 @@ func evalXPath(expr *ast.XPath, ctx *object.Context) object.Item {
 					xpath.Items = append(xpath.Items, it)
 				}
 			}
-
 		default:
 			xpath.Items = append(xpath.Items, item)
 		}
