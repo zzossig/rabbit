@@ -1329,6 +1329,16 @@ func TestPathExpr(t *testing.T) {
 	if len(sequence62.Items) != 1 {
 		t.Errorf("wrong number of items. got=%d, expected=1", len(sequence62.Items))
 	}
+
+	seq63 := testEvalXML2("//office[1]/@location lt //office[2]/@location")
+	sequence63 := seq63.(*object.Sequence)
+	if len(sequence63.Items) != 1 {
+		t.Errorf("wrong number of items. got=%d, expected=1", len(sequence63.Items))
+	}
+	item63 := sequence63.Items[0].(*object.Boolean)
+	if item63.Value() {
+		t.Errorf("the result should be [false]")
+	}
 }
 
 func TestPathPredicateExpr(t *testing.T) {
