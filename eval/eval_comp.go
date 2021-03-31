@@ -64,7 +64,7 @@ func evalComparisonExpr(expr ast.ExprSingle, ctx *object.Context) object.Item {
 		return compBool(op, left, right)
 	}
 
-	return bif.NewError("The operator '%s' is not defined for operands of type %s and %s\n", op.Literal, left.Type(), right.Type())
+	return bif.NewError("cannot compare types: %s, %s", op.Literal, left.Type(), right.Type())
 }
 
 func compNumberNumber(op token.Token, left, right object.Item) object.Item {
@@ -106,7 +106,7 @@ func compNumberNumber(op token.Token, left, right object.Item) object.Item {
 
 		return boolean
 	default:
-		return bif.NewError("The operator '%s' is not defined for operands of type %s and %s\n", op.Literal, left.Type(), right.Type())
+		return bif.NewError("the operator '%s' is not defined for operands of type %s and %s", op.Literal, left.Type(), right.Type())
 	}
 }
 
@@ -187,7 +187,7 @@ func compNumberArray(op token.Token, left, right object.Item) object.Item {
 		}
 		return bif.NewBoolean(false)
 	default:
-		return bif.NewError("The operator '%s' is not defined for operands of type %s and %s\n", op.Literal, left.Type(), right.Type())
+		return bif.NewError("the operator '%s' is not defined for operands of type %s and %s\n", op.Literal, left.Type(), right.Type())
 	}
 }
 
@@ -268,7 +268,7 @@ func compNumberSeq(op token.Token, left, right object.Item) object.Item {
 		}
 		return bif.NewBoolean(false)
 	default:
-		return bif.NewError("The operator '%s' is not defined for operands of type %s and %s\n", op.Literal, left.Type(), right.Type())
+		return bif.NewError("the operator '%s' is not defined for operands of type %s and %s\n", op.Literal, left.Type(), right.Type())
 	}
 }
 
@@ -290,7 +290,7 @@ func compStringString(op token.Token, left, right object.Item) object.Item {
 	case token.GE, token.GEV:
 		return bif.NewBoolean(leftVal >= rightVal)
 	default:
-		return bif.NewError("The operator '%s' is not defined for operands of type %s and %s\n", op.Literal, left.Type(), right.Type())
+		return bif.NewError("the operator '%s' is not defined for operands of type %s and %s\n", op.Literal, left.Type(), right.Type())
 	}
 }
 
@@ -303,7 +303,7 @@ func compStringArray(op token.Token, left, right object.Item) object.Item {
 		for _, item := range rightVal.Items {
 			e, ok := item.(*object.String)
 			if !ok {
-				return bif.NewError("Types %s and %s are not comparable.", leftVal.Type(), item.Type())
+				return bif.NewError("cannot compare types: %s, %s", leftVal.Type(), item.Type())
 			}
 			if leftVal.Value() == e.Value() {
 				return bif.NewBoolean(true)
@@ -314,7 +314,7 @@ func compStringArray(op token.Token, left, right object.Item) object.Item {
 		for _, item := range rightVal.Items {
 			e, ok := item.(*object.String)
 			if !ok {
-				return bif.NewError("Types %s and %s are not comparable.", leftVal.Type(), item.Type())
+				return bif.NewError("cannot compare types: %s, %s", leftVal.Type(), item.Type())
 			}
 			if leftVal.Value() != e.Value() {
 				return bif.NewBoolean(true)
@@ -325,7 +325,7 @@ func compStringArray(op token.Token, left, right object.Item) object.Item {
 		for _, item := range rightVal.Items {
 			e, ok := item.(*object.String)
 			if !ok {
-				return bif.NewError("Types %s and %s are not comparable.", leftVal.Type(), item.Type())
+				return bif.NewError("cannot compare types: %s, %s", leftVal.Type(), item.Type())
 			}
 			if leftVal.Value() < e.Value() {
 				return bif.NewBoolean(true)
@@ -336,7 +336,7 @@ func compStringArray(op token.Token, left, right object.Item) object.Item {
 		for _, item := range rightVal.Items {
 			e, ok := item.(*object.String)
 			if !ok {
-				return bif.NewError("Types %s and %s are not comparable.", leftVal.Type(), item.Type())
+				return bif.NewError("cannot compare types: %s, %s", leftVal.Type(), item.Type())
 			}
 			if leftVal.Value() <= e.Value() {
 				return bif.NewBoolean(true)
@@ -347,7 +347,7 @@ func compStringArray(op token.Token, left, right object.Item) object.Item {
 		for _, item := range rightVal.Items {
 			e, ok := item.(*object.String)
 			if !ok {
-				return bif.NewError("Types %s and %s are not comparable.", leftVal.Type(), item.Type())
+				return bif.NewError("cannot compare types: %s, %s", leftVal.Type(), item.Type())
 			}
 			if leftVal.Value() > e.Value() {
 				return bif.NewBoolean(true)
@@ -358,7 +358,7 @@ func compStringArray(op token.Token, left, right object.Item) object.Item {
 		for _, item := range rightVal.Items {
 			e, ok := item.(*object.String)
 			if !ok {
-				return bif.NewError("Types %s and %s are not comparable.", leftVal.Type(), item.Type())
+				return bif.NewError("cannot compare types: %s, %s", leftVal.Type(), item.Type())
 			}
 			if leftVal.Value() >= e.Value() {
 				return bif.NewBoolean(true)
@@ -366,7 +366,7 @@ func compStringArray(op token.Token, left, right object.Item) object.Item {
 		}
 		return bif.NewBoolean(false)
 	default:
-		return bif.NewError("The operator '%s' is not defined for operands of type %s and %s\n", op.Literal, left.Type(), right.Type())
+		return bif.NewError("the operator '%s' is not defined for operands of type %s and %s\n", op.Literal, left.Type(), right.Type())
 	}
 }
 
@@ -396,7 +396,7 @@ func compStringSeq(op token.Token, left, right object.Item) object.Item {
 				continue
 			}
 
-			return bif.NewError("Types %s and %s are not comparable.", leftVal.Type(), item.Type())
+			return bif.NewError("cannot compare types: %s, %s", leftVal.Type(), item.Type())
 		}
 		return bif.NewBoolean(false)
 	case token.NE, token.NEV:
@@ -420,7 +420,7 @@ func compStringSeq(op token.Token, left, right object.Item) object.Item {
 				continue
 			}
 
-			return bif.NewError("Types %s and %s are not comparable.", leftVal.Type(), item.Type())
+			return bif.NewError("cannot compare types: %s, %s", leftVal.Type(), item.Type())
 		}
 		return bif.NewBoolean(false)
 	case token.LT, token.LTV:
@@ -438,7 +438,7 @@ func compStringSeq(op token.Token, left, right object.Item) object.Item {
 				return bif.NewBoolean(true)
 			}
 
-			return bif.NewError("Types %s and %s are not comparable.", leftVal.Type(), item.Type())
+			return bif.NewError("cannot compare types: %s, %s", leftVal.Type(), item.Type())
 		}
 		return bif.NewBoolean(false)
 	case token.LE, token.LEV:
@@ -456,7 +456,7 @@ func compStringSeq(op token.Token, left, right object.Item) object.Item {
 				return bif.NewBoolean(true)
 			}
 
-			return bif.NewError("Types %s and %s are not comparable.", leftVal.Type(), item.Type())
+			return bif.NewError("cannot compare types: %s, %s", leftVal.Type(), item.Type())
 		}
 		return bif.NewBoolean(false)
 	case token.GT, token.GTV:
@@ -474,7 +474,7 @@ func compStringSeq(op token.Token, left, right object.Item) object.Item {
 				return bif.NewBoolean(true)
 			}
 
-			return bif.NewError("Types %s and %s are not comparable.", leftVal.Type(), item.Type())
+			return bif.NewError("cannot compare types: %s, %s", leftVal.Type(), item.Type())
 		}
 		return bif.NewBoolean(false)
 	case token.GE, token.GEV:
@@ -492,11 +492,11 @@ func compStringSeq(op token.Token, left, right object.Item) object.Item {
 				return bif.NewBoolean(true)
 			}
 
-			return bif.NewError("Types %s and %s are not comparable.", leftVal.Type(), item.Type())
+			return bif.NewError("cannot compare types: %s, %s", leftVal.Type(), item.Type())
 		}
 		return bif.NewBoolean(false)
 	default:
-		return bif.NewError("The operator '%s' is not defined for operands of type %s and %s\n", op.Literal, left.Type(), right.Type())
+		return bif.NewError("the operator '%s' is not defined for operands of type %s and %s\n", op.Literal, left.Type(), right.Type())
 	}
 }
 
@@ -577,7 +577,7 @@ func compArrayNumber(op token.Token, left, right object.Item) object.Item {
 		}
 		return bif.NewBoolean(false)
 	default:
-		return bif.NewError("The operator '%s' is not defined for operands of type %s and %s\n", op.Literal, left.Type(), right.Type())
+		return bif.NewError("the operator '%s' is not defined for operands of type %s and %s\n", op.Literal, left.Type(), right.Type())
 	}
 }
 
@@ -590,7 +590,7 @@ func compArrayString(op token.Token, left, right object.Item) object.Item {
 		for _, item := range leftVal.Items {
 			e, ok := item.(*object.String)
 			if !ok {
-				return bif.NewError("Types %s and %s are not comparable.", leftVal.Type(), item.Type())
+				return bif.NewError("cannot compare types: %s, %s", leftVal.Type(), item.Type())
 			}
 			if e.Value() == rightVal.Value() {
 				return bif.NewBoolean(true)
@@ -601,7 +601,7 @@ func compArrayString(op token.Token, left, right object.Item) object.Item {
 		for _, item := range leftVal.Items {
 			e, ok := item.(*object.String)
 			if !ok {
-				return bif.NewError("Types %s and %s are not comparable.", leftVal.Type(), item.Type())
+				return bif.NewError("cannot compare types: %s, %s", leftVal.Type(), item.Type())
 			}
 			if e.Value() != rightVal.Value() {
 				return bif.NewBoolean(true)
@@ -612,7 +612,7 @@ func compArrayString(op token.Token, left, right object.Item) object.Item {
 		for _, item := range leftVal.Items {
 			e, ok := item.(*object.String)
 			if !ok {
-				return bif.NewError("Types %s and %s are not comparable.", leftVal.Type(), item.Type())
+				return bif.NewError("cannot compare types: %s, %s", leftVal.Type(), item.Type())
 			}
 			if e.Value() < rightVal.Value() {
 				return bif.NewBoolean(true)
@@ -623,7 +623,7 @@ func compArrayString(op token.Token, left, right object.Item) object.Item {
 		for _, item := range leftVal.Items {
 			e, ok := item.(*object.String)
 			if !ok {
-				return bif.NewError("Types %s and %s are not comparable.", leftVal.Type(), item.Type())
+				return bif.NewError("cannot compare types: %s, %s", leftVal.Type(), item.Type())
 			}
 			if e.Value() <= rightVal.Value() {
 				return bif.NewBoolean(true)
@@ -634,7 +634,7 @@ func compArrayString(op token.Token, left, right object.Item) object.Item {
 		for _, item := range leftVal.Items {
 			e, ok := item.(*object.String)
 			if !ok {
-				return bif.NewError("Types %s and %s are not comparable.", leftVal.Type(), item.Type())
+				return bif.NewError("cannot compare types: %s, %s", leftVal.Type(), item.Type())
 			}
 			if e.Value() > rightVal.Value() {
 				return bif.NewBoolean(true)
@@ -645,7 +645,7 @@ func compArrayString(op token.Token, left, right object.Item) object.Item {
 		for _, item := range leftVal.Items {
 			e, ok := item.(*object.String)
 			if !ok {
-				return bif.NewError("Types %s and %s are not comparable.", leftVal.Type(), item.Type())
+				return bif.NewError("cannot compare types: %s, %s", leftVal.Type(), item.Type())
 			}
 			if e.Value() >= rightVal.Value() {
 				return bif.NewBoolean(true)
@@ -653,7 +653,7 @@ func compArrayString(op token.Token, left, right object.Item) object.Item {
 		}
 		return bif.NewBoolean(false)
 	default:
-		return bif.NewError("The operator '%s' is not defined for operands of type %s and %s\n", op.Literal, left.Type(), right.Type())
+		return bif.NewError("the operator '%s' is not defined for operands of type %s and %s\n", op.Literal, left.Type(), right.Type())
 	}
 }
 
@@ -747,7 +747,7 @@ func compArraySeq(op token.Token, left, right object.Item) object.Item {
 		}
 		return bif.NewBoolean(false)
 	default:
-		return bif.NewError("The operator '%s' is not defined for operands of type %s and %s\n", op.Literal, left.Type(), right.Type())
+		return bif.NewError("the operator '%s' is not defined for operands of type %s and %s\n", op.Literal, left.Type(), right.Type())
 	}
 }
 
@@ -841,7 +841,7 @@ func compArrayArray(op token.Token, left, right object.Item) object.Item {
 		}
 		return bif.NewBoolean(false)
 	default:
-		return bif.NewError("The operator '%s' is not defined for operands of type %s and %s\n", op.Literal, left.Type(), right.Type())
+		return bif.NewError("the operator '%s' is not defined for operands of type %s and %s\n", op.Literal, left.Type(), right.Type())
 	}
 }
 
@@ -922,7 +922,7 @@ func compSeqNumber(op token.Token, left, right object.Item) object.Item {
 		}
 		return bif.NewBoolean(false)
 	default:
-		return bif.NewError("The operator '%s' is not defined for operands of type %s and %s\n", op.Literal, left.Type(), right.Type())
+		return bif.NewError("the operator '%s' is not defined for operands of type %s and %s\n", op.Literal, left.Type(), right.Type())
 	}
 }
 
@@ -952,7 +952,7 @@ func compSeqString(op token.Token, left, right object.Item) object.Item {
 				continue
 			}
 
-			return bif.NewError("Types %s and %s are not comparable.", leftVal.Type(), item.Type())
+			return bif.NewError("cannot compare types: %s, %s", leftVal.Type(), item.Type())
 		}
 		return bif.NewBoolean(false)
 	case token.NE, token.NEV:
@@ -976,7 +976,7 @@ func compSeqString(op token.Token, left, right object.Item) object.Item {
 				continue
 			}
 
-			return bif.NewError("Types %s and %s are not comparable.", leftVal.Type(), item.Type())
+			return bif.NewError("cannot compare types: %s, %s", leftVal.Type(), item.Type())
 		}
 		return bif.NewBoolean(false)
 	case token.LT, token.LTV:
@@ -994,7 +994,7 @@ func compSeqString(op token.Token, left, right object.Item) object.Item {
 				return bif.NewBoolean(true)
 			}
 
-			return bif.NewError("Types %s and %s are not comparable.", leftVal.Type(), item.Type())
+			return bif.NewError("cannot compare types: %s, %s", leftVal.Type(), item.Type())
 		}
 		return bif.NewBoolean(false)
 	case token.LE, token.LEV:
@@ -1012,7 +1012,7 @@ func compSeqString(op token.Token, left, right object.Item) object.Item {
 				return bif.NewBoolean(true)
 			}
 
-			return bif.NewError("Types %s and %s are not comparable.", leftVal.Type(), item.Type())
+			return bif.NewError("cannot compare types: %s, %s", leftVal.Type(), item.Type())
 		}
 		return bif.NewBoolean(false)
 	case token.GT, token.GTV:
@@ -1030,7 +1030,7 @@ func compSeqString(op token.Token, left, right object.Item) object.Item {
 				return bif.NewBoolean(true)
 			}
 
-			return bif.NewError("Types %s and %s are not comparable.", leftVal.Type(), item.Type())
+			return bif.NewError("cannot compare types: %s, %s", leftVal.Type(), item.Type())
 		}
 		return bif.NewBoolean(false)
 	case token.GE, token.GEV:
@@ -1048,11 +1048,11 @@ func compSeqString(op token.Token, left, right object.Item) object.Item {
 				return bif.NewBoolean(true)
 			}
 
-			return bif.NewError("Types %s and %s are not comparable.", leftVal.Type(), item.Type())
+			return bif.NewError("cannot compare types: %s, %s", leftVal.Type(), item.Type())
 		}
 		return bif.NewBoolean(false)
 	default:
-		return bif.NewError("The operator '%s' is not defined for operands of type %s and %s\n", op.Literal, left.Type(), right.Type())
+		return bif.NewError("the operator '%s' is not defined for operands of type %s and %s\n", op.Literal, left.Type(), right.Type())
 	}
 }
 
@@ -1146,7 +1146,7 @@ func compSeqArray(op token.Token, left, right object.Item) object.Item {
 		}
 		return bif.NewBoolean(false)
 	default:
-		return bif.NewError("The operator '%s' is not defined for operands of type %s and %s\n", op.Literal, left.Type(), right.Type())
+		return bif.NewError("the operator '%s' is not defined for operands of type %s and %s\n", op.Literal, left.Type(), right.Type())
 	}
 }
 
@@ -1299,7 +1299,7 @@ func compSeqSeq(op token.Token, left, right object.Item, ctx *object.Context) ob
 
 		return bif.NewBoolean(false)
 	default:
-		return bif.NewError("The operator '%s' is not defined for operands of type %s and %s\n", op.Literal, left.Type(), right.Type())
+		return bif.NewError("the operator '%s' is not defined for operands of type %s and %s\n", op.Literal, left.Type(), right.Type())
 	}
 }
 
@@ -1340,7 +1340,7 @@ func compBool(op token.Token, left, right object.Item) object.Item {
 		}
 		return bif.NewBoolean(true)
 	default:
-		return bif.NewError("The operator '%s' is not defined for operands of type %s and %s\n", op.Literal, left.Type(), right.Type())
+		return bif.NewError("the operator '%s' is not defined for operands of type %s and %s\n", op.Literal, left.Type(), right.Type())
 	}
 }
 
@@ -1581,7 +1581,7 @@ func compNodeNumber(op token.Token, left, right object.Item, ctx *object.Context
 		}
 	}
 
-	return bif.NewError("cannot compare")
+	return bif.NewError("the operator '%s' is not defined for operands of type %s and %s\n", op.Literal, left.Type(), right.Type())
 }
 
 func compNumberNode(op token.Token, left, right object.Item, ctx *object.Context) object.Item {
@@ -1686,7 +1686,7 @@ func compNumberNode(op token.Token, left, right object.Item, ctx *object.Context
 		}
 	}
 
-	return bif.NewError("cannot compare")
+	return bif.NewError("the operator '%s' is not defined for operands of type %s and %s\n", op.Literal, left.Type(), right.Type())
 }
 
 func compNodeNode(op token.Token, left, right object.Item, ctx *object.Context) object.Item {

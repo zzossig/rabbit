@@ -1,6 +1,7 @@
 package parser
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/zzossig/xpath/ast"
@@ -200,6 +201,15 @@ func New(l *lexer.Lexer) *Parser {
 	return p
 }
 
+// Errors returns []error
+func (p *Parser) Errors() []error {
+	return p.errors
+}
+
+func (p *Parser) newError(format string, a ...interface{}) {
+	p.errors = append(p.errors, fmt.Errorf(format, a...))
+}
+
 func (p *Parser) nextToken() {
 	p.curToken = p.peekToken
 	p.peekSpace = p.l.PeekSpace()
@@ -321,7 +331,7 @@ func (p *Parser) readEQName() string {
 			sb.WriteString(p.curToken.Literal)
 
 			if !util.IsNCName(p.peekToken.Literal) {
-				// TODO error
+				p.newError("error while parsing xs:EQName: expectPeek: xs:NCName, got=%s", p.peekToken.Literal)
 				return sb.String()
 			}
 
@@ -345,7 +355,7 @@ func (p *Parser) readBracedURI() string {
 	sb.WriteString(p.curToken.Literal)
 
 	if !p.expectPeek(token.LBRACE) {
-		// TODO error
+		p.newError("error while parsing BracedURI: expectPeek: {, got=%s", p.peekToken.Literal)
 		return sb.String()
 	}
 	sb.WriteString(p.curToken.Literal)
@@ -356,7 +366,7 @@ func (p *Parser) readBracedURI() string {
 	}
 
 	if !p.expectPeek(token.RBRACE) {
-		// TODO error
+		p.newError("error while parsing BracedURI: expectPeek: }, got=%s", p.peekToken.Literal)
 		return sb.String()
 	}
 	sb.WriteString(p.curToken.Literal)
@@ -392,6 +402,7 @@ func (p *Parser) ParseXPath() *ast.XPath {
 	e := p.parseExpr()
 	ex, ok := e.(*ast.Expr)
 	if !ok {
+		p.newError("cannot parse XPath")
 		return nil
 	}
 	xpath.Exprs = ex.Exprs

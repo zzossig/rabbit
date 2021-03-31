@@ -48,7 +48,7 @@ func (p *Parser) parsePredicate() ast.Predicate {
 	e := p.parseExpr()
 	ex, ok := e.(*ast.Expr)
 	if !ok {
-		// TODO error
+		p.newError("cannot parse Predicate")
 		return pc
 	}
 	pc.Exprs = ex.Exprs
@@ -95,7 +95,7 @@ func (p *Parser) parseArgumentList() ast.ArgumentList {
 	al := ast.ArgumentList{}
 
 	if !p.curTokenIs(token.LPAREN) {
-		// TODO error
+		p.newError("error while parsing ArgumentList: expectCur: (, got=%s", p.curToken.Literal)
 		return al
 	}
 	p.nextToken()
@@ -129,7 +129,7 @@ func (p *Parser) parseArrowFunctionSpecifier() ast.ArrowFunctionSpecifier {
 		e := p.parseParenthesizedExpr()
 		pe, ok := e.(*ast.ParenthesizedExpr)
 		if !ok {
-			// TODO error
+			p.newError("cannot parse ParenthesizedExpr")
 			return afs
 		}
 
@@ -241,6 +241,7 @@ func (p *Parser) parseNameTest() ast.NodeTest {
 		if p.curToken.Literal == "Q" && p.peekTokenIs(token.LBRACE) {
 			bracedURI := p.readBracedURI()
 			if !p.expectPeek(token.ASTERISK) {
+				p.newError("error while parsing Wildcard: expectPeek: *, got=%s", p.peekToken.Literal)
 				return nil
 			}
 			test.Wildcard.BracedURILiteral.SetValue(bracedURI)
@@ -281,7 +282,7 @@ func (p *Parser) parseDocumentTest() ast.NodeTest {
 	test := &ast.DocumentTest{}
 
 	if !p.expectPeek(token.LPAREN) {
-		// TODO error
+		p.newError("error while parsing DocumentTest: expectPeek: }, got=%s", p.peekToken.Literal)
 		return nil
 	}
 	p.nextToken()
@@ -294,15 +295,16 @@ func (p *Parser) parseDocumentTest() ast.NodeTest {
 
 	t, ok := test.NodeTest.(*ast.KindTest)
 	if !ok {
-		// TODO error
+		p.newError("cannot parse DocumentTest")
 		return nil
 	}
 	if t.TypeID != 2 && t.TypeID != 4 {
-		// TODO error
+		p.newError("error while parsing DocumentTest: expected ElementTest, SchemaElementTest")
 		return nil
 	}
 
 	if !p.expectPeek(token.RPAREN) {
+		p.newError("error while parsing DocumentTest: expectPeek: ), got=%s", p.peekToken.Literal)
 		return nil
 	}
 
@@ -313,7 +315,7 @@ func (p *Parser) parseElementTest() ast.NodeTest {
 	test := &ast.ElementTest{}
 
 	if !p.expectPeek(token.LPAREN) {
-		// TODO error
+		p.newError("error while parsing ElementTest: expectPeek: (, got=%s", p.peekToken.Literal)
 		return nil
 	}
 
@@ -340,6 +342,7 @@ func (p *Parser) parseElementTest() ast.NodeTest {
 	test.Token = p.curToken
 
 	if !p.expectPeek(token.RPAREN) {
+		p.newError("error while parsing ElementTest: expectPeek: ), got=%s", p.peekToken.Literal)
 		return nil
 	}
 
@@ -350,7 +353,7 @@ func (p *Parser) parseAttributeTest() ast.NodeTest {
 	at := &ast.AttributeTest{}
 
 	if !p.expectPeek(token.LPAREN) {
-		// TODO error
+		p.newError("error while parsing AttributeTest: expectPeek: (, got=%s", p.peekToken.Literal)
 		return nil
 	}
 
@@ -370,6 +373,7 @@ func (p *Parser) parseAttributeTest() ast.NodeTest {
 	at.TypeName = p.parseEQName()
 
 	if !p.expectPeek(token.RPAREN) {
+		p.newError("error while parsing AttributeTest: expectPeek: ), got=%s", p.peekToken.Literal)
 		return nil
 	}
 
@@ -380,7 +384,7 @@ func (p *Parser) parseSchemaElementTest() ast.NodeTest {
 	set := &ast.SchemaElementTest{}
 
 	if !p.expectPeek(token.LPAREN) {
-		// TODO error
+		p.newError("error while parsing SchemaElementTest: expectPeek: (, got=%s", p.peekToken.Literal)
 		return nil
 	}
 	p.nextToken()
@@ -388,7 +392,7 @@ func (p *Parser) parseSchemaElementTest() ast.NodeTest {
 	set.ElementDeclaration = p.parseEQName()
 
 	if !p.expectPeek(token.RPAREN) {
-		// TODO error
+		p.newError("error while parsing SchemaElementTest: expectPeek: ), got=%s", p.peekToken.Literal)
 		return nil
 	}
 
@@ -399,7 +403,7 @@ func (p *Parser) parseSchemaAttributeTest() ast.NodeTest {
 	sat := &ast.SchemaAttributeTest{}
 
 	if !p.expectPeek(token.LPAREN) {
-		// TODO error
+		p.newError("error while parsing SchemaAttributeTest: expectPeek: (, got=%s", p.peekToken.Literal)
 		return nil
 	}
 	p.nextToken()
@@ -407,7 +411,7 @@ func (p *Parser) parseSchemaAttributeTest() ast.NodeTest {
 	sat.AttributeDeclaration = p.parseEQName()
 
 	if !p.expectPeek(token.RPAREN) {
-		// TODO error
+		p.newError("error while parsing SchemaAttributeTest: expectPeek: ), got=%s", p.peekToken.Literal)
 		return nil
 	}
 
@@ -418,7 +422,7 @@ func (p *Parser) parsePITest() ast.NodeTest {
 	pit := &ast.PITest{}
 
 	if !p.expectPeek(token.LPAREN) {
-		// TODO error
+		p.newError("error while parsing ProcessingInstructionTest: expectPeek: (, got=%s", p.peekToken.Literal)
 		return nil
 	}
 
@@ -436,6 +440,7 @@ func (p *Parser) parsePITest() ast.NodeTest {
 	}
 
 	if !p.expectPeek(token.RPAREN) {
+		p.newError("error while parsing ProcessingInstructionTest: expectPeek: (, got=%s", p.peekToken.Literal)
 		return nil
 	}
 
@@ -446,12 +451,12 @@ func (p *Parser) parseCommentTest() ast.NodeTest {
 	ct := &ast.CommentTest{}
 
 	if !p.expectPeek(token.LPAREN) {
-		// TODO error
+		p.newError("error while parsing CommentTest: expectPeek: (, got=%s", p.peekToken.Literal)
 		return nil
 	}
 
 	if !p.expectPeek(token.RPAREN) {
-		// TODO error
+		p.newError("error while parsing CommentTest: expectPeek: ), got=%s", p.peekToken.Literal)
 		return nil
 	}
 
@@ -462,12 +467,12 @@ func (p *Parser) parseTextTest() ast.NodeTest {
 	tt := &ast.TextTest{}
 
 	if !p.expectPeek(token.LPAREN) {
-		// TODO error
+		p.newError("error while parsing TextTest: expectPeek: (, got=%s", p.peekToken.Literal)
 		return nil
 	}
 
 	if !p.expectPeek(token.RPAREN) {
-		// TODO error
+		p.newError("error while parsing TextTest: expectPeek: ), got=%s", p.peekToken.Literal)
 		return nil
 	}
 
@@ -478,12 +483,12 @@ func (p *Parser) parseNamespaceNodeTest() ast.NodeTest {
 	nnt := &ast.NamespaceNodeTest{}
 
 	if !p.expectPeek(token.LPAREN) {
-		// TODO error
+		p.newError("error while parsing NamespaceNodeTest: expectPeek: (, got=%s", p.peekToken.Literal)
 		return nil
 	}
 
 	if !p.expectPeek(token.RPAREN) {
-		// TODO error
+		p.newError("error while parsing NamespaceNodeTest: expectPeek: ), got=%s", p.peekToken.Literal)
 		return nil
 	}
 
@@ -494,12 +499,12 @@ func (p *Parser) parseAnyKindTest() ast.NodeTest {
 	akt := &ast.AnyKindTest{}
 
 	if !p.expectPeek(token.LPAREN) {
-		// TODO error
+		p.newError("error while parsing AnyKindTest: expectPeek: (, got=%s", p.peekToken.Literal)
 		return nil
 	}
 
 	if !p.expectPeek(token.RPAREN) {
-		// TODO error
+		p.newError("error while parsing AnyKindTest: expectPeek: ), got=%s", p.peekToken.Literal)
 		return nil
 	}
 
@@ -510,12 +515,12 @@ func (p *Parser) parseItemTest() ast.NodeTest {
 	it := &ast.ItemTest{}
 
 	if !p.expectPeek(token.LPAREN) {
-		// TODO error
+		p.newError("error while parsing ItemTest: expectPeek: (, got=%s", p.peekToken.Literal)
 		return nil
 	}
 
 	if !p.expectPeek(token.RPAREN) {
-		// TODO error
+		p.newError("error while parsing ItemTest: expectPeek: ), got=%s", p.peekToken.Literal)
 		return nil
 	}
 
@@ -526,7 +531,7 @@ func (p *Parser) parseFunctionTest() ast.NodeTest {
 	ft := &ast.FunctionTest{}
 
 	if !p.expectPeek(token.LPAREN) {
-		// TODO error
+		p.newError("error while parsing FunctionTest: expectPeek: (, got=%s", p.peekToken.Literal)
 		return nil
 	}
 
@@ -535,7 +540,7 @@ func (p *Parser) parseFunctionTest() ast.NodeTest {
 		ft.NodeTest = &ast.AnyFunctionTest{}
 
 		if !p.expectPeek(token.RPAREN) {
-			// TODO error
+			p.newError("error while parsing AnyFunctionTest: expectPeek: ), got=%s", p.peekToken.Literal)
 			return nil
 		}
 	} else {
@@ -556,12 +561,13 @@ func (p *Parser) parseFunctionTest() ast.NodeTest {
 			}
 
 			if !p.expectPeek(token.RPAREN) {
+				p.newError("error while parsing TypedFunctionTest: expectPeek: ), got=%s", p.peekToken.Literal)
 				return nil
 			}
 		}
 
 		if !p.expectPeek(token.AS) {
-			// TODO error
+			p.newError("error while parsing TypedFunctionTest: expectPeek: as, got=%s", p.peekToken.Literal)
 			return nil
 		}
 		p.nextToken()
@@ -577,7 +583,7 @@ func (p *Parser) parseMapTest() ast.NodeTest {
 	mt := &ast.MapTest{}
 
 	if !p.expectPeek(token.LPAREN) {
-		// TODO error
+		p.newError("error while parsing MapTest: expectPeek: (, got=%s", p.peekToken.Literal)
 		return nil
 	}
 
@@ -590,7 +596,7 @@ func (p *Parser) parseMapTest() ast.NodeTest {
 		tmt.AtomicOrUnionType.EQName = p.parseEQName()
 
 		if !p.expectPeek(token.COMMA) {
-			// TODO error
+			p.newError("error while parsing TypedMapTest: expectPeek: [,], got=%s", p.peekToken.Literal)
 			return nil
 		}
 		p.nextToken()
@@ -600,7 +606,7 @@ func (p *Parser) parseMapTest() ast.NodeTest {
 	}
 
 	if !p.expectPeek(token.RPAREN) {
-		// TODO error
+		p.newError("error while parsing MapTest: expectPeek: ), got=%s", p.peekToken.Literal)
 		return nil
 	}
 
@@ -611,7 +617,7 @@ func (p *Parser) parseArrayTest() ast.NodeTest {
 	at := &ast.ArrayTest{}
 
 	if !p.expectPeek(token.LPAREN) {
-		// TODO error
+		p.newError("error while parsing ArrayTest: expectPeek: (, got=%s", p.peekToken.Literal)
 		return nil
 	}
 
@@ -627,7 +633,7 @@ func (p *Parser) parseArrayTest() ast.NodeTest {
 	}
 
 	if !p.expectPeek(token.RPAREN) {
-		// TODO error
+		p.newError("error while parsing ArrayTest: expectPeek: ), got=%s", p.peekToken.Literal)
 		return nil
 	}
 
@@ -649,6 +655,7 @@ func (p *Parser) parseParenthesizedItemType() ast.NodeTest {
 	pit.NodeTest = p.parseItemType()
 
 	if !p.expectPeek(token.RPAREN) {
+		p.newError("error while parsing ParenthesizedItemType: expectPeek: ), got=%s", p.peekToken.Literal)
 		return nil
 	}
 
@@ -692,11 +699,11 @@ func (p *Parser) parseSequenceType() ast.SequenceType {
 
 	if p.curToken.Literal == "empty-sequence" {
 		if !p.expectPeek(token.LPAREN) {
-			// TODO error
+			p.newError("error while parsing empty-sequence: expectPeek: (, got=%s", p.peekToken.Literal)
 		}
 
 		if !p.expectPeek(token.RPAREN) {
-			// TODO error
+			p.newError("error while parsing empty-sequence: expectPeek: ), got=%s", p.peekToken.Literal)
 		}
 		st.TypeID = 1
 	} else {
@@ -742,14 +749,14 @@ func (p *Parser) parseEnclosedExpr() ast.EnclosedExpr {
 		e := p.parseExpr()
 		er, ok := e.(*ast.Expr)
 		if !ok {
-			// TODO error
+			p.newError("cannot parse EnclosedExpr")
 			return ee
 		}
 		ee.Exprs = er.Exprs
 	}
 
 	if !p.expectPeek(token.RBRACE) {
-		// TODO error
+		p.newError("error while parsing EnclosedExpr: expectPeek: }, got=%s", p.peekToken.Literal)
 		return ee
 	}
 
@@ -768,6 +775,7 @@ func (p *Parser) parsePal() ast.PAL {
 		}
 
 		if !p.expectPeek(token.RBRACKET) {
+			p.newError("error while parsing Predicate: expectPeek: ], got=%s", p.peekToken.Literal)
 			return nil
 		}
 
@@ -784,7 +792,7 @@ func (p *Parser) parsePal() ast.PAL {
 		return pal
 	}
 
-	//panic
+	p.newError("cannot parse PAL expression. expectCur: [, {, (. got=%s", p.curToken.Literal)
 	return nil
 }
 
@@ -803,7 +811,7 @@ func (p *Parser) parseKeySpecifier() ast.KeySpecifier {
 		pe := p.parseParenthesizedExpr()
 		pep, ok := pe.(*ast.ParenthesizedExpr)
 		if !ok {
-			// TODO error
+			p.newError("cannot parse ParenthesizedExpr")
 			return ks
 		}
 		ks.ParenthesizedExpr.Expr = pep.Expr

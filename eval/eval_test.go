@@ -2511,6 +2511,14 @@ func testEval(input string) object.Item {
 	xpath := p.ParseXPath()
 	ctx := object.NewContext()
 
+	if len(p.Errors()) > 0 {
+		var sb strings.Builder
+		for _, e := range p.Errors() {
+			sb.WriteString(e.Error())
+		}
+		return bif.NewError(sb.String())
+	}
+
 	docFunc := bif.F["fn:doc"]
 	err := docFunc(ctx, bif.NewString("testdata/quotes-1.html"))
 	if err != nil {
@@ -2526,6 +2534,14 @@ func testEvalXML(input string) object.Item {
 	xpath := p.ParseXPath()
 	ctx := object.NewContext()
 
+	if len(p.Errors()) > 0 {
+		var sb strings.Builder
+		for _, e := range p.Errors() {
+			sb.WriteString(e.Error())
+		}
+		return bif.NewError(sb.String())
+	}
+
 	docFunc := bif.F["fn:doc"]
 	err := docFunc(ctx, bif.NewString("testdata/company.xml"))
 	if err != nil {
@@ -2540,6 +2556,14 @@ func testEvalXML2(input string) object.Item {
 	p := parser.New(l)
 	xpath := p.ParseXPath()
 	ctx := object.NewContext()
+
+	if len(p.Errors()) > 0 {
+		var sb strings.Builder
+		for _, e := range p.Errors() {
+			sb.WriteString(e.Error())
+		}
+		return bif.NewError(sb.String())
+	}
 
 	docFunc := bif.F["fn:doc"]
 	err := docFunc(ctx, bif.NewString("testdata/company_2.xml"))

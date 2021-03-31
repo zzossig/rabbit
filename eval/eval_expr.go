@@ -334,12 +334,12 @@ func evalRangeExpr(expr ast.ExprSingle, ctx *object.Context) object.Item {
 
 	left, ok := l.(*object.Integer)
 	if !ok {
-		return bif.NewError("wrong argument type: %s", left.Type())
+		return bif.NewError("not allowed type in RangeExpr: %s", left.Type())
 	}
 
 	right, ok := r.(*object.Integer)
 	if !ok {
-		return bif.NewError("wrong argument type: %s", right.Type())
+		return bif.NewError("not allowed type in RangeExpr: %s", right.Type())
 	}
 
 	seq := &object.Sequence{}

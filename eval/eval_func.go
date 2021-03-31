@@ -152,7 +152,7 @@ func evalPredicate(it object.Item, pred *ast.Predicate, ctx *object.Context) obj
 
 		evaled := Eval(&pred.Expr, ctx).(*object.Sequence)
 		if len(evaled.Items) != 1 {
-			return bif.NewError("Wrong number of argument. got=%d, want=1", len(evaled.Items))
+			return bif.NewError("wrong number of argument. got=%d, want=1", len(evaled.Items))
 		}
 
 		switch ev := evaled.Items[0].(type) {
@@ -195,10 +195,10 @@ func evalLookup(it object.Item, lu *ast.Lookup, ctx *object.Context) object.Item
 	case *object.Array:
 		switch lu.KeySpecifier.TypeID {
 		case 1:
-			return bif.NewError("[XPTY0004] Cannot convert xs:string to xs:integer: %s.", lu.NCName.Value())
+			return bif.NewError("cannot convert xs:string to xs:integer: %s.", lu.NCName.Value())
 		case 2:
 			if lu.IntegerLiteral.Value == 0 || lu.IntegerLiteral.Value > len(it.Items) {
-				return bif.NewError("[FOAY0001] Array index %d out of bounds (1..%d)", lu.IntegerLiteral.Value, len(it.Items))
+				return bif.NewError("array index %d out of bounds (1..%d)", lu.IntegerLiteral.Value, len(it.Items))
 			}
 			return it.Items[lu.IntegerLiteral.Value-1]
 		case 3:
@@ -208,7 +208,7 @@ func evalLookup(it object.Item, lu *ast.Lookup, ctx *object.Context) object.Item
 			for _, item := range src.Items {
 				if i, ok := item.(*object.Integer); ok {
 					if i.Value() == 0 || i.Value() > len(it.Items) {
-						return bif.NewError("[FOAY0001] Array index %d out of bounds (1..%d)", i.Value(), len(it.Items))
+						return bif.NewError("array index %d out of bounds (1..%d)", i.Value(), len(it.Items))
 					}
 					seq.Items = append(seq.Items, it.Items[i.Value()-1])
 				}
@@ -254,7 +254,7 @@ func evalLookup(it object.Item, lu *ast.Lookup, ctx *object.Context) object.Item
 			seq.Items = append(seq.Items, evaled)
 		}
 	default:
-		return bif.NewError("[XPTY0004] Input of lookup operator is not a map or array: %v.", it)
+		return bif.NewError("input of lookup operator is not a map or array: %v.", it)
 	}
 
 	return seq
@@ -359,7 +359,7 @@ func evalDynamicFunctionCall(f object.Item, args []object.Item, ctx *object.Cont
 		}
 		builtin, ok := bif.F[f.Name.Value()]
 		if !ok {
-			return bif.NewError("built-in function not found: %s", f.Name.Value())
+			return bif.NewError("function not found: %s", f.Name.Value())
 		}
 		if len(args) != f.Num {
 			return bif.NewError("wrong number of argument. got=%d, want=%d", len(args), f.Num)
@@ -380,7 +380,7 @@ func evalDynamicFunctionCall(f object.Item, args []object.Item, ctx *object.Cont
 		}
 		return f.Items[index.Value()-1]
 	default:
-		bif.NewError("Cannot match item type with required type")
+		bif.NewError("cannot match item type with required type")
 	}
 	return nil
 }
@@ -455,10 +455,10 @@ func evalUnaryLookup(expr ast.ExprSingle, ctx *object.Context) object.Item {
 	case *object.Array:
 		switch ul.KeySpecifier.TypeID {
 		case 1:
-			return bif.NewError("[err:XPTY0004] NCName not supported in unary lookup")
+			return bif.NewError("NCName not supported in unary lookup")
 		case 2:
 			if ul.IntegerLiteral.Value == 0 || ul.IntegerLiteral.Value > len(it.Items) {
-				return bif.NewError("[FOAY0001] Array index %d out of bounds (1..%d)", ul.IntegerLiteral.Value, len(it.Items))
+				return bif.NewError("array index %d out of bounds (1..%d)", ul.IntegerLiteral.Value, len(it.Items))
 			}
 			return it.Items[ul.IntegerLiteral.Value-1]
 		case 3:
@@ -468,10 +468,10 @@ func evalUnaryLookup(expr ast.ExprSingle, ctx *object.Context) object.Item {
 			for _, item := range src.Items {
 				i, ok := item.(*object.Integer)
 				if !ok {
-					return bif.NewError("[XPTY0004] Cannot convert %s to xs:integer", i.Type())
+					return bif.NewError("cannot convert %s to xs:integer", i.Type())
 				}
 				if i.Value() == 0 || i.Value() > len(it.Items) {
-					return bif.NewError("[FOAY0001] Array index %d out of bounds (1..%d)", ul.IntegerLiteral.Value, len(it.Items))
+					return bif.NewError("array index %d out of bounds (1..%d)", ul.IntegerLiteral.Value, len(it.Items))
 				}
 				seq.Items = append(seq.Items, it.Items[i.Value()-1])
 			}
@@ -511,7 +511,7 @@ func evalUnaryLookup(expr ast.ExprSingle, ctx *object.Context) object.Item {
 			}
 		}
 	default:
-		return bif.NewError("[err:XPTY0004] context item is not a map or an array")
+		return bif.NewError("context item is not a map or an array")
 	}
 
 	return seq

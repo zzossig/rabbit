@@ -29,7 +29,6 @@ func (p *Parser) parseExpr() ast.ExprSingle {
 func (p *Parser) parseExprSingle(precedence int) ast.ExprSingle {
 	prefix := p.prefixParseFns[p.curToken.Type]
 	if prefix == nil {
-		// TODO error
 		return nil
 	}
 	leftExp := prefix()
@@ -50,37 +49,34 @@ func (p *Parser) parseExprSingle(precedence int) ast.ExprSingle {
 
 func (p *Parser) parseIntegerLiteral() ast.ExprSingle {
 	value, err := strconv.ParseInt(p.curToken.Literal, 0, 64)
-	il := &ast.IntegerLiteral{Value: int(value)}
-
 	if err != nil {
-		// TODO error
+		p.newError("cannot parse token %s to int", p.curToken.Literal)
 		return nil
 	}
 
+	il := &ast.IntegerLiteral{Value: int(value)}
 	return il
 }
 
 func (p *Parser) parseDecimalLiteral() ast.ExprSingle {
 	value, err := strconv.ParseFloat(p.curToken.Literal, 64)
-	dl := &ast.DecimalLiteral{Value: value}
-
 	if err != nil {
-		// TODO error
+		p.newError("cannot parse token %s to float", p.curToken.Literal)
 		return nil
 	}
 
+	dl := &ast.DecimalLiteral{Value: value}
 	return dl
 }
 
 func (p *Parser) parseDoubleLiteral() ast.ExprSingle {
 	value, err := strconv.ParseFloat(p.curToken.Literal, 64)
-	dl := &ast.DoubleLiteral{Value: value}
-
 	if err != nil {
-		// TODO error
+		p.newError("cannot parse token %s to float", p.curToken.Literal)
 		return nil
 	}
 
+	dl := &ast.DoubleLiteral{Value: value}
 	return dl
 }
 
@@ -131,6 +127,7 @@ func (p *Parser) parseGroupedExpr() ast.ExprSingle {
 	p.nextToken()
 	expr := p.parseExprSingle(LOWEST)
 	if !p.expectPeek(token.RPAREN) {
+		p.newError("error while parsing GroupedExpr: expectPeek: ), got=%s", p.peekToken.Literal)
 		return nil
 	}
 
@@ -156,6 +153,7 @@ func (p *Parser) parseSequenceExpr() ast.ExprSingle {
 	}
 
 	if !p.expectPeek(token.RPAREN) {
+		p.newError("error while parsing SequenceExpr: expectPeek: ), got=%s", p.peekToken.Literal)
 		return nil
 	}
 
@@ -208,6 +206,7 @@ func (p *Parser) parseUnaryLookupExpr() ast.ExprSingle {
 	expr := &ast.UnaryLookup{}
 
 	if !p.curTokenIs(token.QUESTION) {
+		p.newError("error while parsing UnaryLookup: expectCur: ?, got=%s", p.curToken.Literal)
 		return nil
 	}
 
@@ -279,6 +278,7 @@ func (p *Parser) parseMapExpr() ast.ExprSingle {
 		entry := ast.MapConstructorEntry{}
 		entry.MapKeyExpr.ExprSingle = p.parseExprSingle(LOWEST)
 		if !p.expectPeek(token.COLON) {
+			p.newError("error while parsing MapConstructor: expectPeek: :, got=%s", p.peekToken.Literal)
 			return nil
 		}
 
@@ -365,10 +365,12 @@ func (p *Parser) parseIfExpr() ast.ExprSingle {
 	expr.TestExpr = p.parseExpr()
 
 	if !p.expectPeek(token.RPAREN) {
+		p.newError("error while parsing IfExpr: expectPeek: ), got=%s", p.peekToken.Literal)
 		return nil
 	}
 
 	if !p.expectPeek(token.THEN) {
+		p.newError("error while parsing IfExpr: expectPeek: then, got=%s", p.peekToken.Literal)
 		return nil
 	}
 	p.nextToken()
@@ -376,6 +378,7 @@ func (p *Parser) parseIfExpr() ast.ExprSingle {
 	expr.ThenExpr = p.parseExprSingle(LOWEST)
 
 	if !p.expectPeek(token.ELSE) {
+		p.newError("error while parsing IfExpr: expectPeek: else, got=%s", p.peekToken.Literal)
 		return nil
 	}
 	p.nextToken()
@@ -398,6 +401,7 @@ func (p *Parser) parseForExpr() ast.ExprSingle {
 		binding.VarName = p.parseEQName()
 
 		if !p.expectPeek(token.IN) {
+			p.newError("error while parsing ForExpr: expectPeek: in, got=%s", p.peekToken.Literal)
 			return nil
 		}
 		p.nextToken()
@@ -412,6 +416,7 @@ func (p *Parser) parseForExpr() ast.ExprSingle {
 	}
 
 	if !p.expectPeek(token.RETURN) {
+		p.newError("error while parsing ForExpr: expectPeek: return, got=%s", p.peekToken.Literal)
 		return nil
 	}
 	p.nextToken()
@@ -434,6 +439,7 @@ func (p *Parser) parseLetExpr() ast.ExprSingle {
 		binding.VarName = p.parseEQName()
 
 		if !p.expectPeek(token.ASSIGN) {
+			p.newError("error while parsing LetExpr: expectPeek: :=, got=%s", p.peekToken.Literal)
 			return nil
 		}
 		p.nextToken()
@@ -447,6 +453,7 @@ func (p *Parser) parseLetExpr() ast.ExprSingle {
 	}
 
 	if !p.expectPeek(token.RETURN) {
+		p.newError("error while parsing LetExpr: expectPeek: return, got=%s", p.peekToken.Literal)
 		return nil
 	}
 	p.nextToken()
@@ -469,6 +476,7 @@ func (p *Parser) parseQuantifiedExpr() ast.ExprSingle {
 		binding.VarName = p.parseEQName()
 
 		if !p.expectPeek(token.IN) {
+			p.newError("error while parsing QuantifiedExpr: expectPeek: in, got=%s", p.peekToken.Literal)
 			return nil
 		}
 		p.nextToken()
@@ -483,7 +491,7 @@ func (p *Parser) parseQuantifiedExpr() ast.ExprSingle {
 	}
 
 	if !p.expectPeek(token.SATISFIES) {
-		// TODO error
+		p.newError("error while parsing QuantifiedExpr: expectPeek: satisfies, got=%s", p.peekToken.Literal)
 		return nil
 	}
 	p.nextToken()
@@ -561,6 +569,7 @@ func (p *Parser) parseInstanceofExpr(left ast.ExprSingle) ast.ExprSingle {
 	expr := &ast.InstanceofExpr{ExprSingle: left}
 
 	if !p.expectPeek(token.OF) {
+		p.newError("error while parsing InstanceofExpr: expectPeek: of, got=%s", p.peekToken.Literal)
 		return nil
 	}
 	p.nextToken()
@@ -574,6 +583,7 @@ func (p *Parser) parseCastExpr(left ast.ExprSingle) ast.ExprSingle {
 	expr := &ast.CastExpr{ExprSingle: left}
 
 	if !p.expectPeek(token.AS) {
+		p.newError("error while parsing CastExpr: expectPeek: as, got=%s", p.peekToken.Literal)
 		return nil
 	}
 	p.nextToken()
@@ -587,6 +597,7 @@ func (p *Parser) parseCastableExpr(left ast.ExprSingle) ast.ExprSingle {
 	expr := &ast.CastableExpr{ExprSingle: left}
 
 	if !p.expectPeek(token.AS) {
+		p.newError("error while parsing CastableExpr: expectPeek: as, got=%s", p.peekToken.Literal)
 		return nil
 	}
 	p.nextToken()
@@ -600,6 +611,7 @@ func (p *Parser) parseTreatExpr(left ast.ExprSingle) ast.ExprSingle {
 	expr := &ast.TreatExpr{ExprSingle: left}
 
 	if !p.expectPeek(token.AS) {
+		p.newError("error while parsing TreatExpr: expectPeek: as, got=%s", p.peekToken.Literal)
 		return nil
 	}
 	p.nextToken()
@@ -622,6 +634,7 @@ func (p *Parser) parseInlineFunctionExpr() ast.ExprSingle {
 	}
 
 	if !p.expectPeek(token.RPAREN) {
+		p.newError("error while parsing InlineFunctionExpr: expectPeek: ), got=%s", p.peekToken.Literal)
 		return nil
 	}
 
@@ -649,7 +662,7 @@ func (p *Parser) parseNamedFunctionRef(left ast.ExprSingle) ast.ExprSingle {
 	il := p.parseIntegerLiteral()
 	i, ok := il.(*ast.IntegerLiteral)
 	if !ok {
-		// TODO error
+		p.newError("cannot parse NamedFunctionRef: expectedPeek: #number")
 		return nil
 	}
 
@@ -689,6 +702,7 @@ func (p *Parser) parseParenthesizedExpr() ast.ExprSingle {
 	pe := &ast.ParenthesizedExpr{}
 
 	if !p.curTokenIs(token.LPAREN) {
+		p.newError("error while parsing ParenthesizedExpr: expectCur: (, got=%s", p.curToken.Literal)
 		return nil
 	}
 	p.nextToken()
@@ -696,11 +710,13 @@ func (p *Parser) parseParenthesizedExpr() ast.ExprSingle {
 	e := p.parseExpr()
 	er, ok := e.(*ast.Expr)
 	if !ok {
+		p.newError("cannot parse ParenthesizedExpr")
 		return nil
 	}
 	pe.Exprs = er.Exprs
 
 	if !p.expectPeek(token.RPAREN) {
+		p.newError("error while parsing ParenthesizedExpr: expectPeek: ), got=%s", p.peekToken.Literal)
 		return nil
 	}
 
@@ -715,7 +731,6 @@ func (p *Parser) parsePathExpr() ast.ExprSingle {
 	pe := &ast.PathExpr{Token: p.curToken}
 
 	if p.curTokenIs(token.DSLASH) && p.peekTokenIs(token.EOF) {
-		// TODO error unexpected end of xpath expr
 		return nil
 	}
 
@@ -746,7 +761,6 @@ func (p *Parser) parseRelativePathExpr(left ast.ExprSingle) ast.ExprSingle {
 
 	if (p.curTokenIs(token.DSLASH) && p.peekTokenIs(token.EOF)) ||
 		(p.curTokenIs(token.SLASH) && p.peekTokenIs(token.EOF)) {
-		// TODO error unexpected end of xpath expr
 		return nil
 	}
 
@@ -859,7 +873,7 @@ func (p *Parser) parseStepExpr() ast.ExprSingle {
 				as.PredicateList = p.parsePredicateList()
 			}
 		} else {
-			// TODO error unknown axis
+			p.newError("unknown axis: %s", axis)
 			return nil
 		}
 	}
