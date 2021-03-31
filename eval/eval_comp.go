@@ -3,10 +3,10 @@ package eval
 import (
 	"strconv"
 
-	"github.com/zzossig/xpath/ast"
-	"github.com/zzossig/xpath/bif"
-	"github.com/zzossig/xpath/object"
-	"github.com/zzossig/xpath/token"
+	"github.com/zzossig/rabbit/ast"
+	"github.com/zzossig/rabbit/bif"
+	"github.com/zzossig/rabbit/object"
+	"github.com/zzossig/rabbit/token"
 )
 
 func evalComparisonExpr(expr ast.ExprSingle, ctx *object.Context) object.Item {

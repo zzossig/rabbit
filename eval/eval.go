@@ -1,9 +1,9 @@
 package eval
 
 import (
-	"github.com/zzossig/xpath/ast"
-	"github.com/zzossig/xpath/bif"
-	"github.com/zzossig/xpath/object"
+	"github.com/zzossig/rabbit/ast"
+	"github.com/zzossig/rabbit/bif"
+	"github.com/zzossig/rabbit/object"
 )
 
 // Eval function evaluate a ast.ExprSingle to object.Item

@@ -1,6 +1,6 @@
 package bif
 
-import "github.com/zzossig/xpath/object"
+import "github.com/zzossig/rabbit/object"
 
 func fnForEach(ctx *object.Context, args ...object.Item) object.Item {
 	if len(args) < 2 {

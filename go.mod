@@ -1,4 +1,4 @@
-module github.com/zzossig/xpath
+module github.com/zzossig/rabbit
 
 go 1.16
 

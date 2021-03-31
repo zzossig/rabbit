@@ -3,7 +3,7 @@ package ast
 import (
 	"strings"
 
-	"github.com/zzossig/xpath/token"
+	"github.com/zzossig/rabbit/token"
 )
 
 // AdditiveExpr ::= MultiplicativeExpr ( ("+" | "-") MultiplicativeExpr )*

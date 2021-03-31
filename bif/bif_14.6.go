@@ -6,7 +6,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/zzossig/xpath/object"
+	"github.com/zzossig/rabbit/object"
 	"golang.org/x/net/html"
 )
 

@@ -1,6 +1,6 @@
 package object
 
-import "github.com/zzossig/xpath/ast"
+import "github.com/zzossig/rabbit/ast"
 
 // Func represents function type
 type Func func(ctx *Context, args ...Item) Item

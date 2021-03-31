@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/zzossig/xpath/ast"
-	"github.com/zzossig/xpath/object"
-	"github.com/zzossig/xpath/token"
+	"github.com/zzossig/rabbit/ast"
+	"github.com/zzossig/rabbit/object"
+	"github.com/zzossig/rabbit/token"
 )
 
 // F is a map that have built-in functions

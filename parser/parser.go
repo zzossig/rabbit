@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/zzossig/xpath/ast"
-	"github.com/zzossig/xpath/lexer"
-	"github.com/zzossig/xpath/token"
-	"github.com/zzossig/xpath/util"
+	"github.com/zzossig/rabbit/ast"
+	"github.com/zzossig/rabbit/lexer"
+	"github.com/zzossig/rabbit/token"
+	"github.com/zzossig/rabbit/util"
 )
 
 // Precedence Order

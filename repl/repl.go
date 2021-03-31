@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/zzossig/xpath/eval"
-	"github.com/zzossig/xpath/lexer"
-	"github.com/zzossig/xpath/object"
-	"github.com/zzossig/xpath/parser"
+	"github.com/zzossig/rabbit/eval"
+	"github.com/zzossig/rabbit/lexer"
+	"github.com/zzossig/rabbit/object"
+	"github.com/zzossig/rabbit/parser"
 )
 
 const PROMPT = ">> "

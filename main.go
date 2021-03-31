@@ -5,7 +5,7 @@ import (
 	"os"
 	"os/user"
 
-	"github.com/zzossig/xpath/repl"
+	"github.com/zzossig/rabbit/repl"
 )
 
 func main() {

@@ -3,7 +3,7 @@ package bif
 import (
 	"strings"
 
-	"github.com/zzossig/xpath/object"
+	"github.com/zzossig/rabbit/object"
 )
 
 func fnContains(ctx *object.Context, args ...object.Item) object.Item {

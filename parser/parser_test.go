@@ -3,7 +3,7 @@ package parser
 import (
 	"testing"
 
-	"github.com/zzossig/xpath/lexer"
+	"github.com/zzossig/rabbit/lexer"
 )
 
 func TestArithmeticExpr(t *testing.T) {

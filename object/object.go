@@ -6,7 +6,7 @@ import (
 	"math"
 	"strings"
 
-	"github.com/zzossig/xpath/ast"
+	"github.com/zzossig/rabbit/ast"
 	"golang.org/x/net/html"
 )
 

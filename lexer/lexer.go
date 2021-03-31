@@ -4,8 +4,8 @@ import (
 	"strings"
 	"unicode"
 
-	"github.com/zzossig/xpath/token"
-	"github.com/zzossig/xpath/util"
+	"github.com/zzossig/rabbit/token"
+	"github.com/zzossig/rabbit/util"
 )
 
 // Lexer reads input string one by one

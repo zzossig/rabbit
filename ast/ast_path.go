@@ -3,8 +3,8 @@ package ast
 import (
 	"strings"
 
-	"github.com/zzossig/xpath/token"
-	"github.com/zzossig/xpath/util"
+	"github.com/zzossig/rabbit/token"
+	"github.com/zzossig/rabbit/util"
 )
 
 // NodeTest ::= KindTest | NameTest

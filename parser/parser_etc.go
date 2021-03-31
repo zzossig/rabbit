@@ -4,9 +4,9 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/zzossig/xpath/ast"
-	"github.com/zzossig/xpath/token"
-	"github.com/zzossig/xpath/util"
+	"github.com/zzossig/rabbit/ast"
+	"github.com/zzossig/rabbit/token"
+	"github.com/zzossig/rabbit/util"
 )
 
 func (p *Parser) parseParam() ast.Param {

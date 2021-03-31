@@ -3,7 +3,7 @@ package bif
 import (
 	"math"
 
-	"github.com/zzossig/xpath/object"
+	"github.com/zzossig/rabbit/object"
 )
 
 func mathPI(ctx *object.Context, args ...object.Item) object.Item {

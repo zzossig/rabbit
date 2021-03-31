@@ -1,10 +1,10 @@
 package eval
 
 import (
-	"github.com/zzossig/xpath/ast"
-	"github.com/zzossig/xpath/bif"
-	"github.com/zzossig/xpath/object"
-	"github.com/zzossig/xpath/token"
+	"github.com/zzossig/rabbit/ast"
+	"github.com/zzossig/rabbit/bif"
+	"github.com/zzossig/rabbit/object"
+	"github.com/zzossig/rabbit/token"
 )
 
 func evalPathExpr(expr ast.ExprSingle, ctx *object.Context) object.Item {

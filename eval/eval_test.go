@@ -6,10 +6,10 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/zzossig/xpath/bif"
-	"github.com/zzossig/xpath/lexer"
-	"github.com/zzossig/xpath/object"
-	"github.com/zzossig/xpath/parser"
+	"github.com/zzossig/rabbit/bif"
+	"github.com/zzossig/rabbit/lexer"
+	"github.com/zzossig/rabbit/object"
+	"github.com/zzossig/rabbit/parser"
 )
 
 func TestEvalArithmetic(t *testing.T) {
