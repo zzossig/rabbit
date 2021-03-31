@@ -9,7 +9,7 @@ import (
 	"github.com/zzossig/xpath/token"
 )
 
-// F ...
+// F is a map that have built-in functions
 var F = map[string]object.Func{
 	// 2
 	"fn:node-name": fnNodeName,
@@ -155,47 +155,47 @@ var F = map[string]object.Func{
 	"xs:boolean": xsBoolean,
 }
 
-// NewError ..
+// NewError cteates object.Error
 func NewError(format string, a ...interface{}) *object.Error {
 	return &object.Error{Message: fmt.Sprintf(format, a...)}
 }
 
-// NewString ..
+// NewString creates object.String
 func NewString(s string) *object.String {
 	str := &object.String{}
 	str.SetValue(s)
 	return str
 }
 
-// NewBoolean ..
+// NewBoolean creates object.Boolean
 func NewBoolean(b bool) *object.Boolean {
 	boolean := &object.Boolean{}
 	boolean.SetValue(b)
 	return boolean
 }
 
-// NewInteger ..
+// NewInteger creates object.Integer
 func NewInteger(i int) *object.Integer {
 	integer := &object.Integer{}
 	integer.SetValue(i)
 	return integer
 }
 
-// NewDecimal ..
+// NewDecimal creates object.Decimal
 func NewDecimal(d float64) *object.Decimal {
 	decimal := &object.Decimal{}
 	decimal.SetValue(d)
 	return decimal
 }
 
-// NewDouble ..
+// NewDouble creates object.Double
 func NewDouble(d float64) *object.Double {
 	double := &object.Double{}
 	double.SetValue(d)
 	return double
 }
 
-// NewSequence ..
+// NewSequence creates object.Sequence
 func NewSequence(items ...object.Item) *object.Sequence {
 	seq := &object.Sequence{}
 	if len(items) > 0 {
@@ -204,7 +204,7 @@ func NewSequence(items ...object.Item) *object.Sequence {
 	return seq
 }
 
-// IsError ..
+// IsError checks if item is an object.Error
 func IsError(item object.Item) bool {
 	if item == nil {
 		return false
@@ -212,7 +212,7 @@ func IsError(item object.Item) bool {
 	return item.Type() == object.ErrorType
 }
 
-// IsItem ..
+// IsItem checks if item is an Item
 func IsItem(item object.Item) bool {
 	if item == nil {
 		return false
@@ -220,7 +220,7 @@ func IsItem(item object.Item) bool {
 	return IsAnyAtomic(item) || IsNode(item) || IsAnyFunc(item)
 }
 
-// IsSeq ..
+// IsSeq checks if item is an object.Sequence
 func IsSeq(item object.Item) bool {
 	if item == nil {
 		return false
@@ -228,7 +228,7 @@ func IsSeq(item object.Item) bool {
 	return item.Type() == object.SequenceType
 }
 
-// IsSeqEmpty ..
+// IsSeqEmpty checks if item is an empty object.Sequence
 func IsSeqEmpty(item object.Item) bool {
 	if item == nil {
 		return false
@@ -239,7 +239,7 @@ func IsSeqEmpty(item object.Item) bool {
 	return item.Inspect() == "()"
 }
 
-// IsPlaceholder ..
+// IsPlaceholder checks if item is an object.Placeholder
 func IsPlaceholder(item object.Item) bool {
 	if item == nil {
 		return false
@@ -247,7 +247,7 @@ func IsPlaceholder(item object.Item) bool {
 	return item.Type() == object.PholderType
 }
 
-// IsNumeric ..
+// IsNumeric checks if item is a numeric
 func IsNumeric(item object.Item) bool {
 	if item == nil {
 		return false
@@ -257,7 +257,7 @@ func IsNumeric(item object.Item) bool {
 		item.Type() == object.DoubleType
 }
 
-// IsFunc ..
+// IsFunc checks if item is a function
 func IsFunc(item object.Item) bool {
 	if item == nil {
 		return false
@@ -265,7 +265,7 @@ func IsFunc(item object.Item) bool {
 	return item.Type() == object.FuncType
 }
 
-// IsAnyAtomic ..
+// IsAnyAtomic checks if item is an atomic
 func IsAnyAtomic(item object.Item) bool {
 	if item == nil {
 		return false
@@ -277,7 +277,7 @@ func IsAnyAtomic(item object.Item) bool {
 		item.Type() == object.BooleanType
 }
 
-// IsAnyFunc ..
+// IsAnyFunc checks if item is a function or map or array
 func IsAnyFunc(item object.Item) bool {
 	if item == nil {
 		return false
@@ -287,19 +287,21 @@ func IsAnyFunc(item object.Item) bool {
 		item.Type() == object.ArrayType
 }
 
-// IsNode ..
+// IsNode checks if item is a node
 func IsNode(item object.Item) bool {
 	if item == nil {
 		return false
 	}
-	return item.Type() == object.TextNodeType ||
+	return item.Type() == object.ElementNodeType ||
+		item.Type() == object.TextNodeType ||
+		item.Type() == object.AttributeNodeType ||
 		item.Type() == object.DocumentNodeType ||
-		item.Type() == object.ElementNodeType ||
 		item.Type() == object.CommentNodeType ||
-		item.Type() == object.AttributeNodeType
+		item.Type() == object.DoctypeNodeType
+
 }
 
-// IsMap ..
+// IsMap checks if item is an object.Map
 func IsMap(item object.Item) bool {
 	if item == nil {
 		return false
@@ -307,7 +309,7 @@ func IsMap(item object.Item) bool {
 	return item.Type() == object.MapType
 }
 
-// IsArray ..
+// IsArray checks if item is an object.Array
 func IsArray(item object.Item) bool {
 	if item == nil {
 		return false
@@ -315,7 +317,7 @@ func IsArray(item object.Item) bool {
 	return item.Type() == object.ArrayType
 }
 
-// IsArrayEmpty ..
+// IsArrayEmpty checks if item is an empty object.Array
 func IsArrayEmpty(item object.Item) bool {
 	if item == nil {
 		return false
@@ -326,7 +328,7 @@ func IsArrayEmpty(item object.Item) bool {
 	return item.Inspect() == "[]"
 }
 
-// IsString ..
+// IsString checks if item is an object.String
 func IsString(item object.Item) bool {
 	if item == nil {
 		return false
@@ -334,7 +336,7 @@ func IsString(item object.Item) bool {
 	return item.Type() == object.StringType
 }
 
-// IsBoolean ..
+// IsBoolean checks if item is an object.Boolean
 func IsBoolean(item object.Item) bool {
 	if item == nil {
 		return false
@@ -342,7 +344,7 @@ func IsBoolean(item object.Item) bool {
 	return item.Type() == object.BooleanType
 }
 
-// IsItemSeq ..
+// IsItemSeq checks if item is a object.Sequence that have only Item type
 func IsItemSeq(item object.Item) bool {
 	seq, ok := item.(*object.Sequence)
 	if !ok {
@@ -358,7 +360,7 @@ func IsItemSeq(item object.Item) bool {
 	return true
 }
 
-// IsNodeSeq ..
+// IsNodeSeq checks if item is a object.Sequence that have only node type
 func IsNodeSeq(item object.Item) bool {
 	seq, ok := item.(*object.Sequence)
 	if !ok {
@@ -374,7 +376,7 @@ func IsNodeSeq(item object.Item) bool {
 	return true
 }
 
-// IsAnyFuncSeq ..
+// IsAnyFuncSeq checks if item is a object.Sequence that have only AnyFunction type
 func IsAnyFuncSeq(item object.Item) bool {
 	seq, ok := item.(*object.Sequence)
 	if !ok {
@@ -390,7 +392,7 @@ func IsAnyFuncSeq(item object.Item) bool {
 	return true
 }
 
-// IsMapSeq ..
+// IsMapSeq checks if item is a object.Sequence that have only object.Map type
 func IsMapSeq(item object.Item) bool {
 	seq, ok := item.(*object.Sequence)
 	if !ok {
@@ -406,7 +408,7 @@ func IsMapSeq(item object.Item) bool {
 	return true
 }
 
-// IsArraySeq ..
+// IsArraySeq checks if item is a object.Sequence that have only object.Array type
 func IsArraySeq(item object.Item) bool {
 	seq, ok := item.(*object.Sequence)
 	if !ok {
@@ -422,7 +424,7 @@ func IsArraySeq(item object.Item) bool {
 	return true
 }
 
-// IsAtomicSeq ..
+// IsAtomicSeq checks if item is a object.Sequence that have only atomic type
 func IsAtomicSeq(item object.Item) bool {
 	seq, ok := item.(*object.Sequence)
 	if !ok {
@@ -438,7 +440,7 @@ func IsAtomicSeq(item object.Item) bool {
 	return true
 }
 
-// IsDocNodeSeq ..
+// IsDocNodeSeq checks if item is a object.Sequence that have only DocumentNode type
 func IsDocNodeSeq(item object.Item) bool {
 	seq, ok := item.(*object.Sequence)
 	if !ok {
@@ -454,7 +456,7 @@ func IsDocNodeSeq(item object.Item) bool {
 	return true
 }
 
-// IsElemNodeSeq ..
+// IsElemNodeSeq checks if item is a object.Sequence that have only ElementNode type
 func IsElemNodeSeq(item object.Item) bool {
 	seq, ok := item.(*object.Sequence)
 	if !ok {
@@ -470,7 +472,7 @@ func IsElemNodeSeq(item object.Item) bool {
 	return true
 }
 
-// IsAttrNodeSeq ..
+// IsAttrNodeSeq checks if item is a object.Sequence that have only AttributeNode type
 func IsAttrNodeSeq(item object.Item) bool {
 	seq, ok := item.(*object.Sequence)
 	if !ok {
@@ -486,7 +488,7 @@ func IsAttrNodeSeq(item object.Item) bool {
 	return true
 }
 
-// IsCommNodeSeq ..
+// IsCommNodeSeq checks if item is a object.Sequence that have only CommentNode type
 func IsCommNodeSeq(item object.Item) bool {
 	seq, ok := item.(*object.Sequence)
 	if !ok {
@@ -502,7 +504,7 @@ func IsCommNodeSeq(item object.Item) bool {
 	return true
 }
 
-// IsTextNodeSeq ..
+// IsTextNodeSeq checks if item is a object.Sequence that have only TextNode type
 func IsTextNodeSeq(item object.Item) bool {
 	seq, ok := item.(*object.Sequence)
 	if !ok {
@@ -518,7 +520,7 @@ func IsTextNodeSeq(item object.Item) bool {
 	return true
 }
 
-// IsCastable ..
+// IsCastable checks if item can be casted to a specific type
 func IsCastable(tg object.Item, ty object.Type) object.Item {
 	switch tg := tg.(type) {
 	case *object.Sequence:
@@ -665,7 +667,7 @@ func IsCastable(tg object.Item, ty object.Type) object.Item {
 	return NewBoolean(false)
 }
 
-// CastType ..
+// CastType convert target item type to a specific type
 func CastType(tg object.Item, ty object.Type) object.Item {
 	bl := IsCastable(tg, ty)
 	if IsError(bl) {
@@ -821,7 +823,8 @@ func CastType(tg object.Item, ty object.Type) object.Item {
 	return NewError("cannot convert %s with value %s to %s", tg.Type(), tg.Inspect(), ty)
 }
 
-// IsPrecede ..
+// IsPrecede checks if n1 is precede n2 in document order
+// https://www.w3.org/TR/xpath-31/#id-document-order
 func IsPrecede(n1, n2 object.Node, src *object.BaseNode) object.Item {
 	for c := src.FirstChild(); c != nil; c = c.NextSibling() {
 		c := c.(*object.BaseNode)
@@ -886,7 +889,8 @@ func IsPrecede(n1, n2 object.Node, src *object.BaseNode) object.Item {
 	return nil
 }
 
-// IsSameAtomic ..
+// IsSameAtomic compares object.Item with golang primitive type
+// and return true if value is the same
 func IsSameAtomic(item object.Item, val interface{}) bool {
 	switch val := val.(type) {
 	case int:
@@ -923,7 +927,7 @@ func IsSameAtomic(item object.Item, val interface{}) bool {
 	return false
 }
 
-// IsEQ ..
+// IsEQ checks if left item and right item has eqaul value
 func IsEQ(left, right object.Item) object.Item {
 	if leftVal, ok := left.(*object.Integer); ok {
 		switch rightVal := right.(type) {
@@ -1044,7 +1048,7 @@ func IsEQ(left, right object.Item) object.Item {
 	return NewError("cannot compare: %s, %s", left.Inspect(), right.Inspect())
 }
 
-// IsNE ..
+// IsNE checks if left item is not eqaul to the right item
 func IsNE(left, right object.Item) object.Item {
 	if leftVal, ok := left.(*object.Integer); ok {
 		switch rightVal := right.(type) {
@@ -1165,7 +1169,7 @@ func IsNE(left, right object.Item) object.Item {
 	return NewError("cannot compare: %s, %s", left.Inspect(), right.Inspect())
 }
 
-// IsLT ..
+// IsLT checks if left item is less-than the right item
 func IsLT(left, right object.Item) object.Item {
 	if leftVal, ok := left.(*object.Integer); ok {
 		switch rightVal := right.(type) {
@@ -1286,7 +1290,7 @@ func IsLT(left, right object.Item) object.Item {
 	return NewError("cannot compare: %s, %s", left.Inspect(), right.Inspect())
 }
 
-// IsLE ..
+// IsLE checks if left item is less-than-or-equal to the right item
 func IsLE(left, right object.Item) object.Item {
 	if leftVal, ok := left.(*object.Integer); ok {
 		switch rightVal := right.(type) {
@@ -1407,7 +1411,7 @@ func IsLE(left, right object.Item) object.Item {
 	return NewError("cannot compare: %s, %s", left.Inspect(), right.Inspect())
 }
 
-// IsGT ..
+// IsGT checks if left item is greater-than the right item
 func IsGT(left, right object.Item) object.Item {
 	if leftVal, ok := left.(*object.Integer); ok {
 		switch rightVal := right.(type) {
@@ -1528,7 +1532,7 @@ func IsGT(left, right object.Item) object.Item {
 	return NewError("cannot compare: %s, %s", left.Inspect(), right.Inspect())
 }
 
-// IsGE ..
+// IsGE checks if left item is greater-than-or-equal to the right item
 func IsGE(left, right object.Item) object.Item {
 	if leftVal, ok := left.(*object.Integer); ok {
 		switch rightVal := right.(type) {
@@ -1649,7 +1653,7 @@ func IsGE(left, right object.Item) object.Item {
 	return NewError("cannot compare: %s, %s", left.Inspect(), right.Inspect())
 }
 
-// IsOccurMatch ..
+// IsOccurMatch checks if item occurence match with the type t
 func IsOccurMatch(item object.Item, t token.Token) bool {
 	seq, ok := item.(*object.Sequence)
 	if !ok {
@@ -1677,7 +1681,7 @@ func IsOccurMatch(item object.Item, t token.Token) bool {
 	}
 }
 
-// IsTypeMatch ..
+// IsTypeMatch checks if item type is match with the SequenceType
 func IsTypeMatch(item object.Item, st *ast.SequenceType) object.Item {
 	switch st.TypeID {
 	case 1:
@@ -1771,7 +1775,7 @@ func IsTypeMatch(item object.Item, st *ast.SequenceType) object.Item {
 	return NewBoolean(false)
 }
 
-// IsKindMatch ..
+// IsKindMatch checks node kind by typeID
 func IsKindMatch(n object.Node, typeID byte) bool {
 	switch typeID {
 	case 1:
@@ -1802,7 +1806,7 @@ func IsKindMatch(n object.Node, typeID byte) bool {
 	return false
 }
 
-// IsContainN ..
+// IsContainN checks if src contains the target node
 func IsContainN(src []object.Node, target object.Node) bool {
 	for _, item := range src {
 		if item, ok := item.(*object.BaseNode); ok {
@@ -1830,7 +1834,7 @@ func IsContainN(src []object.Node, target object.Node) bool {
 	return false
 }
 
-// AppendNode ..
+// AppendNode append target node to the src
 func AppendNode(src []object.Node, target object.Node) []object.Node {
 	if !IsContainN(src, target) {
 		src = append(src, target)
@@ -1838,19 +1842,19 @@ func AppendNode(src []object.Node, target object.Node) []object.Node {
 	return src
 }
 
-// CopyFocus ..
+// CopyFocus copy focus from context
 func CopyFocus(ctx *object.Context) *object.Focus {
 	return &object.Focus{CSize: ctx.CSize, CPos: ctx.CPos, CAxis: ctx.CAxis}
 }
 
-// ReplaceFocus ..
+// ReplaceFocus replace context focus to the passed focus
 func ReplaceFocus(ctx *object.Context, focus *object.Focus) {
 	ctx.CSize = focus.CSize
 	ctx.CAxis = focus.CAxis
 	ctx.CPos = focus.CPos
 }
 
-// UnwrapSeq ..
+// UnwrapSeq unwrap all sequence in a sequence
 func UnwrapSeq(item object.Item) []object.Item {
 	if seq, ok := item.(*object.Sequence); ok {
 		var items []object.Item
@@ -1867,7 +1871,7 @@ func UnwrapSeq(item object.Item) []object.Item {
 	return []object.Item{item}
 }
 
-// UnwrapArr ..
+// UnwrapArr unwrap all array and sequence
 func UnwrapArr(item object.Item) []object.Item {
 	if arr, ok := item.(*object.Array); ok {
 		var items []object.Item

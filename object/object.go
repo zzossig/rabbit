@@ -29,7 +29,7 @@ type Node interface {
 	Text() string
 }
 
-// Error ..
+// Error is an item that is represents error when doing evaluation
 type Error struct {
 	Message string
 }
@@ -37,13 +37,13 @@ type Error struct {
 func (e *Error) Type() Type      { return ErrorType }
 func (e *Error) Inspect() string { return "ERROR: " + e.Message }
 
-// Placeholder ..
+// Placeholder is an item that is represents ?(question token) when doing evaluation
 type Placeholder struct{}
 
 func (p *Placeholder) Type() Type      { return PholderType }
 func (p *Placeholder) Inspect() string { return "?" }
 
-// Varref ..
+// Varref is an item that is represents $var when doing evaluation
 type Varref struct {
 	Name ast.EQName
 }
@@ -51,7 +51,7 @@ type Varref struct {
 func (v *Varref) Type() Type      { return VarrefType }
 func (v *Varref) Inspect() string { return fmt.Sprintf("$%s", v.Name.Value()) }
 
-// Sequence ..
+// Sequence is an ordered collection of zero or more items.
 type Sequence struct {
 	Items []Item
 }
@@ -72,24 +72,25 @@ func (s *Sequence) Inspect() string {
 	return sb.String()
 }
 
-// Hasher ..
+// Hasher implemented in atomic types: integer, decimal, double, boolean, string
+// So, atomic types are used as a Map key
 type Hasher interface {
 	HashKey() HashKey
 }
 
-// HashKey ..
+// HashKey is used as a Map key
 type HashKey struct {
 	Type
 	Value uint64
 }
 
-// Pair ..
+// Pair contains key, value pair
 type Pair struct {
 	Key   Item
 	Value Item
 }
 
-// Map ..
+// Map is an item that is represents map data-type
 type Map struct {
 	Pairs map[HashKey]Pair
 }
@@ -111,7 +112,7 @@ func (m *Map) Inspect() string {
 	return sb.String()
 }
 
-// Array ..
+// Array is an item that is represents array data-type
 type Array struct {
 	Items []Item
 }
@@ -132,7 +133,7 @@ func (a *Array) Inspect() string {
 	return sb.String()
 }
 
-// FuncNamed ..
+// FuncNamed ::= ns:bif#n
 type FuncNamed struct {
 	Name ast.EQName
 	Num  int
@@ -143,7 +144,7 @@ type FuncNamed struct {
 func (fn *FuncNamed) Type() Type      { return FuncType }
 func (fn *FuncNamed) Inspect() string { return fmt.Sprintf("%s#%d", fn.Name.Value(), fn.Num) }
 
-// FuncInline ..
+// FuncInline ::= function() {}
 type FuncInline struct {
 	PL   *ast.ParamList
 	Body *ast.EnclosedExpr
@@ -154,7 +155,7 @@ type FuncInline struct {
 func (fi *FuncInline) Type() Type      { return FuncType }
 func (fi *FuncInline) Inspect() string { return "function" }
 
-// FuncPartial ..
+// FuncPartial ::= ns:bif(?,...)
 type FuncPartial struct {
 	Name ast.EQName
 	Args []Item
@@ -166,7 +167,7 @@ type FuncPartial struct {
 func (fp *FuncPartial) Type() Type      { return FuncType }
 func (fp *FuncPartial) Inspect() string { return "function" }
 
-// Integer ..
+// Integer is an item that is represents int data-type
 type Integer struct {
 	value int
 }
@@ -179,7 +180,8 @@ func (i *Integer) HashKey() HashKey {
 	return HashKey{Type: i.Type(), Value: uint64(i.value)}
 }
 
-// Decimal ..
+// Decimal is an item that is represents float64 data-type
+// number token that is not contains `e` or `E` is evaluated to Decimal
 type Decimal struct {
 	value float64
 }
@@ -192,7 +194,8 @@ func (d *Decimal) HashKey() HashKey {
 	return HashKey{Type: d.Type(), Value: math.Float64bits(d.value)}
 }
 
-// Double ..
+// Double is an item that is represents float64 data-type
+// number token that contains `e` or `E` is evaluated to Double
 type Double struct {
 	value float64
 }
@@ -205,7 +208,7 @@ func (d *Double) HashKey() HashKey {
 	return HashKey{Type: d.Type(), Value: math.Float64bits(d.value)}
 }
 
-// Boolean ..
+// Boolean is an item that is represents bool data-type
 type Boolean struct {
 	value bool
 }
@@ -226,7 +229,7 @@ func (b *Boolean) HashKey() HashKey {
 	return HashKey{Type: b.Type(), Value: value}
 }
 
-// String ..
+// String is an item that is represents string data-type
 type String struct {
 	value string
 }
@@ -242,19 +245,20 @@ func (s *String) HashKey() HashKey {
 	return HashKey{Type: s.Type(), Value: h.Sum64()}
 }
 
-// BaseNode ..
+// BaseNode ::= ElementNode | TextNode | DocumentNode | CommentNode | DoctypeNode
+// BaseNode just wraps *html.Node
 type BaseNode struct {
 	tree *html.Node
 }
 
 func (bn *BaseNode) Type() Type {
 	switch bn.tree.Type {
+	case html.ElementNode:
+		return ElementNodeType
 	case html.TextNode:
 		return TextNodeType
 	case html.DocumentNode:
 		return DocumentNodeType
-	case html.ElementNode:
-		return ElementNodeType
 	case html.CommentNode:
 		return CommentNodeType
 	case html.DoctypeNode:
@@ -318,7 +322,10 @@ func (bn *BaseNode) Text() string {
 	return ""
 }
 
-// AttrNode ..
+// AttrNode ::= AttributeNode
+// Attribute node is not exist in the golang.org/x/net/html package
+// so the struct field is different from the BaseNode.
+// AttrNode is basically, become a child of ElementNode.
 type AttrNode struct {
 	parent *html.Node
 	attr   html.Attribute
@@ -343,19 +350,3 @@ func (an *AttrNode) Parent() Node {
 	return nil
 }
 func (an *AttrNode) Text() string { return an.attr.Val }
-
-// ErrNode ..
-type ErrNode struct {
-	Message string
-}
-
-func (en *ErrNode) Type() Type           { return ErrorNodeType }
-func (en *ErrNode) Inspect() string      { return en.Message }
-func (en *ErrNode) Tree() *html.Node     { return nil }
-func (en *ErrNode) SetTree(t *html.Node) {}
-func (en *ErrNode) Parent() Node         { return nil }
-func (en *ErrNode) FirstChild() Node     { return nil }
-func (en *ErrNode) LastChild() Node      { return nil }
-func (en *ErrNode) PrevSibling() Node    { return nil }
-func (en *ErrNode) NextSibling() Node    { return nil }
-func (en *ErrNode) Text() string         { return en.Message }
