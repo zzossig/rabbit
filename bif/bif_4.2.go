@@ -49,7 +49,7 @@ func numericAdd(ctx *object.Context, args ...object.Item) object.Item {
 		return NewDouble(leftVal + rightVal)
 	}
 
-	return object.NIL
+	return NewError("cannot add types: %s, %s", arg1.Type(), arg2.Type())
 }
 
 func numericSubtract(ctx *object.Context, args ...object.Item) object.Item {
@@ -95,7 +95,7 @@ func numericSubtract(ctx *object.Context, args ...object.Item) object.Item {
 		return NewDouble(leftVal - rightVal)
 	}
 
-	return object.NIL
+	return NewError("cannot subtract types: %s, %s", arg1.Type(), arg2.Type())
 }
 
 func numericMultiply(ctx *object.Context, args ...object.Item) object.Item {
@@ -141,7 +141,7 @@ func numericMultiply(ctx *object.Context, args ...object.Item) object.Item {
 		return NewDouble(leftVal * rightVal)
 	}
 
-	return object.NIL
+	return NewError("cannot add multiply: %s, %s", arg1.Type(), arg2.Type())
 }
 
 func numericDivide(ctx *object.Context, args ...object.Item) object.Item {
@@ -187,7 +187,7 @@ func numericDivide(ctx *object.Context, args ...object.Item) object.Item {
 		return NewDouble(leftVal / rightVal)
 	}
 
-	return object.NIL
+	return NewError("cannot divide types: %s, %s", arg1.Type(), arg2.Type())
 }
 
 func numericIntegerDivide(ctx *object.Context, args ...object.Item) object.Item {
@@ -233,7 +233,7 @@ func numericIntegerDivide(ctx *object.Context, args ...object.Item) object.Item 
 		return NewInteger(int(leftVal / rightVal))
 	}
 
-	return object.NIL
+	return NewError("cannot integer divide types: %s, %s", arg1.Type(), arg2.Type())
 }
 
 func numericMod(ctx *object.Context, args ...object.Item) object.Item {
@@ -279,7 +279,7 @@ func numericMod(ctx *object.Context, args ...object.Item) object.Item {
 		return NewDouble(math.Mod(leftVal, rightVal))
 	}
 
-	return object.NIL
+	return NewError("cannot mod types: %s, %s", arg1.Type(), arg2.Type())
 }
 
 func numericUnaryPlus(ctx *object.Context, args ...object.Item) object.Item {
@@ -297,7 +297,7 @@ func numericUnaryPlus(ctx *object.Context, args ...object.Item) object.Item {
 		return NewDouble(rightVal)
 	}
 
-	return object.NIL
+	return NewError("cannot unary plus in type: %s", arg.Type())
 }
 
 func numericUnaryMinus(ctx *object.Context, args ...object.Item) object.Item {
@@ -315,5 +315,5 @@ func numericUnaryMinus(ctx *object.Context, args ...object.Item) object.Item {
 		return NewDouble(-1 * rightVal)
 	}
 
-	return object.NIL
+	return NewError("cannot unary minus in type: %s", arg.Type())
 }

@@ -878,12 +878,12 @@ func IsPrecede(n1, n2 object.Node, src *object.BaseNode) object.Item {
 
 		if c.FirstChild() != nil {
 			result := IsPrecede(n1, n2, c)
-			if result != object.NIL {
+			if result != nil {
 				return result
 			}
 		}
 	}
-	return object.NIL
+	return nil
 }
 
 // IsSameAtomic ..

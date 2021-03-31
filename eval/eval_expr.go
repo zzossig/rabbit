@@ -61,7 +61,7 @@ func evalExpr(expr ast.ExprSingle, ctx *object.Context) object.Item {
 		}
 		return seq
 	}
-	return object.NIL
+	return bif.NewError("unexpected xpath expression. %#v", expr)
 }
 
 func evalIntegerLiteral(expr ast.ExprSingle, ctx *object.Context) object.Item {
@@ -379,7 +379,7 @@ func evalLogicalExpr(expr ast.ExprSingle, ctx *object.Context) object.Item {
 	case token.OR:
 		return bif.NewBoolean(leftBool.Value() || rightBool.Value())
 	default:
-		return object.NIL
+		return bif.NewError("undefined operator: %s in LogicalExpr", op.Type)
 	}
 }
 

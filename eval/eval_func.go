@@ -25,7 +25,7 @@ func evalFunctionLiteral(expr ast.ExprSingle, ctx *object.Context) object.Item {
 		fi.Fn = Eval
 		return fi
 	}
-	return object.NIL
+	return bif.NewError("unexpected xpath expression. %#v", expr)
 }
 
 func evalFunctionCall(expr ast.ExprSingle, ctx *object.Context) object.Item {
@@ -113,7 +113,7 @@ func evalArgument(arg ast.Argument, ctx *object.Context) object.Item {
 	case 2:
 		return &object.Placeholder{}
 	default:
-		return object.NIL
+		return bif.NewError("unexpected argument expression. %#v", arg)
 	}
 }
 
@@ -180,8 +180,6 @@ func evalPredicate(it object.Item, pred *ast.Predicate, ctx *object.Context) obj
 			if ev.Value() {
 				items = append(items, s)
 			}
-		case *object.Nil:
-			break
 		}
 	}
 

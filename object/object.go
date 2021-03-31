@@ -10,13 +10,13 @@ import (
 	"golang.org/x/net/html"
 )
 
-// Item ..
+// Item ::= node | function(*) | xs:anyAtomicType
 type Item interface {
 	Type() Type
 	Inspect() string
 }
 
-// Node ..
+// Node ::= document, element, attribute, comment, namespace, processing-instruction, text
 type Node interface {
 	Item
 	Tree() *html.Node
@@ -28,17 +28,6 @@ type Node interface {
 	NextSibling() Node
 	Text() string
 }
-
-// predefined
-var (
-	NIL = &Nil{}
-)
-
-// Nil ..
-type Nil struct{}
-
-func (n *Nil) Type() Type      { return NilType }
-func (n *Nil) Inspect() string { return "nil" }
 
 // Error ..
 type Error struct {

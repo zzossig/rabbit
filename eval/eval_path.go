@@ -210,7 +210,7 @@ func evalNodeTest(test ast.NodeTest, plist *ast.PredicateList, ctx *object.Conte
 		}
 	}
 
-	return object.NIL
+	return bif.NewError("unexpected xpath expression. %#v", test)
 }
 
 // ii param is used when len(plist.PL.Params) > 1

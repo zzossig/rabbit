@@ -45,7 +45,7 @@ func opNumericEqual(ctx *object.Context, args ...object.Item) object.Item {
 		return NewBoolean(leftVal == rightVal)
 	}
 
-	return object.NIL
+	return NewError("cannot eqaul types: %s, %s", arg1.Type(), arg2.Type())
 }
 
 func opNumericLessThan(ctx *object.Context, args ...object.Item) object.Item {
@@ -91,7 +91,7 @@ func opNumericLessThan(ctx *object.Context, args ...object.Item) object.Item {
 		return NewBoolean(leftVal < rightVal)
 	}
 
-	return object.NIL
+	return NewError("cannot less than types: %s, %s", arg1.Type(), arg2.Type())
 }
 
 func opNumericGreaterThan(ctx *object.Context, args ...object.Item) object.Item {
@@ -137,5 +137,5 @@ func opNumericGreaterThan(ctx *object.Context, args ...object.Item) object.Item 
 		return NewBoolean(leftVal > rightVal)
 	}
 
-	return object.NIL
+	return NewError("cannot greater than types: %s, %s", arg1.Type(), arg2.Type())
 }

@@ -6,7 +6,7 @@ import (
 	"github.com/zzossig/xpath/object"
 )
 
-// Eval ..
+// Eval function evaluate a ast.ExprSingle to object.Item
 func Eval(expr ast.ExprSingle, ctx *object.Context) object.Item {
 	switch expr := expr.(type) {
 	case *ast.XPath:
