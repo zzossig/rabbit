@@ -64,7 +64,7 @@ func evalComparisonExpr(expr ast.ExprSingle, ctx *object.Context) object.Item {
 		return compBool(op, left, right)
 	}
 
-	return bif.NewError("cannot compare types: %s, %s", op.Literal, left.Type(), right.Type())
+	return bif.NewError("the operator '%s' is not defined for operands of type %s and %s", op.Literal, left.Type(), right.Type())
 }
 
 func compNumberNumber(op token.Token, left, right object.Item) object.Item {

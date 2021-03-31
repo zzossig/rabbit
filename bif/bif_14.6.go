@@ -11,7 +11,18 @@ import (
 )
 
 func fnDoc(ctx *object.Context, args ...object.Item) object.Item {
-	uri := args[0].(*object.String)
+	if len(args) > 1 {
+		return NewError("too many parameters for function call: fn:doc")
+	}
+	if len(args) < 1 {
+		return NewError("too few parameters for function call: fn:doc")
+	}
+
+	uri, ok := args[0].(*object.String)
+	if !ok {
+		return NewError("cannot match item type with required type")
+	}
+
 	docNode := &object.BaseNode{}
 	var err error
 

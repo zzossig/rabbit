@@ -11,8 +11,11 @@ func fnFalse(ctx *object.Context, args ...object.Item) object.Item {
 }
 
 func fnBoolean(ctx *object.Context, args ...object.Item) object.Item {
-	if len(args) != 1 {
-		return NewError("%d arguments supplied, 1 expected", len(args))
+	if len(args) > 1 {
+		return NewError("too many parameters for function call: fn:boolean")
+	}
+	if len(args) < 1 {
+		return NewError("too few parameters for function call: fn:boolean")
 	}
 
 	switch arg := args[0].(type) {

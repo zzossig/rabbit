@@ -7,8 +7,11 @@ import (
 )
 
 func fnAbs(ctx *object.Context, args ...object.Item) object.Item {
-	if len(args) != 1 {
-		return NewError("wrong number of arguments. got=%d, want=1", len(args))
+	if len(args) > 1 {
+		return NewError("too many parameters for function call: fn:abs")
+	}
+	if len(args) < 1 {
+		return NewError("too few parameters for function call: fn:abs")
 	}
 
 	switch arg := args[0].(type) {
@@ -30,8 +33,11 @@ func fnAbs(ctx *object.Context, args ...object.Item) object.Item {
 }
 
 func fnCeiling(ctx *object.Context, args ...object.Item) object.Item {
-	if len(args) != 1 {
-		return NewError("wrong number of arguments. got=%d, want=1", len(args))
+	if len(args) > 1 {
+		return NewError("too many parameters for function call: fn:ceiling")
+	}
+	if len(args) < 1 {
+		return NewError("too few parameters for function call: fn:ceiling")
 	}
 
 	switch arg := args[0].(type) {
@@ -49,8 +55,11 @@ func fnCeiling(ctx *object.Context, args ...object.Item) object.Item {
 }
 
 func fnFloor(ctx *object.Context, args ...object.Item) object.Item {
-	if len(args) != 1 {
-		return NewError("wrong number of arguments. got=%d, want=1", len(args))
+	if len(args) > 1 {
+		return NewError("too many parameters for function call: fn:floor")
+	}
+	if len(args) < 1 {
+		return NewError("too few parameters for function call: fn:floor")
 	}
 
 	switch arg := args[0].(type) {
@@ -68,8 +77,11 @@ func fnFloor(ctx *object.Context, args ...object.Item) object.Item {
 }
 
 func fnRound(ctx *object.Context, args ...object.Item) object.Item {
-	if len(args) != 1 {
-		return NewError("wrong number of arguments. got=%d, want=1", len(args))
+	if len(args) > 1 {
+		return NewError("too many parameters for function call: fn:round")
+	}
+	if len(args) < 1 {
+		return NewError("too few parameters for function call: fn:round")
 	}
 
 	switch arg := args[0].(type) {
@@ -88,8 +100,11 @@ func fnRound(ctx *object.Context, args ...object.Item) object.Item {
 
 // round-half-to-even
 func fnRoundHTE(ctx *object.Context, args ...object.Item) object.Item {
-	if len(args) != 1 {
-		return NewError("wrong number of arguments. got=%d, want=1", len(args))
+	if len(args) > 1 {
+		return NewError("too many parameters for function call: fn:round-half-to-even")
+	}
+	if len(args) < 1 {
+		return NewError("too few parameters for function call: fn:round-half-to-even")
 	}
 
 	switch arg := args[0].(type) {

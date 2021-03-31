@@ -8,7 +8,7 @@ import (
 
 func fnNodeName(ctx *object.Context, args ...object.Item) object.Item {
 	if len(args) > 0 {
-		NewError("wrong number of arguments. got=%d, expected=0", len(args))
+		return NewError("too many parameters for function call: fn:node-name")
 	}
 
 	seq := &object.Sequence{}
@@ -25,7 +25,7 @@ func fnNodeName(ctx *object.Context, args ...object.Item) object.Item {
 // include whitespace
 func fnString(ctx *object.Context, args ...object.Item) object.Item {
 	if len(args) > 1 {
-		return NewError("wrong number of arguments. got=%d, expected=0 or 1", len(args))
+		return NewError("too many parameters for function call: fn:string")
 	}
 
 	if len(args) == 1 {
@@ -49,7 +49,7 @@ func fnString(ctx *object.Context, args ...object.Item) object.Item {
 // exclude whitespace
 func fnData(ctx *object.Context, args ...object.Item) object.Item {
 	if len(args) > 1 {
-		return NewError("wrong number of arguments. got=%d, expected=0 or 1", len(args))
+		return NewError("too many parameters for function call: fn:data")
 	}
 
 	if len(args) == 1 {

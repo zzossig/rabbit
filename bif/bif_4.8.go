@@ -14,8 +14,11 @@ func mathPI(ctx *object.Context, args ...object.Item) object.Item {
 }
 
 func mathExp(ctx *object.Context, args ...object.Item) object.Item {
-	if len(args) != 1 {
-		return NewError("wrong number of parameters for function call: math:exp. got=%d, want=1", len(args))
+	if len(args) > 1 {
+		return NewError("too many parameters for function call: math:exp")
+	}
+	if len(args) < 1 {
+		return NewError("too few parameters for function call: math:exp")
 	}
 	if !IsNumeric(args[0]) {
 		return NewError("cannot match item type with required type")
@@ -31,8 +34,11 @@ func mathExp(ctx *object.Context, args ...object.Item) object.Item {
 }
 
 func mathExp2(ctx *object.Context, args ...object.Item) object.Item {
-	if len(args) != 1 {
-		return NewError("wrong number of parameters for function call: math:exp2. got=%d, want=1", len(args))
+	if len(args) > 1 {
+		return NewError("too many parameters for function call: math:exp2")
+	}
+	if len(args) < 1 {
+		return NewError("too few parameters for function call: math:exp2")
 	}
 	if !IsNumeric(args[0]) {
 		return NewError("cannot match item type with required type")
@@ -48,8 +54,11 @@ func mathExp2(ctx *object.Context, args ...object.Item) object.Item {
 }
 
 func mathLog(ctx *object.Context, args ...object.Item) object.Item {
-	if len(args) != 1 {
-		return NewError("wrong number of parameters for function call: math:log. got=%d, want=1", len(args))
+	if len(args) > 1 {
+		return NewError("too many parameters for function call: math:log")
+	}
+	if len(args) < 1 {
+		return NewError("too few parameters for function call: math:log")
 	}
 	if !IsNumeric(args[0]) {
 		return NewError("cannot match item type with required type")
@@ -65,8 +74,11 @@ func mathLog(ctx *object.Context, args ...object.Item) object.Item {
 }
 
 func mathLog2(ctx *object.Context, args ...object.Item) object.Item {
-	if len(args) != 1 {
-		return NewError("wrong number of parameters for function call: math:log2. got=%d, want=1", len(args))
+	if len(args) > 1 {
+		return NewError("too many parameters for function call: math:log2")
+	}
+	if len(args) < 1 {
+		return NewError("too few parameters for function call: math:log2")
 	}
 	if !IsNumeric(args[0]) {
 		return NewError("cannot match item type with required type")
@@ -82,8 +94,11 @@ func mathLog2(ctx *object.Context, args ...object.Item) object.Item {
 }
 
 func mathLog10(ctx *object.Context, args ...object.Item) object.Item {
-	if len(args) != 1 {
-		return NewError("wrong number of parameters for function call: math:log10. got=%d, want=1", len(args))
+	if len(args) > 1 {
+		return NewError("too many parameters for function call: math:log10")
+	}
+	if len(args) < 1 {
+		return NewError("too few parameters for function call: math:log10")
 	}
 	if !IsNumeric(args[0]) {
 		return NewError("cannot match item type with required type")
@@ -100,8 +115,11 @@ func mathLog10(ctx *object.Context, args ...object.Item) object.Item {
 }
 
 func mathPow(ctx *object.Context, args ...object.Item) object.Item {
-	if len(args) != 2 {
-		return NewError("wrong number of parameters for function call: math:pow. got=%d, want=2", len(args))
+	if len(args) > 2 {
+		return NewError("too many parameters for function call: math:pow")
+	}
+	if len(args) < 2 {
+		return NewError("too few parameters for function call: math:pow")
 	}
 	if !IsNumeric(args[0]) || !IsNumeric(args[1]) {
 		return NewError("cannot match item type with required type")
@@ -119,8 +137,11 @@ func mathPow(ctx *object.Context, args ...object.Item) object.Item {
 }
 
 func mathSqrt(ctx *object.Context, args ...object.Item) object.Item {
-	if len(args) != 1 {
-		return NewError("wrong number of parameters for function call: math:sqrt. got=%d, want=1", len(args))
+	if len(args) > 1 {
+		return NewError("too many parameters for function call: math:sqrt")
+	}
+	if len(args) < 1 {
+		return NewError("too few parameters for function call: math:sqrt")
 	}
 	if !IsNumeric(args[0]) {
 		return NewError("cannot match item type with required type")
@@ -137,8 +158,11 @@ func mathSqrt(ctx *object.Context, args ...object.Item) object.Item {
 }
 
 func mathSin(ctx *object.Context, args ...object.Item) object.Item {
-	if len(args) != 1 {
-		return NewError("wrong number of parameters for function call: math:sin. got=%d, want=1", len(args))
+	if len(args) > 1 {
+		return NewError("too many parameters for function call: math:sin")
+	}
+	if len(args) < 1 {
+		return NewError("too few parameters for function call: math:sin")
 	}
 	if !IsNumeric(args[0]) {
 		return NewError("cannot match item type with required type")
@@ -155,8 +179,11 @@ func mathSin(ctx *object.Context, args ...object.Item) object.Item {
 }
 
 func mathCos(ctx *object.Context, args ...object.Item) object.Item {
-	if len(args) != 1 {
-		return NewError("wrong number of parameters for function call: math:cos. got=%d, want=1", len(args))
+	if len(args) > 1 {
+		return NewError("too many parameters for function call: math:cos")
+	}
+	if len(args) < 1 {
+		return NewError("too few parameters for function call: math:cos")
 	}
 	if !IsNumeric(args[0]) {
 		return NewError("cannot match item type with required type")
@@ -173,8 +200,11 @@ func mathCos(ctx *object.Context, args ...object.Item) object.Item {
 }
 
 func mathTan(ctx *object.Context, args ...object.Item) object.Item {
-	if len(args) != 1 {
-		return NewError("wrong number of parameters for function call: math:tan. got=%d, want=1", len(args))
+	if len(args) > 1 {
+		return NewError("too many parameters for function call: math:tan")
+	}
+	if len(args) < 1 {
+		return NewError("too few parameters for function call: math:tan")
 	}
 	if !IsNumeric(args[0]) {
 		return NewError("cannot match item type with required type")
@@ -191,8 +221,11 @@ func mathTan(ctx *object.Context, args ...object.Item) object.Item {
 }
 
 func mathAsin(ctx *object.Context, args ...object.Item) object.Item {
-	if len(args) != 1 {
-		return NewError("wrong number of parameters for function call: math:asin. got=%d, want=1", len(args))
+	if len(args) > 1 {
+		return NewError("too many parameters for function call: math:asin")
+	}
+	if len(args) < 1 {
+		return NewError("too few parameters for function call: math:asin")
 	}
 	if !IsNumeric(args[0]) {
 		return NewError("cannot match item type with required type")
@@ -209,8 +242,11 @@ func mathAsin(ctx *object.Context, args ...object.Item) object.Item {
 }
 
 func mathAcos(ctx *object.Context, args ...object.Item) object.Item {
-	if len(args) != 1 {
-		return NewError("wrong number of parameters for function call: math:acos. got=%d, want=1", len(args))
+	if len(args) > 1 {
+		return NewError("too many parameters for function call: math:acos")
+	}
+	if len(args) < 1 {
+		return NewError("too few parameters for function call: math:acos")
 	}
 	if !IsNumeric(args[0]) {
 		return NewError("cannot match item type with required type")
@@ -227,8 +263,11 @@ func mathAcos(ctx *object.Context, args ...object.Item) object.Item {
 }
 
 func mathAtan(ctx *object.Context, args ...object.Item) object.Item {
-	if len(args) != 1 {
-		return NewError("wrong number of parameters for function call: math:atan. got=%d, want=1", len(args))
+	if len(args) > 1 {
+		return NewError("too many parameters for function call: math:atan")
+	}
+	if len(args) < 1 {
+		return NewError("too few parameters for function call: math:atan")
 	}
 	if !IsNumeric(args[0]) {
 		return NewError("cannot match item type with required type")
@@ -245,8 +284,11 @@ func mathAtan(ctx *object.Context, args ...object.Item) object.Item {
 }
 
 func mathAtan2(ctx *object.Context, args ...object.Item) object.Item {
-	if len(args) != 2 {
-		return NewError("wrong number of parameters for function call: math:atan2. got=%d, want=2", len(args))
+	if len(args) > 2 {
+		return NewError("too many parameters for function call: math:atan2")
+	}
+	if len(args) < 2 {
+		return NewError("too few parameters for function call: math:atan2")
 	}
 	if !IsNumeric(args[0]) || !IsNumeric(args[1]) {
 		return NewError("cannot match item type with required type")

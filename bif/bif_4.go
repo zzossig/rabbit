@@ -8,7 +8,7 @@ import (
 
 func fnNumber(ctx *object.Context, args ...object.Item) object.Item {
 	if len(args) > 1 {
-		return NewError("wrong number of arguments. got=%d, expected=0 or 1", len(args))
+		return NewError("too many parameters for function call: fn:number")
 	}
 
 	if len(args) == 1 {
