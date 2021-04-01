@@ -12,6 +12,9 @@ func evalXPath(expr *ast.XPath, ctx *object.Context) object.Item {
 
 	for _, e := range expr.Exprs {
 		item := Eval(e, ctx)
+		if bif.IsError(item) {
+			return item
+		}
 
 		switch item := item.(type) {
 		case *object.Sequence:
@@ -73,7 +76,7 @@ func evalContextItem(expr ast.ExprSingle, ctx *object.Context) object.Item {
 		return ctx.CItem
 	}
 
-	return bif.NewError("context item is not defined")
+	return bif.NewError("context item is undefined")
 }
 
 func evalIntegerLiteral(expr ast.ExprSingle, ctx *object.Context) object.Item {

@@ -1,4 +1,4 @@
-# rabbit
+# 🐰rabbit
 
 > An interpreted language written in Go - XPath 3.1 implementation for HTML
 
@@ -39,10 +39,31 @@ For example, if your document looks like this
 </html>
 ```
 
-So, in this document, XPath expression `/div` has no result because the root node is an `html`, not `div`.
+So, in this example, XPath expression `/div` has no result because the root node is an `html`, not `div`.
 Keep in mind this fact and otherwise, you can get confused.
 
 ## Basic Usage
+
+```go
+// you can chaining xpath object. data is nil or []interface{}
+data := New().SetDoc("uri/or/filepath.txt").Eval("//a").Data()
+```
+
+```go
+// with error check
+x := New()
+x.SetDoc("uri/or/filepath.txt")
+if len(x.errors) > 0 {
+  // ... do something with errors (the errors type is []error)
+}
+data := x.Eval("//a").Data()
+```
+
+```go
+// without SetDoc. Since document is not set in the context, node related xpath expressions are not going to work.
+x := New()
+data := x.Eval("1+1").Data()
+```
 
 ## Features
 

@@ -43,7 +43,7 @@ func fnString(ctx *object.Context, args ...object.Item) object.Item {
 		return seq
 	}
 
-	return NewError("context node is not defined")
+	return NewError("context node is undefined")
 }
 
 // exclude whitespace
@@ -74,7 +74,7 @@ func fnData(ctx *object.Context, args ...object.Item) object.Item {
 		return seq
 	}
 
-	return NewError("context node is not defined")
+	return NewError("context node is undefined")
 }
 
 func fnBaseURI(ctx *object.Context, args ...object.Item) object.Item {

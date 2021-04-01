@@ -2,7 +2,6 @@ package rabbit
 
 import (
 	"fmt"
-	"strings"
 
 	"github.com/zzossig/rabbit/bif"
 	"github.com/zzossig/rabbit/eval"
@@ -11,67 +10,75 @@ import (
 	"github.com/zzossig/rabbit/parser"
 )
 
-var context *object.Context
+type xpath struct {
+	input   string
+	context *object.Context
+	evaled  object.Item
+	errors  []error
+}
 
-// XPath function evaluates xpath expression with a context.
-// The ctx param can be nil. In that case,  the global context is used.
-// If global context also nil, you can't use node-related xpath expressions.
-func XPath(ctx *object.Context, input string) (object.Item, error) {
+// New creates new xpath object.
+func New() *xpath {
+	return &xpath{context: object.NewContext()}
+}
+
+// SetDoc set document to a context.
+// if document is not set in a context, node related xpath expressions not going to work.
+// input param can be url or local filepath.
+func (x *xpath) SetDoc(input string) *xpath {
+	f := bif.F["fn:doc"]
+
+	err := f(x.context, bif.NewString(input))
+	if err != nil {
+		x.errors = append(x.errors, fmt.Errorf(err.Inspect()))
+	}
+	return x
+}
+
+// Eval evaluates a xpath expression and save the result to xpath.
+func (x *xpath) Eval(input string) *xpath {
+	if len(x.errors) > 0 {
+		return x
+	}
+
+	x.input = input
 	l := lexer.New(input)
 	p := parser.New(l)
 	px := p.ParseXPath()
 
 	if len(p.Errors()) != 0 {
-		return nil, createError(p.Errors())
+		x.errors = append(x.errors, p.Errors()...)
+		return x
 	}
 
-	var e object.Item
-	if ctx != nil {
-		e = eval.Eval(px, ctx)
-	} else if context != nil {
-		e = eval.Eval(px, context)
-	} else {
-		e = eval.Eval(px, nil)
-	}
-
+	e := eval.Eval(px, x.context)
 	if bif.IsError(e) {
-		return nil, fmt.Errorf(e.Inspect())
+		x.errors = append(x.errors, fmt.Errorf(e.Inspect()))
+		return x
 	}
+	x.evaled = e
 
-	return e, nil
+	return x
 }
 
-// NewContext create new context for using evaluate xpath expressions.
-// input param can be a url or local file path.
-// returned context is used as the XPath function's first parameter.
-func NewContext(input string) (*object.Context, error) {
-	ctx := object.NewContext()
-	f := bif.F["fn:doc"]
+// Data convert evaled field to a golang data type
+func (x *xpath) Data() []interface{} {
+	if x.evaled == nil {
+		x.errors = append(x.errors, fmt.Errorf("cannot convert item since evaled field is nil"))
+		return nil
+	}
 
-	err := f(ctx, bif.NewString(input))
+	e, err := convert(x.evaled)
 	if err != nil {
-		return nil, fmt.Errorf(err.Inspect())
+		x.errors = append(x.errors, err)
+		return nil
 	}
 
-	return ctx, nil
+	// evaled field always a sequence type so converted value always be a []interface{} type
+	return e.([]interface{})
 }
 
-// SetGlobalConetxt set global context so when you call XPath function without ctx param, global context is used as default.
-func SetGlobalConetxt(input string) error {
-	ctx := object.NewContext()
-	f := bif.F["fn:doc"]
-
-	err := f(ctx, bif.NewString(input))
-	if err != nil {
-		return fmt.Errorf(err.Inspect())
-	}
-
-	context = ctx
-	return nil
-}
-
-// Convert convert object.Item to a golang data type
-func Convert(item object.Item) (interface{}, error) {
+func convert(item object.Item) (interface{}, error) {
 	switch item := item.(type) {
 	case *object.Integer:
 		return item.Value(), nil
@@ -100,11 +107,11 @@ func Convert(item object.Item) (interface{}, error) {
 func convertMap(m *object.Map) (map[interface{}]interface{}, error) {
 	mm := make(map[interface{}]interface{}, len(m.Pairs))
 	for _, pair := range m.Pairs {
-		k, err := Convert(pair.Key)
+		k, err := convert(pair.Key)
 		if err != nil {
 			return nil, err
 		}
-		v, err := Convert(pair.Value)
+		v, err := convert(pair.Value)
 		if err != nil {
 			return nil, err
 		}
@@ -116,7 +123,7 @@ func convertMap(m *object.Map) (map[interface{}]interface{}, error) {
 func convertArray(a *object.Array) ([]interface{}, error) {
 	aa := make([]interface{}, 0, len(a.Items))
 	for _, v := range a.Items {
-		v, err := Convert(v)
+		v, err := convert(v)
 		if err != nil {
 			return nil, err
 		}
@@ -128,22 +135,11 @@ func convertArray(a *object.Array) ([]interface{}, error) {
 func convertSequence(s *object.Sequence) ([]interface{}, error) {
 	ss := make([]interface{}, 0, len(s.Items))
 	for _, v := range s.Items {
-		v, err := Convert(v)
+		v, err := convert(v)
 		if err != nil {
 			return nil, err
 		}
 		ss = append(ss, v)
 	}
 	return ss, nil
-}
-
-func createError(errors []error) error {
-	var sb strings.Builder
-	for i, e := range errors {
-		sb.WriteString(e.Error())
-		if i < len(errors)-1 {
-			sb.WriteString("\n")
-		}
-	}
-	return fmt.Errorf(sb.String())
 }

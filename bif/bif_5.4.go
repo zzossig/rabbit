@@ -216,7 +216,7 @@ func fnNormalizeSpace(ctx *object.Context, args ...object.Item) object.Item {
 		return seq
 	}
 
-	return NewError("context node is not defined")
+	return NewError("context node is undefined")
 }
 
 func fnUpperCase(ctx *object.Context, args ...object.Item) object.Item {

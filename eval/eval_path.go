@@ -8,6 +8,9 @@ import (
 )
 
 func evalPathExpr(expr ast.ExprSingle, ctx *object.Context) object.Item {
+	if ctx == nil {
+		return bif.NewError("context is undefined")
+	}
 	if ctx.Doc == nil {
 		return bif.NewError("context node is undefined")
 	}
@@ -46,6 +49,10 @@ func evalPathExpr(expr ast.ExprSingle, ctx *object.Context) object.Item {
 }
 
 func evalRelativePathExpr(expr ast.ExprSingle, ctx *object.Context) object.Item {
+	if ctx == nil {
+		return bif.NewError("context is undefined")
+	}
+
 	rpe := expr.(*ast.RelativePathExpr)
 
 	left := Eval(rpe.LeftExpr, ctx)
@@ -86,6 +93,9 @@ func evalRelativePathExpr(expr ast.ExprSingle, ctx *object.Context) object.Item 
 }
 
 func evalAxisStep(expr ast.ExprSingle, ctx *object.Context) object.Item {
+	if ctx == nil {
+		return bif.NewError("context is undefined")
+	}
 	if ctx.Doc == nil {
 		return bif.NewError("context node is undefined")
 	}

@@ -739,7 +739,7 @@ func TestMapExpr2(t *testing.T) {
 			[]interface{}{"Sonntag", "Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag"},
 		},
 		{
-			`map:entry("Su", "Sunday"),`,
+			`map:entry("Su", "Sunday")`,
 			[]interface{}{"Su"},
 			[]interface{}{"Sunday"},
 		},
@@ -965,9 +965,8 @@ func TestDocNode(t *testing.T) {
 	}
 
 	seq := testEval("//")
-	sequence := seq.(*object.Sequence)
-	if !bif.IsError(sequence.Items[0]) {
-		t.Errorf("// is not a valid xpath expression")
+	if !bif.IsError(seq) {
+		t.Errorf(seq.Inspect())
 	}
 
 	seq2 := testEval("/div")
@@ -2462,14 +2461,12 @@ func TestBIF(t *testing.T) {
 	}
 
 	seq18 := testEvalXML2("let $abc := ('a', 'b', '') return fn:boolean($abc)")
-	item18 := seq18.(*object.Sequence).Items[0]
-	if !bif.IsError(item18) {
+	if !bif.IsError(seq18) {
 		t.Errorf("the result should be error")
 	}
 
 	seq19 := testEvalXML2("let $abc := ('a', 'b', '') return fn:boolean([])")
-	item19 := seq19.(*object.Sequence).Items[0]
-	if !bif.IsError(item19) {
+	if !bif.IsError(seq19) {
 		t.Errorf("the result should be error")
 	}
 
