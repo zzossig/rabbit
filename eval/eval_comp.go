@@ -13,7 +13,13 @@ func evalComparisonExpr(expr ast.ExprSingle, ctx *object.Context) object.Item {
 	ce := expr.(*ast.ComparisonExpr)
 
 	left := Eval(ce.LeftExpr, ctx)
+	if bif.IsError(left) {
+		return left
+	}
 	right := Eval(ce.RightExpr, ctx)
+	if bif.IsError(right) {
+		return right
+	}
 	op := ce.Token
 
 	switch {

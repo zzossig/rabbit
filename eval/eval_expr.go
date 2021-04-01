@@ -64,6 +64,18 @@ func evalExpr(expr ast.ExprSingle, ctx *object.Context) object.Item {
 	return bif.NewError("unexpected xpath expression. %#v", expr)
 }
 
+func evalContextItem(expr ast.ExprSingle, ctx *object.Context) object.Item {
+	if ctx.CItem != nil {
+		return ctx.CItem
+	}
+	if ctx.Doc != nil {
+		ctx.CItem = ctx.Doc
+		return ctx.CItem
+	}
+
+	return bif.NewError("context item is not defined")
+}
+
 func evalIntegerLiteral(expr ast.ExprSingle, ctx *object.Context) object.Item {
 	il := expr.(*ast.IntegerLiteral)
 	return bif.NewInteger(il.Value)

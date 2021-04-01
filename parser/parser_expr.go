@@ -736,20 +736,16 @@ func (p *Parser) parsePathExpr() ast.ExprSingle {
 
 	p.nextToken()
 
-	if p.curTokenIs(token.AT) || p.curTokenIs(token.DDOT) {
+	switch p.curToken.Type {
+	case token.AT, token.DDOT:
 		pe.ExprSingle = p.parseAbbrevToken()
-	} else if p.curTokenIs(token.INT) ||
-		p.curTokenIs(token.DECIMAL) ||
-		p.curTokenIs(token.DOUBLE) ||
-		p.curTokenIs(token.STRING) ||
-		p.curTokenIs(token.FUNCTION) ||
-		p.curTokenIs(token.MAP) ||
-		p.curTokenIs(token.ARRAY) ||
-		p.curTokenIs(token.LBRACKET) ||
-		p.curTokenIs(token.LPAREN) {
+	case token.INT, token.DECIMAL, token.DOUBLE, token.STRING, token.FUNCTION,
+		token.MAP, token.ARRAY, token.LBRACKET, token.LPAREN:
 		precedence := p.curPrecedence()
 		pe.ExprSingle = p.parseExprSingle(precedence)
-	} else {
+	case token.DOT:
+		pe.ExprSingle = p.parseContextItemExpr()
+	default:
 		pe.ExprSingle = p.parseStepExpr()
 	}
 
@@ -766,20 +762,16 @@ func (p *Parser) parseRelativePathExpr(left ast.ExprSingle) ast.ExprSingle {
 
 	p.nextToken()
 
-	if p.curTokenIs(token.AT) || p.curTokenIs(token.DDOT) {
+	switch p.curToken.Type {
+	case token.AT, token.DDOT:
 		rpe.RightExpr = p.parseAbbrevToken()
-	} else if p.curTokenIs(token.INT) ||
-		p.curTokenIs(token.DECIMAL) ||
-		p.curTokenIs(token.DOUBLE) ||
-		p.curTokenIs(token.STRING) ||
-		p.curTokenIs(token.FUNCTION) ||
-		p.curTokenIs(token.MAP) ||
-		p.curTokenIs(token.ARRAY) ||
-		p.curTokenIs(token.LBRACKET) ||
-		p.curTokenIs(token.LPAREN) {
+	case token.INT, token.DECIMAL, token.DOUBLE, token.STRING, token.FUNCTION,
+		token.MAP, token.ARRAY, token.LBRACKET, token.LPAREN:
 		precedence := p.curPrecedence()
 		rpe.RightExpr = p.parseExprSingle(precedence)
-	} else {
+	case token.DOT:
+		rpe.RightExpr = p.parseContextItemExpr()
+	default:
 		rpe.RightExpr = p.parseStepExpr()
 	}
 

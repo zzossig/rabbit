@@ -13,7 +13,6 @@ func evalPathExpr(expr ast.ExprSingle, ctx *object.Context) object.Item {
 	}
 
 	pe := expr.(*ast.PathExpr)
-	ctx.CNode = []object.Node{ctx.Doc}
 	ctx.CItem = ctx.Doc
 	ctx.CSize = 1
 
@@ -106,6 +105,9 @@ func evalAxisStep(expr ast.ExprSingle, ctx *object.Context) object.Item {
 			return evalNodeTest(as.ReverseStep.NodeTest, &as.PredicateList, ctx)
 		case 2:
 			ctx.CAxis = "parent::"
+			nt := &ast.NameTest{TypeID: 2}
+			nt.Wildcard.TypeID = 1
+			as.ReverseStep.NodeTest = nt
 			return evalNodeTest(as.ReverseStep.NodeTest, &as.PredicateList, ctx)
 		default:
 			return bif.NewError("not supported axis: %s", as.ReverseAxis.Value())

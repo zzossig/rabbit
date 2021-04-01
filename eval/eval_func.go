@@ -154,6 +154,9 @@ func evalPredicate(it object.Item, pred *ast.Predicate, ctx *object.Context) obj
 		if len(evaled.Items) != 1 {
 			return bif.NewError("wrong number of argument. got=%d, want=1", len(evaled.Items))
 		}
+		if bif.IsError(evaled.Items[0]) {
+			return evaled
+		}
 
 		switch ev := evaled.Items[0].(type) {
 		case *object.Integer:
@@ -377,6 +380,22 @@ func evalDynamicFunctionCall(f object.Item, args []object.Item, ctx *object.Cont
 			return bif.NewError("Index out of range: size(%d)", len(f.Items))
 		}
 		return f.Items[index.Value()-1]
+	case *object.Map:
+		if len(args) != 1 {
+			return bif.NewError("wrong number of argument. got=%d, want=1", len(args))
+		}
+
+		h, ok := args[0].(object.Hasher)
+		if !ok {
+			return bif.NewError("dynamic function call on map should have atomic argument")
+		}
+
+		key := h.HashKey()
+		pair, ok := f.Pairs[key]
+		if !ok {
+			return bif.NewSequence()
+		}
+		return pair.Value
 	default:
 		bif.NewError("cannot match item type with required type")
 	}
@@ -412,13 +431,20 @@ func evalArrayExpr(expr ast.ExprSingle, ctx *object.Context) object.Item {
 	switch expr := expr.(type) {
 	case *ast.SquareArrayConstructor:
 		exprs = expr.Exprs
+		for _, e := range exprs {
+			item := Eval(e, ctx)
+			array.Items = append(array.Items, item)
+		}
 	case *ast.CurlyArrayConstructor:
 		exprs = expr.EnclosedExpr.Exprs
-	}
-
-	for _, e := range exprs {
-		item := Eval(e, ctx)
-		array.Items = append(array.Items, item)
+		for _, e := range exprs {
+			item := Eval(e, ctx)
+			if bif.IsSeq(item) {
+				array.Items = append(array.Items, bif.UnwrapSeq(item)...)
+			} else {
+				array.Items = append(array.Items, item)
+			}
+		}
 	}
 
 	return array

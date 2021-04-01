@@ -20,7 +20,7 @@ func Eval(expr ast.ExprSingle, ctx *object.Context) object.Item {
 	case *ast.StringLiteral:
 		return evalStringLiteral(expr, ctx)
 	case *ast.ContextItemExpr:
-		return ctx.CItem
+		return evalContextItem(expr, ctx)
 	case *ast.Expr:
 		return evalExpr(expr, ctx)
 	case *ast.ParenthesizedExpr:

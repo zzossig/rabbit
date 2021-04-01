@@ -38,6 +38,7 @@ func fnDoc(ctx *object.Context, args ...object.Item) object.Item {
 
 		docNode.SetTree(parsedHTML)
 		ctx.Doc = docNode
+		ctx.CNode = []object.Node{ctx.Doc}
 
 		path, err := os.Getwd()
 		if err != nil {
@@ -58,6 +59,7 @@ func fnDoc(ctx *object.Context, args ...object.Item) object.Item {
 
 		docNode.SetTree(parsedHTML)
 		ctx.Doc = docNode
+		ctx.CNode = []object.Node{ctx.Doc}
 		ctx.BaseURI = uri.Value()
 	}
 

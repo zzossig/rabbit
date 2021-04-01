@@ -51,6 +51,7 @@ func TestEvalArray(t *testing.T) {
 		input    string
 		expected []interface{}
 	}{
+		{`[ [1, 2, 3], [4, 5, 6]](2)`, []interface{}{4, 5, 6}},
 		{`array:join((["a", "b"], ["c", "d"], [["e", "f"]]))`, []interface{}{"a", "b", "c", "d", []interface{}{"e", "f"}}},
 		{`array:join((["a", "b"], ["c", "d"], [ ]))`, []interface{}{"a", "b", "c", "d"}},
 		{`array:join((["a", "b"], ["c", "d"]))`, []interface{}{"a", "b", "c", "d"}},
@@ -102,9 +103,6 @@ func TestEvalArray(t *testing.T) {
 			case *object.Double:
 			case *object.String:
 			case *object.Array:
-				if len(item.Items) != len(tt.expected) {
-					t.Errorf("Array lenth not match with the expected one. got=%d, want=%d", len(item.Items), len(tt.expected))
-				}
 				for i, v := range item.Items {
 					switch vv := v.(type) {
 					case *object.Integer:
@@ -190,6 +188,16 @@ func TestEvalArray2(t *testing.T) {
 		input    string
 		expected []interface{}
 	}{
+		{`([1,2,3], [4,5,6])?2`, []interface{}{2, 5}},
+		{`[4, 5, 6]?2`, []interface{}{5}},
+		{`([1,2,3], [1,2,5], [1,2])[?2 = 2]`, []interface{}{[]int{1, 2, 3}, []int{1, 2, 5}, []int{1, 2}}},
+		{`[[1, 2, 3], [4, 5, 6]]?*`, []interface{}{[]int{1, 2, 3}, []int{4, 5, 6}}},
+		{`[1, 2, 5, 7]?*`, []interface{}{1, 2, 5, 7}},
+		{`[1, 2, 3, 4]?2`, []interface{}{2}},
+		{`array { (), (27, 17, 0) }(2)`, []interface{}{17}},
+		{`array { (), (27, 17, 0) }(1)`, []interface{}{27}},
+		{`[ [1, 2, 3], [4, 5, 6]](2)(2)`, []interface{}{5}},
+		{`[ 1, 2, 5, 7 ](4)`, []interface{}{7}},
 		{`array:flatten([(1,0), (1,1), (0,1), (0,0)])`, []interface{}{1, 0, 1, 1, 0, 1, 0, 0}},
 		{`array:flatten(([1, 2, 5], [[10, 11], 12], [], 13))`, []interface{}{1, 2, 5, 10, 11, 12, 13}},
 		{`array:flatten([1, 4, 6, 5, 3])`, []interface{}{1, 4, 6, 5, 3}},
@@ -610,6 +618,11 @@ func TestMapExpr(t *testing.T) {
 		input    string
 		expected []interface{}
 	}{
+		{`(map {"first": "Tom"}, map {"first": "Dick"}, map {"first": "Harry"})?first`, []interface{}{"Tom", "Dick", "Harry"}},
+		{`map { "first" : "Jenna", "last" : "Scott" }?first`, []interface{}{"Jenna"}},
+		{`let $weekdays := map {"Su" : "Sunday"} return $weekdays?*`, []interface{}{"Sunday"}},
+		{`let $weekdays := map {"Su" : "Sunday"} return $weekdays?Su`, []interface{}{"Sunday"}},
+		{`let $weekdays := map {"Su" : "Sunday"} return $weekdays("Su")`, []interface{}{"Sunday"}},
 		{`map:contains(map{"abc":23, "xyz":()}, "xyz")`, []interface{}{true}},
 		{`map:contains(map{"xyz":23}, "xyz")`, []interface{}{true}},
 		{`map:contains(map{}, "xyz")`, []interface{}{false}},
@@ -638,6 +651,31 @@ func TestMapExpr(t *testing.T) {
 		{`map:size(map{})`, []interface{}{0}},
 		{`map{"a":1}?a`, []interface{}{1}},
 		{`map{"a":1,"b":2,"c":3}?("a","b")`, []interface{}{1, 2}},
+		{
+			`let $books := map {
+				"book": map {
+					"title": "Data on the Web",
+					"year": 2000,
+					"author": [
+						map {
+							"last": "Abiteboul",
+							"first": "Serge"
+						},
+						map {
+							"last": "Buneman",
+							"first": "Peter"
+						},
+						map {
+							"last": "Suciu",
+							"first": "Dan"
+						}
+					],
+					"publisher": "Morgan Kaufmann Publishers",
+					"price": 39.95
+				}
+			} return $books("book")("author")(1)("last")`,
+			[]interface{}{"Abiteboul"},
+		},
 	}
 
 	for _, tt := range tests {
@@ -2502,6 +2540,44 @@ func TestBIF(t *testing.T) {
 	sequence28 := seq28.(*object.Sequence)
 	if len(sequence28.Items) != 5 {
 		t.Errorf("wrong number of items. got=%d, expected=5", len(sequence28.Items))
+	}
+}
+
+func TestPathExpr2(t *testing.T) {
+	seq := testEvalXML2(".//company")
+	sequence := seq.(*object.Sequence)
+	if len(sequence.Items) != 1 {
+		t.Errorf("wrong number of items. got=%d, expected=1", len(sequence.Items))
+	}
+	node := sequence.Items[0].(*object.BaseNode)
+	if node.Tree().Data != "company" {
+		t.Errorf("selected node name should be company. got=%s", node.Tree().Data)
+	}
+
+	seq2 := testEvalXML2("./.")
+	sequence2 := seq2.(*object.Sequence)
+	if len(sequence2.Items) != 1 {
+		t.Errorf("wrong number of items. got=%d, expected=1", len(sequence2.Items))
+	}
+	node2 := sequence2.Items[0].(*object.BaseNode)
+	if node2.Type() != object.DocumentNodeType {
+		t.Errorf("selected node type should be DocumentNode")
+	}
+
+	seq3 := testEvalXML2(".//company/./office")
+	sequence3 := seq3.(*object.Sequence)
+	if len(sequence3.Items) != 2 {
+		t.Errorf("wrong number of items. got=%d, expected=2", len(sequence3.Items))
+	}
+
+	seq4 := testEvalXML2(".//company/../.")
+	sequence4 := seq4.(*object.Sequence)
+	if len(sequence4.Items) != 1 {
+		t.Errorf("wrong number of items. got=%d, expected=1", len(sequence4.Items))
+	}
+	node4 := sequence4.Items[0].(*object.BaseNode)
+	if node4.Tree().Data != "body" {
+		t.Errorf("selected node name should be body")
 	}
 }
 
