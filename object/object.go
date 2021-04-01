@@ -8,6 +8,7 @@ import (
 
 	"github.com/zzossig/rabbit/ast"
 	"golang.org/x/net/html"
+	"golang.org/x/net/html/atom"
 )
 
 // Item ::= node | function(*) | xs:anyAtomicType
@@ -21,6 +22,7 @@ type Node interface {
 	Item
 	Tree() *html.Node
 	SetTree(t *html.Node)
+	Self() *html.Node
 	Parent() Node
 	FirstChild() Node
 	LastChild() Node
@@ -270,6 +272,7 @@ func (bn *BaseNode) Type() Type {
 func (bn *BaseNode) Inspect() string         { return bn.tree.Data }
 func (bn *BaseNode) Tree() *html.Node        { return bn.tree }
 func (bn *BaseNode) SetTree(tree *html.Node) { bn.tree = tree }
+func (bn *BaseNode) Self() *html.Node        { return bn.tree }
 func (bn *BaseNode) Parent() Node {
 	if bn.tree.Parent != nil {
 		return &BaseNode{bn.tree.Parent}
@@ -325,7 +328,7 @@ func (bn *BaseNode) Text() string {
 // AttrNode ::= AttributeNode
 // Attribute node is not exist in the golang.org/x/net/html package
 // so the struct field is different from the BaseNode.
-// AttrNode is basically, become a child of ElementNode.
+// AttrNode is basically, a child of ElementNode.
 type AttrNode struct {
 	parent *html.Node
 	attr   html.Attribute
@@ -338,11 +341,47 @@ func (an *AttrNode) Attr() html.Attribute        { return an.attr }
 func (an *AttrNode) SetAttr(attr html.Attribute) { an.attr = attr }
 func (an *AttrNode) SetTree(p *html.Node)        { an.parent = p }
 func (an *AttrNode) Tree() *html.Node            { return an.parent }
-func (an *AttrNode) Self() Node                  { return nil }
-func (an *AttrNode) FirstChild() Node            { return nil }
-func (an *AttrNode) LastChild() Node             { return nil }
-func (an *AttrNode) PrevSibling() Node           { return nil }
-func (an *AttrNode) NextSibling() Node           { return nil }
+func (an *AttrNode) Self() *html.Node {
+	var n *html.Node
+
+	n.Type = html.NodeType(7)
+	n.Data = an.Inspect()
+	n.DataAtom = atom.Lookup([]byte(an.Inspect()))
+	n.Attr = append(n.Attr, an.Attr())
+	n.Parent = an.Tree()
+	if an.PrevSibling() != nil {
+		n.PrevSibling = an.PrevSibling().Self()
+	}
+	if an.NextSibling() != nil {
+		n.NextSibling = an.NextSibling().Self()
+	}
+
+	return n
+}
+func (an *AttrNode) FirstChild() Node { return nil }
+func (an *AttrNode) LastChild() Node  { return nil }
+func (an *AttrNode) PrevSibling() Node {
+	for i, a := range an.parent.Attr {
+		if a.Key == an.Key() && a.Val == an.Inspect() {
+			if i <= 0 {
+				return nil
+			}
+			return &AttrNode{parent: an.parent, attr: an.parent.Attr[i-1]}
+		}
+	}
+	return nil
+}
+func (an *AttrNode) NextSibling() Node {
+	for i, a := range an.parent.Attr {
+		if a.Key == an.Key() && a.Val == an.Inspect() {
+			if i >= len(an.parent.Attr)-1 {
+				return nil
+			}
+			return &AttrNode{parent: an.parent, attr: an.parent.Attr[i+1]}
+		}
+	}
+	return nil
+}
 func (an *AttrNode) Parent() Node {
 	if an.parent != nil {
 		return &BaseNode{an.parent}
