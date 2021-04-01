@@ -222,6 +222,8 @@ func TestFunctionCall(t *testing.T) {
 		input    string
 		expected []interface{}
 	}{
+		{`(1 to 3)!(.*.) => fn:sum()`, []interface{}{14}},
+		{`fn:string-join((1 to 5)!"*")`, []interface{}{"*****"}},
 		{"filter((1, 2), fn:empty#1)", []interface{}{}},
 		{"fn:filter((4, 5), fn:exists(?))", []interface{}{4, 5}},
 		{"fn:filter((1, 2), fn:exists#1)", []interface{}{1, 2}},
