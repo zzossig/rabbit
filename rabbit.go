@@ -20,7 +20,7 @@ import (
 // evaled field is set when you call Eval method.
 // evaled type is an object.Item which is a custom data type used in rabbit language.
 // You can convert evaled type to a golang data type using Data or Nodes method.
-// errors field is collected errors while parsing and evaluating
+// errors field is a collected errors while parsing and evaluating
 type XPath struct {
 	input   string
 	context *object.Context
@@ -117,7 +117,7 @@ func (x *XPath) Errors() []error {
 	return x.errors
 }
 
-// Input returns input field
+// String returns input field
 func (x *XPath) String() string {
 	return x.input
 }
