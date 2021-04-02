@@ -46,7 +46,7 @@ func (x *XPath) SetDoc(input string) *XPath {
 	return x
 }
 
-// Eval evaluates a xpath expression and save the result to xpath.
+// Eval evaluates a xpath expression and save the result to evaled field.
 func (x *XPath) Eval(input string) *XPath {
 	if len(x.errors) > 0 {
 		return x
@@ -122,6 +122,7 @@ func (x *XPath) String() string {
 	return x.input
 }
 
+// CLI is a command line interface
 func (x *XPath) CLI() {
 	repl.Start(os.Stdin, os.Stdout, x.context)
 }
