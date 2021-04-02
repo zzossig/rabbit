@@ -1,5 +1,6 @@
 # 🐰rabbit
 
+[![Go Report Card](https://goreportcard.com/badge/github.com/zzossig/rabbit)](https://goreportcard.com/report/github.com/zzossig/rabbit)
 > An interpreted language written in Go - XPath 3.1 implementation for HTML
 
 XML Path Language(XPath) 3.1 is W3C recommendation since 21 march 2017.
@@ -19,12 +20,12 @@ For example)
 
 ```go
 // you can chaining xpath object. data is nil or []interface{}
-data := New().SetDoc("uri/or/filepath.txt").Eval("//a").Data()
+data := rabbit.New().SetDoc("uri/or/filepath.txt").Eval("//a").Data()
 ```
 
 ```go
 // with error check
-x := New()
+x := rabbit.New()
 x.SetDoc("uri/or/filepath.txt")
 if len(x.errors) > 0 {
   // ... do something with errors (the errors type is []error)
@@ -35,8 +36,13 @@ data := x.Eval("//a").Data()
 ```go
 // without SetDoc. Since document is not set in the context, 
 // node related xpath expressions are not going to work.
-x := New()
+x := rabbit.New()
 data := x.Eval("1+1").Data()
+```
+
+```go
+// you can use cli program like this.
+rabbit.New().SetDoc("uri/or/filepath.txt").CLI()
 ```
 
 ## Features
