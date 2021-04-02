@@ -67,15 +67,15 @@ func (x *XPath) Eval(input string) *XPath {
 		x.errors = append(x.errors, fmt.Errorf(e.Inspect()))
 		return x
 	}
-
 	x.evaled = e
-	initContext(x.context)
 
 	return x
 }
 
 // Data convert evaled field to []interface{}
 func (x *XPath) Data() []interface{} {
+	initContext(x.context)
+
 	if x.evaled == nil {
 		x.errors = append(x.errors, fmt.Errorf("cannot convert item since evaled field is nil"))
 		return nil
@@ -93,6 +93,8 @@ func (x *XPath) Data() []interface{} {
 
 // Nodes convert evaled field to []*html.Node
 func (x *XPath) Nodes() []*html.Node {
+	initContext(x.context)
+
 	if x.evaled == nil {
 		x.errors = append(x.errors, fmt.Errorf("cannot convert item since evaled field is nil"))
 		return nil
@@ -109,6 +111,7 @@ func (x *XPath) Nodes() []*html.Node {
 
 // Raw returns evaled field
 func (x *XPath) Raw() object.Item {
+	initContext(x.context)
 	return x.evaled
 }
 

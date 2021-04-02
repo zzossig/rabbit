@@ -7,6 +7,8 @@
 XML Path Language(XPath) 3.1 is W3C recommendation since 21 march 2017.
 The rabbit language is built for selecting HTML nodes with XPath syntax.
 
+# API will be changed in the near future
+
 ## Overview
 
 Rabbit language is built for HTML, not for XML. Since XPath 3.1 is targeted for XML, it was not possible to implement all the concepts listed in [https://www.w3.org/TR/xpath-31/](https://www.w3.org/TR/xpath-31/). But in most cases, it is fair enough for selecting HTML nodes with rabbit language.
