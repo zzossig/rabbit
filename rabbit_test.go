@@ -10,6 +10,11 @@ func TestXPath(t *testing.T) {
 		t.Errorf("result length should be 5. got=%d", len(data))
 	}
 
+	nodes := New().SetDoc("./eval/testdata/company_2.xml").Eval("//employee").Nodes()
+	if len(nodes) != 5 {
+		t.Errorf("result length should be 5. got=%d", len(nodes))
+	}
+
 	x := New()
 	data2 := x.Eval("1+1").Data()
 	if data2[0] != 2 {

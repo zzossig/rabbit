@@ -24,6 +24,12 @@ data := rabbit.New().SetDoc("uri/or/filepath.txt").Eval("//a").Data()
 ```
 
 ```go
+// if you expect evaled result is a sequence of html node, 
+// use Nodes() instead of Data()
+nodes := rabbit.New().SetDoc("uri/or/filepath.txt").Eval("//a").Nodes()
+```
+
+```go
 // with error check
 x := rabbit.New()
 x.SetDoc("uri/or/filepath.txt")
@@ -38,6 +44,11 @@ data := x.Eval("//a").Data()
 // node related xpath expressions are not going to work.
 x := rabbit.New()
 data := x.Eval("1+1").Data()
+```
+
+```go
+// you can test simple xpath expressions using cli program
+rabbit.New().SetDoc("uri/or/filepath.txt").CLI()
 ```
 
 ## Features

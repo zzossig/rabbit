@@ -26,6 +26,9 @@ func Start(in io.Reader, out io.Writer, ctx *object.Context) {
 		line := scanner.Text()
 		l := lexer.New(line)
 		p := parser.New(l)
+		c := object.NewContext()
+		c.Doc = ctx.Doc
+		c.Static = ctx.Static
 
 		xpath := p.ParseXPath()
 		if len(p.Errors()) != 0 {
@@ -33,7 +36,7 @@ func Start(in io.Reader, out io.Writer, ctx *object.Context) {
 			continue
 		}
 
-		evaled := eval.Eval(xpath, ctx)
+		evaled := eval.Eval(xpath, c)
 		if evaled != nil {
 			io.WriteString(out, evaled.Inspect())
 			io.WriteString(out, "\n")

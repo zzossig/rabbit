@@ -10,6 +10,7 @@ import (
 	"github.com/zzossig/rabbit/object"
 	"github.com/zzossig/rabbit/parser"
 	"github.com/zzossig/rabbit/repl"
+	"golang.org/x/net/html"
 )
 
 type xpath struct {
@@ -58,12 +59,14 @@ func (x *xpath) Eval(input string) *xpath {
 		x.errors = append(x.errors, fmt.Errorf(e.Inspect()))
 		return x
 	}
+
 	x.evaled = e
+	initContext(x.context)
 
 	return x
 }
 
-// Data convert evaled field to a golang data type
+// Data convert evaled field to []interface{}
 func (x *xpath) Data() []interface{} {
 	if x.evaled == nil {
 		x.errors = append(x.errors, fmt.Errorf("cannot convert item since evaled field is nil"))
@@ -78,6 +81,22 @@ func (x *xpath) Data() []interface{} {
 
 	// evaled field always a sequence type so converted value always be a []interface{} type
 	return e.([]interface{})
+}
+
+// Nodes convert evaled field to []*html.Node
+func (x *xpath) Nodes() []*html.Node {
+	if x.evaled == nil {
+		x.errors = append(x.errors, fmt.Errorf("cannot convert item since evaled field is nil"))
+		return nil
+	}
+
+	e, err := convertNode(x.evaled)
+	if err != nil {
+		x.errors = append(x.errors, err)
+		return nil
+	}
+
+	return e
 }
 
 func (x *xpath) CLI() {
@@ -148,4 +167,73 @@ func convertSequence(s *object.Sequence) ([]interface{}, error) {
 		ss = append(ss, v)
 	}
 	return ss, nil
+}
+
+func convertNode(item object.Item) ([]*html.Node, error) {
+	switch item := item.(type) {
+	case *object.Sequence:
+		nodes := make([]*html.Node, 0, len(item.Items))
+		for _, i := range item.Items {
+			switch i := i.(type) {
+			case *object.Sequence:
+				n, err := convertNode(i)
+				if err != nil {
+					return nodes, fmt.Errorf("unknown node type: %s", i.Type())
+				}
+				nodes = append(nodes, n...)
+			case *object.Array:
+				n, err := convertNode(i)
+				if err != nil {
+					return nodes, fmt.Errorf("unknown node type: %s", i.Type())
+				}
+				nodes = append(nodes, n...)
+			case *object.BaseNode:
+				nodes = append(nodes, i.Self())
+			case *object.AttrNode:
+				nodes = append(nodes, i.Self())
+			default:
+				return nodes, fmt.Errorf("unknown node type: %s", i.Type())
+			}
+		}
+		return nodes, nil
+	case *object.Array:
+		nodes := make([]*html.Node, 0, len(item.Items))
+		for _, i := range item.Items {
+			switch i := i.(type) {
+			case *object.Sequence:
+				n, err := convertNode(i)
+				if err != nil {
+					return nodes, fmt.Errorf("unknown node type: %s", i.Type())
+				}
+				nodes = append(nodes, n...)
+			case *object.Array:
+				n, err := convertNode(i)
+				if err != nil {
+					return nodes, fmt.Errorf("unknown node type: %s", i.Type())
+				}
+				nodes = append(nodes, n...)
+			case *object.BaseNode:
+				nodes = append(nodes, i.Self())
+			case *object.AttrNode:
+				nodes = append(nodes, i.Self())
+			default:
+				return nodes, fmt.Errorf("unknown node type: %s", i.Type())
+			}
+		}
+		return nodes, nil
+	case *object.BaseNode:
+		return []*html.Node{item.Self()}, nil
+	case *object.AttrNode:
+		return []*html.Node{item.Self()}, nil
+	default:
+		return []*html.Node{}, fmt.Errorf("unknown node type: %s", item.Type())
+	}
+}
+
+func initContext(ctx *object.Context) {
+	ctx.CSize = 0
+	ctx.CPos = 0
+	ctx.CAxis = ""
+	ctx.CItem = nil
+	ctx.CNode = []object.Node{}
 }
