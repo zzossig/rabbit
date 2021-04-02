@@ -107,6 +107,21 @@ func (x *XPath) Nodes() []*html.Node {
 	return e
 }
 
+// Raw returns evaled field
+func (x *XPath) Raw() object.Item {
+	return x.evaled
+}
+
+// Errors returns errors field
+func (x *XPath) Errors() []error {
+	return x.errors
+}
+
+// Input returns input field
+func (x *XPath) String() string {
+	return x.input
+}
+
 func (x *XPath) CLI() {
 	repl.Start(os.Stdin, os.Stdout, x.context)
 }

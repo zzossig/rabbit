@@ -34,8 +34,8 @@ nodes := rabbit.New().SetDoc("uri/or/filepath.txt").Eval("//a").Nodes()
 // with error check
 x := rabbit.New()
 x.SetDoc("uri/or/filepath.txt")
-if len(x.errors) > 0 {
-  // ... do something with errors (the errors type is []error)
+if len(x.Errors()) > 0 {
+  // ... do something with errors (the x.Errors() type is []error)
 }
 data := x.Eval("//a").Data()
 ```
