@@ -15,50 +15,6 @@ For example)
 - `//div[@category='web']/preceding::node()[2]`
 - `let $abc := ('a', 'b', 'c') return fn:insert-before($abc, 4, 'z')`
 
-## Notice
-
-### Attribute node is custom *html.Node type
-
-Rabbit language support attribute node. But /x/net/html package has no such a type(it only have 6 kinds of node) and treat attribute as a field of element node. So, in order to make attribute as a node, I had to make a custom *html.Node type. It have following fields.
-
-- Type: html.NodeType(7).
-- Parent: node(*html.Node) that is contain the attribute
-- FirstChild, LastChild: `nil`
-- PrevSibling, NextSibling: prev or next attribute node(*html.Node) of current one
-- Data: attribute value(string).
-- DataAtom: atomized Data(atom.Atom)
-- Namespace: ""(empty string)
-- Attr: Attr field contains only one html.Attribute item. Is has key, value pair for the attribute.
-
-### Not well formed document will be transfromed
-
-Rabbit language uses the /x/net/html package for parsing HTML. So, the type of the selected node will be *html.Node.
-One thing that should know is that /x/net/html package is wrap a document with html, head, body tags if it is not well-formed.
-
-For example, if your document looks like this
-
-```html
-<div>
-  ...
-</div>
-```
-
-/x/net/html package transforms the document to this internally.
-
-```html
-<html>
-  <head></head>
-  <body>
-    <div>
-      ...
-    </div>
-  </body>
-</html>
-```
-
-So, in this example, XPath expression `/div` has no result because the root node is an `html`, not `div`.
-Keep in mind this fact and otherwise, you can get confused.
-
 ## Basic Usage
 
 ```go
@@ -148,3 +104,47 @@ Node test with argument is not supported. For example, `element(person)`, `eleme
 
 6. Whildcard Expressions<br/>
 Only `*` wildcard is allowed in the Rabbit language. `NCName:*`, `*:NCName`, `BracedURILiteral*` are not supported since namespace is not a big deal in the Rabbit language.
+
+## Notice
+
+### Attribute node is custom *html.Node type
+
+Rabbit language support attribute node. But /x/net/html package has no such a type(it only have 6 kinds of node) and treat attribute as a field of element node. So, in order to make attribute as a node, I had to make a custom *html.Node type. It have following fields.
+
+- Type: html.NodeType(7).
+- Parent: node(*html.Node) that is contain the attribute
+- FirstChild, LastChild: `nil`
+- PrevSibling, NextSibling: prev or next attribute node(*html.Node) of current one
+- Data: attribute value(string).
+- DataAtom: atomized Data(atom.Atom)
+- Namespace: ""(empty string)
+- Attr: Attr field contains only one html.Attribute item. Is has key, value pair for the attribute.
+
+### Not well formed document will be transfromed
+
+Rabbit language uses the /x/net/html package for parsing HTML. So, the type of the selected node will be *html.Node.
+One thing that should know is that /x/net/html package is wrap a document with html, head, body tags if it is not well-formed.
+
+For example, if your document looks like this
+
+```html
+<div>
+  ...
+</div>
+```
+
+/x/net/html package transforms the document to this internally.
+
+```html
+<html>
+  <head></head>
+  <body>
+    <div>
+      ...
+    </div>
+  </body>
+</html>
+```
+
+So, in this example, XPath expression `/div` has no result because the root node is an `html`, not `div`.
+Keep in mind this fact and otherwise, you can get confused.

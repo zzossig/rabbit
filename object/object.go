@@ -36,13 +36,19 @@ type Error struct {
 	Message string
 }
 
-func (e *Error) Type() Type      { return ErrorType }
+// Type ::= ErrorType
+func (e *Error) Type() Type { return ErrorType }
+
+// Inspect ::= "Error: " + e.Message
 func (e *Error) Inspect() string { return "ERROR: " + e.Message }
 
 // Placeholder is an item that is represents ?(question token) when doing evaluation
 type Placeholder struct{}
 
-func (p *Placeholder) Type() Type      { return PholderType }
+// Type ::= PholderType
+func (p *Placeholder) Type() Type { return PholderType }
+
+// Inspect ::= ?
 func (p *Placeholder) Inspect() string { return "?" }
 
 // Varref is an item that is represents $var when doing evaluation
@@ -50,7 +56,10 @@ type Varref struct {
 	Name ast.EQName
 }
 
-func (v *Varref) Type() Type      { return VarrefType }
+// Type ::= VarrefType
+func (v *Varref) Type() Type { return VarrefType }
+
+// Inspect ::= EQName.Value()
 func (v *Varref) Inspect() string { return fmt.Sprintf("$%s", v.Name.Value()) }
 
 // Sequence is an ordered collection of zero or more items.
@@ -58,7 +67,10 @@ type Sequence struct {
 	Items []Item
 }
 
+// Type ::= SequenceType
 func (s *Sequence) Type() Type { return SequenceType }
+
+// Inspect ::= (...)
 func (s *Sequence) Inspect() string {
 	var sb strings.Builder
 
@@ -97,7 +109,10 @@ type Map struct {
 	Pairs map[HashKey]Pair
 }
 
+// Type ::= MapType
 func (m *Map) Type() Type { return MapType }
+
+// Inspect ::= map{...}
 func (m *Map) Inspect() string {
 	var sb strings.Builder
 
@@ -119,7 +134,10 @@ type Array struct {
 	Items []Item
 }
 
+// Type ::= ArrayType
 func (a *Array) Type() Type { return ArrayType }
+
+// Inspect ::= [...]
 func (a *Array) Inspect() string {
 	var sb strings.Builder
 
@@ -154,7 +172,10 @@ type FuncInline struct {
 	*Context
 }
 
-func (fi *FuncInline) Type() Type      { return FuncType }
+// Type ::= FuncType
+func (fi *FuncInline) Type() Type { return FuncType }
+
+// Inspect ::= function
 func (fi *FuncInline) Inspect() string { return "function" }
 
 // FuncPartial ::= ns:bif(?,...)
@@ -166,6 +187,7 @@ type FuncPartial struct {
 	*Func
 }
 
+// Type ::= FuncType
 func (fp *FuncPartial) Type() Type      { return FuncType }
 func (fp *FuncPartial) Inspect() string { return "function" }
 
@@ -174,10 +196,19 @@ type Integer struct {
 	value int
 }
 
-func (i *Integer) Type() Type      { return IntegerType }
+// Type ::= IntegerType
+func (i *Integer) Type() Type { return IntegerType }
+
+// Inspect ::= %d
 func (i *Integer) Inspect() string { return fmt.Sprintf("%d", i.value) }
-func (i *Integer) SetValue(v int)  { i.value = v }
-func (i *Integer) Value() int      { return i.value }
+
+// SetValue is setter for the Integer
+func (i *Integer) SetValue(v int) { i.value = v }
+
+// Value is getter for the Integer
+func (i *Integer) Value() int { return i.value }
+
+// HashKey used as a map key
 func (i *Integer) HashKey() HashKey {
 	return HashKey{Type: i.Type(), Value: uint64(i.value)}
 }
@@ -188,10 +219,19 @@ type Decimal struct {
 	value float64
 }
 
-func (d *Decimal) Type() Type         { return DecimalType }
-func (d *Decimal) Inspect() string    { return fmt.Sprintf("%f", d.value) }
+// Type ::= DecimalType
+func (d *Decimal) Type() Type { return DecimalType }
+
+// Inspect ::= %f
+func (d *Decimal) Inspect() string { return fmt.Sprintf("%f", d.value) }
+
+// SetValue is setter for the Decimal
 func (d *Decimal) SetValue(v float64) { d.value = v }
-func (d *Decimal) Value() float64     { return d.value }
+
+// Value is getter for the Decimal
+func (d *Decimal) Value() float64 { return d.value }
+
+// HashKey used as a map key
 func (d *Decimal) HashKey() HashKey {
 	return HashKey{Type: d.Type(), Value: math.Float64bits(d.value)}
 }
@@ -202,10 +242,19 @@ type Double struct {
 	value float64
 }
 
-func (d *Double) Type() Type         { return DoubleType }
-func (d *Double) Inspect() string    { return fmt.Sprintf("%e", d.value) }
+// Type ::= DoubleType
+func (d *Double) Type() Type { return DoubleType }
+
+// Inspect ::= %e
+func (d *Double) Inspect() string { return fmt.Sprintf("%e", d.value) }
+
+// SetValue is setter for the Double
 func (d *Double) SetValue(v float64) { d.value = v }
-func (d *Double) Value() float64     { return d.value }
+
+// Value is getter for the Double
+func (d *Double) Value() float64 { return d.value }
+
+// HashKey used as a map key
 func (d *Double) HashKey() HashKey {
 	return HashKey{Type: d.Type(), Value: math.Float64bits(d.value)}
 }
@@ -215,10 +264,19 @@ type Boolean struct {
 	value bool
 }
 
-func (b *Boolean) Type() Type      { return BooleanType }
+// Type ::= BooleanType
+func (b *Boolean) Type() Type { return BooleanType }
+
+// Inspect ::= %t
 func (b *Boolean) Inspect() string { return fmt.Sprintf("%t", b.value) }
+
+// SetValue is setter for the Boolean
 func (b *Boolean) SetValue(v bool) { b.value = v }
-func (b *Boolean) Value() bool     { return b.value }
+
+// Value is getter for the Boolean
+func (b *Boolean) Value() bool { return b.value }
+
+// HashKey used as a map key
 func (b *Boolean) HashKey() HashKey {
 	var value uint64
 
@@ -236,10 +294,19 @@ type String struct {
 	value string
 }
 
-func (s *String) Type() Type        { return StringType }
-func (s *String) Inspect() string   { return s.value }
+// Type ::= StringType
+func (s *String) Type() Type { return StringType }
+
+// Inspect ::= string
+func (s *String) Inspect() string { return s.value }
+
+// SetValue is setter for the String
 func (s *String) SetValue(v string) { s.value = v }
-func (s *String) Value() string     { return s.value }
+
+// Value is getter for the String
+func (s *String) Value() string { return s.value }
+
+// HashKey used as a map key
 func (s *String) HashKey() HashKey {
 	h := fnv.New64a()
 	h.Write([]byte(s.value))
@@ -253,6 +320,7 @@ type BaseNode struct {
 	tree *html.Node
 }
 
+// Type ::= ElementNodeType | TextNodeType | DocumentNodeType | CommentNodeType | DoctypeNodeType | RawNodeType
 func (bn *BaseNode) Type() Type {
 	switch bn.tree.Type {
 	case html.ElementNode:
@@ -269,40 +337,60 @@ func (bn *BaseNode) Type() Type {
 		return RawNodeType
 	}
 }
-func (bn *BaseNode) Inspect() string         { return bn.tree.Data }
-func (bn *BaseNode) Tree() *html.Node        { return bn.tree }
+
+// Inspect ::= *html.Node.Data
+func (bn *BaseNode) Inspect() string { return bn.tree.Data }
+
+// Tree returns *html.Node. BaseNode is just a wrapper type for the *html.Node
+func (bn *BaseNode) Tree() *html.Node { return bn.tree }
+
+// SetTree is setter for the BaseNode
 func (bn *BaseNode) SetTree(tree *html.Node) { bn.tree = tree }
-func (bn *BaseNode) Self() *html.Node        { return bn.tree }
+
+// Self is getter for the BaseNode
+func (bn *BaseNode) Self() *html.Node { return bn.tree }
+
+// Parent returns parent node of the current one if exist
 func (bn *BaseNode) Parent() Node {
 	if bn.tree.Parent != nil {
 		return &BaseNode{bn.tree.Parent}
 	}
 	return nil
 }
+
+// FirstChild returns first child node of the current one if exist
 func (bn *BaseNode) FirstChild() Node {
 	if bn.tree.FirstChild != nil {
 		return &BaseNode{bn.tree.FirstChild}
 	}
 	return nil
 }
+
+// LastChild returns last child node of the current one if exist
 func (bn *BaseNode) LastChild() Node {
 	if bn.tree.LastChild != nil {
 		return &BaseNode{bn.tree.LastChild}
 	}
 	return nil
 }
+
+// PrevSibling returns previous sibling node of the current one if exist
 func (bn *BaseNode) PrevSibling() Node {
 	if bn.tree.PrevSibling != nil {
 		return &BaseNode{bn.tree.PrevSibling}
 	}
 	return nil
 }
+
+// NextSibling returns next sibling node of the current one if exist
 func (bn *BaseNode) NextSibling() Node {
 	if bn.tree.NextSibling != nil {
 		return &BaseNode{bn.tree.NextSibling}
 	}
 	return nil
 }
+
+// Attr returns Attr field of element node with wrap it to AttrNode
 func (bn *BaseNode) Attr() []Node {
 	if len(bn.tree.Attr) > 0 {
 		var nodes []Node
@@ -313,6 +401,8 @@ func (bn *BaseNode) Attr() []Node {
 	}
 	return nil
 }
+
+// Text returns *html.Node.Data
 func (bn *BaseNode) Text() string {
 	if bn.Type() == CommentNodeType || bn.Type() == TextNodeType {
 		return bn.Tree().Data
@@ -334,13 +424,28 @@ type AttrNode struct {
 	attr   html.Attribute
 }
 
-func (an *AttrNode) Type() Type                  { return AttributeNodeType }
-func (an *AttrNode) Inspect() string             { return an.attr.Val }
-func (an *AttrNode) Key() string                 { return an.attr.Key }
-func (an *AttrNode) Attr() html.Attribute        { return an.attr }
+// Type ::= AttributeNodeType
+func (an *AttrNode) Type() Type { return AttributeNodeType }
+
+// Inspect returns a value of the attr field
+func (an *AttrNode) Inspect() string { return an.attr.Val }
+
+// Key returns a key of the attr field
+func (an *AttrNode) Key() string { return an.attr.Key }
+
+// Attr returns attr field
+func (an *AttrNode) Attr() html.Attribute { return an.attr }
+
+// SetAttr is setter for the attr field
 func (an *AttrNode) SetAttr(attr html.Attribute) { an.attr = attr }
-func (an *AttrNode) SetTree(p *html.Node)        { an.parent = p }
-func (an *AttrNode) Tree() *html.Node            { return an.parent }
+
+// SetTree is setter for the parent field
+func (an *AttrNode) SetTree(p *html.Node) { an.parent = p }
+
+// Tree is getter for the parent field
+func (an *AttrNode) Tree() *html.Node { return an.parent }
+
+// Self returns customized *html.Node which represents Attribute node
 func (an *AttrNode) Self() *html.Node {
 	var n *html.Node
 
@@ -358,8 +463,14 @@ func (an *AttrNode) Self() *html.Node {
 
 	return n
 }
+
+// FirstChild is not exist in AttrNode
 func (an *AttrNode) FirstChild() Node { return nil }
-func (an *AttrNode) LastChild() Node  { return nil }
+
+// LastChild is not exist in AttrNode
+func (an *AttrNode) LastChild() Node { return nil }
+
+// PrevSibling returns previous sibling of the current one if exist
 func (an *AttrNode) PrevSibling() Node {
 	for i, a := range an.parent.Attr {
 		if a.Key == an.Key() && a.Val == an.Inspect() {
@@ -371,6 +482,8 @@ func (an *AttrNode) PrevSibling() Node {
 	}
 	return nil
 }
+
+// NextSibling returns next sibling of the current one if exist
 func (an *AttrNode) NextSibling() Node {
 	for i, a := range an.parent.Attr {
 		if a.Key == an.Key() && a.Val == an.Inspect() {
@@ -382,6 +495,8 @@ func (an *AttrNode) NextSibling() Node {
 	}
 	return nil
 }
+
+// Parent returns parent node of the current one if exist
 func (an *AttrNode) Parent() Node {
 	if an.parent != nil {
 		return &BaseNode{an.parent}

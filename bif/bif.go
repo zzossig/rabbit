@@ -850,10 +850,8 @@ func IsPrecede(n1, n2 object.Node, src *object.BaseNode) object.Item {
 				if n1.Tree() == a.Tree() && n1.Key() == a.Key() {
 					if n1.Tree() != n2.Tree() {
 						return NewBoolean(true)
-					} else {
-						return NewBoolean(false)
 					}
-
+					return NewBoolean(false)
 				}
 			}
 		} else if n2.Type() == object.AttributeNodeType {
@@ -864,10 +862,8 @@ func IsPrecede(n1, n2 object.Node, src *object.BaseNode) object.Item {
 				if n2.Tree() == a.Tree() && n2.Key() == a.Key() {
 					if n1.Tree() != n2.Tree() {
 						return NewBoolean(false)
-					} else {
-						return NewBoolean(true)
 					}
-
+					return NewBoolean(true)
 				}
 			}
 		} else {
@@ -1653,7 +1649,7 @@ func IsGE(left, right object.Item) object.Item {
 	return NewError("cannot compare: %s, %s", left.Inspect(), right.Inspect())
 }
 
-// IsOccurMatch checks if item occurence match with the type t
+// IsOccurMatch checks if item occurrence match with the type t
 func IsOccurMatch(item object.Item, t token.Token) bool {
 	seq, ok := item.(*object.Sequence)
 	if !ok {

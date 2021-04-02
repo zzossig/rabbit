@@ -172,12 +172,12 @@ func TestEvalArray(t *testing.T) {
 							}
 						}
 					default:
-						t.Errorf("Unkown item type. got=%s", item.Type())
+						t.Errorf("Unknown item type. got=%s", item.Type())
 					}
 
 				}
 			default:
-				t.Errorf("Unkown item type. got=%s", item.Type())
+				t.Errorf("Unknown item type. got=%s", item.Type())
 			}
 		}
 	}
@@ -414,7 +414,7 @@ func TestStringConcat(t *testing.T) {
 			case *object.String:
 				testStringObject(t, item, tt.expected)
 			default:
-				t.Errorf("Unkown item type. got=%s", item.Type())
+				t.Errorf("Unknown item type. got=%s", item.Type())
 			}
 		}
 	}
@@ -476,7 +476,7 @@ func TestArrowExpr(t *testing.T) {
 			case *object.String:
 				testStringObject(t, item, tt.expected)
 			default:
-				t.Errorf("Unkown item type. got=%s", item.Type())
+				t.Errorf("Unknown item type. got=%s", item.Type())
 			}
 		}
 	}
@@ -2668,7 +2668,7 @@ func testNumberObject(t *testing.T, item object.Item, expected interface{}) {
 			t.Errorf("object.Double has wrong value. got=%f, want=%f", item.Value(), expected)
 		}
 	default:
-		t.Errorf("Unkown item type. got=%s", item.Type())
+		t.Errorf("Unknown item type. got=%s", item.Type())
 	}
 }
 
@@ -2862,7 +2862,7 @@ func testSequenceObject(t *testing.T, item object.Item, expected []interface{}) 
 			case *object.Array:
 				testArrayObject(t, it, expected[i])
 			default:
-				t.Errorf("Unkown item type. got=%s, %s", it.Type(), it.Inspect())
+				t.Errorf("Unknown item type. got=%s, %s", it.Type(), it.Inspect())
 			}
 		}
 	default:

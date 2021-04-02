@@ -16,3 +16,9 @@ func TestXPath(t *testing.T) {
 		t.Errorf("result value should be 2. got=%d", data2[0])
 	}
 }
+func BenchmarkXPath(b *testing.B) {
+	x := New().SetDoc("./eval/testdata/company_2.xml")
+	for n := 0; n < b.N; n++ {
+		x.Eval("//employee").Data()
+	}
+}

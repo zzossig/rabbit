@@ -290,9 +290,8 @@ func mapMerge(ctx *object.Context, args ...object.Item) object.Item {
 			for key, pair := range m.Pairs {
 				if _, ok := result.Pairs[key]; ok {
 					return NewError("duplicate keys are rejected")
-				} else {
-					result.Pairs[key] = pair
 				}
+				result.Pairs[key] = pair
 			}
 		}
 	case "use-first":
@@ -300,9 +299,8 @@ func mapMerge(ctx *object.Context, args ...object.Item) object.Item {
 			for key, pair := range m.Pairs {
 				if _, ok := result.Pairs[key]; ok {
 					continue
-				} else {
-					result.Pairs[key] = pair
 				}
+				result.Pairs[key] = pair
 			}
 		}
 	case "use-any":

@@ -51,7 +51,7 @@ func NewEnclosedContext(outer *Context) *Context {
 	return ctx
 }
 
-// Get retreive items from the store field or the outer field.
+// Get retrieve items from the store field or the outer field.
 func (c *Context) Get(name string) (Item, bool) {
 	item, ok := c.store[name]
 	if !ok && c.outer != nil {

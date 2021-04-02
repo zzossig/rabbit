@@ -42,9 +42,8 @@ func fnStringJoin(ctx *object.Context, args ...object.Item) object.Item {
 			}
 
 			return NewString(sb.String())
-		} else {
-			return CastType(args[0], object.StringType)
 		}
+		return CastType(args[0], object.StringType)
 	}
 
 	if args[1].Type() != object.StringType {

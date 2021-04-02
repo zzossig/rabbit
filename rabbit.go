@@ -2,12 +2,14 @@ package rabbit
 
 import (
 	"fmt"
+	"os"
 
 	"github.com/zzossig/rabbit/bif"
 	"github.com/zzossig/rabbit/eval"
 	"github.com/zzossig/rabbit/lexer"
 	"github.com/zzossig/rabbit/object"
 	"github.com/zzossig/rabbit/parser"
+	"github.com/zzossig/rabbit/repl"
 )
 
 type xpath struct {
@@ -76,6 +78,10 @@ func (x *xpath) Data() []interface{} {
 
 	// evaled field always a sequence type so converted value always be a []interface{} type
 	return e.([]interface{})
+}
+
+func (x *xpath) CLI() {
+	repl.Start(os.Stdin, os.Stdout, x.context)
 }
 
 func convert(item object.Item) (interface{}, error) {

@@ -791,11 +791,10 @@ func (p *Parser) parseStepExpr() ast.ExprSingle {
 			fc.EQName = name
 
 			return fc
-		} else {
-			as.TypeID = 2
-			as.ForwardStep.TypeID = 1
-			as.ForwardStep.NodeTest = p.parseKindTest()
 		}
+		as.TypeID = 2
+		as.ForwardStep.TypeID = 1
+		as.ForwardStep.NodeTest = p.parseKindTest()
 	}
 
 	if p.peekTokenIs(token.HASH) {

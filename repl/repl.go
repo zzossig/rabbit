@@ -13,9 +13,8 @@ import (
 
 const PROMPT = ">> "
 
-func Start(in io.Reader, out io.Writer) {
+func Start(in io.Reader, out io.Writer, ctx *object.Context) {
 	scanner := bufio.NewScanner(in)
-	ctx := object.NewContext()
 
 	for {
 		fmt.Fprintf(out, PROMPT)

@@ -72,9 +72,8 @@ func fnMax(ctx *object.Context, args ...object.Item) object.Item {
 	if !IsSeq(args[0]) && !IsArray(args[0]) {
 		if IsNumeric(args[0]) {
 			return args[0]
-		} else {
-			return NewError("cannot match item type with required type")
 		}
+		return NewError("cannot match item type with required type")
 	}
 
 	src := &object.Sequence{}
@@ -158,9 +157,8 @@ func fnMin(ctx *object.Context, args ...object.Item) object.Item {
 	if !IsSeq(args[0]) && !IsArray(args[0]) {
 		if IsNumeric(args[0]) {
 			return args[0]
-		} else {
-			return NewError("cannot match item type with required type")
 		}
+		return NewError("cannot match item type with required type")
 	}
 
 	src := &object.Sequence{}
@@ -241,9 +239,8 @@ func fnSum(ctx *object.Context, args ...object.Item) object.Item {
 	if !IsSeq(args[0]) && !IsArray(args[0]) {
 		if IsNumeric(args[0]) {
 			return args[0]
-		} else {
-			return NewError("cannot match item type with required type")
 		}
+		return NewError("cannot match item type with required type")
 	}
 
 	src := &object.Sequence{}

@@ -141,9 +141,8 @@ func evalAxisStep(expr ast.ExprSingle, ctx *object.Context) object.Item {
 			if as.AbbrevForwardStep.NodeTest == nil {
 				if ctx.CItem.Type() == object.DocumentNodeType {
 					return ctx.Doc
-				} else {
-					return bif.NewError("not a valid xpath expression")
 				}
+				return bif.NewError("not a valid xpath expression")
 			}
 
 			return evalNodeTest(as.ForwardStep.AbbrevForwardStep.NodeTest, &as.PredicateList, ctx)
