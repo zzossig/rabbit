@@ -1221,8 +1221,8 @@ func TestPathExpr(t *testing.T) {
 	if node38.Type() != object.AttributeNodeType {
 		t.Errorf("wrong node type. got=%s", node38.Type())
 	}
-	if node38.Inspect() != "paperback" {
-		t.Errorf("wrong attr value. got=%s, expected='paperback'", node38.Inspect())
+	if node38.Inspect() != "Attr{cover:paperback}" {
+		t.Errorf("wrong attr value. got=%s, expected='Attr{cover:paperback}'", node38.Inspect())
 	}
 
 	seq39 := testEvalXML("//book/self::book")
@@ -1408,8 +1408,8 @@ func TestPathPredicateExpr(t *testing.T) {
 	if !ok {
 		t.Errorf("node type must be an attribute node")
 	}
-	if node4.Inspect() != "web" {
-		t.Errorf("wrong attribute value. got=%s, expected='web'", node4.Inspect())
+	if node4.Inspect() != "Attr{category:web}" {
+		t.Errorf("wrong attribute value. got=%s, expected='Attr{category:web}'", node4.Inspect())
 	}
 
 	seq5 := testEvalXML("//book[@category='web']")
@@ -1661,8 +1661,8 @@ func TestPathPredicateExpr(t *testing.T) {
 	if !ok {
 		t.Errorf("node must be an AttrNode. got=%s", node43.Type())
 	}
-	if node43.Inspect() != "1" {
-		t.Errorf("wrong attribute value. got=%s, expected='1'", node43.Inspect())
+	if node43.Inspect() != "Attr{category:1}" {
+		t.Errorf("wrong attribute value. got=%s, expected='Attr{category:1}'", node43.Inspect())
 	}
 
 	seq44 := testEvalXML("//@category[. = '2']")
@@ -1674,8 +1674,8 @@ func TestPathPredicateExpr(t *testing.T) {
 	if !ok {
 		t.Errorf("node must be an AttrNode. got=%s", node44.Type())
 	}
-	if node44.Inspect() != "2" {
-		t.Errorf("wrong attribute value. got=%s, expected='2'", node44.Inspect())
+	if node44.Inspect() != "Attr{category:2}" {
+		t.Errorf("wrong attribute value. got=%s, expected='Attr{category:2}'", node44.Inspect())
 	}
 
 	seq45 := testEvalXML("//book[year='2003'][1]")
@@ -1715,8 +1715,8 @@ func TestPathPredicateExpr(t *testing.T) {
 	if !ok {
 		t.Errorf("node type should be AttrNode")
 	}
-	if attr49.Key() != "category" || attr49.Inspect() != "2" {
-		t.Errorf("expected attr: %s='%s'", attr49.Key(), attr49.Inspect())
+	if attr49.Key() != "category" || attr49.Inspect() != "Attr{category:2}" {
+		t.Errorf("expected attr: %s", attr49.Inspect())
 	}
 
 	seq50 := testEvalXML("//book[year='2003']/preceding::*[book][2]")
@@ -1732,8 +1732,8 @@ func TestPathPredicateExpr(t *testing.T) {
 	if !ok {
 		t.Errorf("node type should be AttrNode")
 	}
-	if attr50.Key() != "category" || attr50.Inspect() != "1" {
-		t.Errorf("expected attr: %s='%s'", attr50.Key(), attr50.Inspect())
+	if attr50.Key() != "category" || attr50.Inspect() != "Attr{category:1}" {
+		t.Errorf("expected attr: %s", attr50.Inspect())
 	}
 
 	seq51 := testEvalXML2("//age[.=25]")

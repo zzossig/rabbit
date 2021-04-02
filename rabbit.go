@@ -13,7 +13,15 @@ import (
 	"golang.org/x/net/html"
 )
 
-type xpath struct {
+// XPath is a base object to evaluate xpath expressions.
+// input is xpath expression that is saved when you are using Eval method.
+// context is a context that contains a document.
+// SetDoc function saves a document to the context.
+// evaled field is set when you call Eval method.
+// evaled type is an object.Item which is a custom data type used in rabbit language.
+// You can convert evaled type to a golang data type using Data or Nodes method.
+// errors field is collected errors while parsing and evaluating
+type XPath struct {
 	input   string
 	context *object.Context
 	evaled  object.Item
@@ -21,14 +29,14 @@ type xpath struct {
 }
 
 // New creates new xpath object.
-func New() *xpath {
-	return &xpath{context: object.NewContext()}
+func New() *XPath {
+	return &XPath{context: object.NewContext()}
 }
 
 // SetDoc set document to a context.
 // if document is not set in a context, node related xpath expressions not going to work.
 // input param can be url or local filepath.
-func (x *xpath) SetDoc(input string) *xpath {
+func (x *XPath) SetDoc(input string) *XPath {
 	f := bif.F["fn:doc"]
 
 	err := f(x.context, bif.NewString(input))
@@ -39,7 +47,7 @@ func (x *xpath) SetDoc(input string) *xpath {
 }
 
 // Eval evaluates a xpath expression and save the result to xpath.
-func (x *xpath) Eval(input string) *xpath {
+func (x *XPath) Eval(input string) *XPath {
 	if len(x.errors) > 0 {
 		return x
 	}
@@ -67,7 +75,7 @@ func (x *xpath) Eval(input string) *xpath {
 }
 
 // Data convert evaled field to []interface{}
-func (x *xpath) Data() []interface{} {
+func (x *XPath) Data() []interface{} {
 	if x.evaled == nil {
 		x.errors = append(x.errors, fmt.Errorf("cannot convert item since evaled field is nil"))
 		return nil
@@ -84,7 +92,7 @@ func (x *xpath) Data() []interface{} {
 }
 
 // Nodes convert evaled field to []*html.Node
-func (x *xpath) Nodes() []*html.Node {
+func (x *XPath) Nodes() []*html.Node {
 	if x.evaled == nil {
 		x.errors = append(x.errors, fmt.Errorf("cannot convert item since evaled field is nil"))
 		return nil
@@ -99,7 +107,7 @@ func (x *xpath) Nodes() []*html.Node {
 	return e
 }
 
-func (x *xpath) CLI() {
+func (x *XPath) CLI() {
 	repl.Start(os.Stdin, os.Stdout, x.context)
 }
 
