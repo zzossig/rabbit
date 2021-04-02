@@ -40,11 +40,6 @@ x := rabbit.New()
 data := x.Eval("1+1").Data()
 ```
 
-```go
-// you can use cli program like this.
-rabbit.New().SetDoc("uri/or/filepath.txt").CLI()
-```
-
 ## Features
 
 ### What is supported
