@@ -1,5 +1,6 @@
 # 🐰rabbit
 
+[![Go Reference](https://pkg.go.dev/badge/github.com/zzossig/rabbit.svg)](https://pkg.go.dev/github.com/zzossig/rabbit)
 [![Go Report Card](https://goreportcard.com/badge/github.com/zzossig/rabbit)](https://goreportcard.com/report/github.com/zzossig/rabbit)
 > An interpreted language written in Go - XPath 3.1 implementation for HTML
 
