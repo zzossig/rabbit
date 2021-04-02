@@ -339,7 +339,21 @@ func (bn *BaseNode) Type() Type {
 }
 
 // Inspect ::= *html.Node.Data
-func (bn *BaseNode) Inspect() string { return bn.tree.Data }
+func (bn *BaseNode) Inspect() string {
+	switch bn.tree.Type {
+	case html.ElementNode:
+		return fmt.Sprintf("Elem{%s}", bn.tree.Data)
+	case html.TextNode:
+		return fmt.Sprintf("Text{%s}", bn.tree.Data)
+	case html.DocumentNode:
+		return fmt.Sprintf("Doc{%s}", bn.tree.Data)
+	case html.CommentNode:
+		return fmt.Sprintf("Comm{%s}", bn.tree.Data)
+	case html.DoctypeNode:
+		return fmt.Sprintf("Doctype{%s}", bn.tree.Data)
+	}
+	return bn.tree.Data
+}
 
 // Tree returns *html.Node. BaseNode is just a wrapper type for the *html.Node
 func (bn *BaseNode) Tree() *html.Node { return bn.tree }
@@ -428,7 +442,7 @@ type AttrNode struct {
 func (an *AttrNode) Type() Type { return AttributeNodeType }
 
 // Inspect returns a value of the attr field
-func (an *AttrNode) Inspect() string { return an.attr.Val }
+func (an *AttrNode) Inspect() string { return fmt.Sprintf("Attr{%s:%s}", an.attr.Key, an.attr.Val) }
 
 // Key returns a key of the attr field
 func (an *AttrNode) Key() string { return an.attr.Key }
