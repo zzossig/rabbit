@@ -7,8 +7,6 @@
 XML Path Language(XPath) 3.1 is W3C recommendation since 21 march 2017.
 The rabbit language is built for selecting HTML nodes with XPath syntax.
 
-# API will be changed in the near future
-
 ## Overview
 
 Rabbit language is built for HTML, not for XML. Since XPath 3.1 is targeted for XML, it was not possible to implement all the concepts listed in [https://www.w3.org/TR/xpath-31/](https://www.w3.org/TR/xpath-31/). But in most cases, it is fair enough for selecting HTML nodes with rabbit language.
@@ -22,14 +20,14 @@ For example)
 ## Basic Usage
 
 ```go
-// you can chaining xpath object. data is nil or []interface{}
-data := rabbit.New().SetDoc("uri/or/filepath.txt").Eval("//a").Data()
+// you can chaining xpath object. data is nil or []string
+data := rabbit.New().SetDoc("uri/or/filepath.txt").Eval("//a").GetAll()
 ```
 
 ```go
 // if you expect evaled result is a sequence of html node, 
-// use Nodes() instead of Data()
-nodes := rabbit.New().SetDoc("uri/or/filepath.txt").Eval("//a").Nodes()
+// use NodeAll() instead of DataAll() or GetAll()
+nodes := rabbit.New().SetDoc("uri/or/filepath.txt").Eval("//a").NodeAll()
 ```
 
 ```go
@@ -39,7 +37,11 @@ x.SetDoc("uri/or/filepath.txt")
 if len(x.Errors()) > 0 {
   // ... do something with errors (the x.Errors() type is []error)
 }
-data := x.Eval("//a").Data()
+x.Eval("//a")
+if len(x.Errors()) > 0 {
+  // ... do something with errors
+}
+data = x.DataAll()
 ```
 
 ```go
@@ -130,7 +132,7 @@ Rabbit language support attribute node. But /x/net/html package has no such a ty
 - Parent: node(*html.Node) that is contain the attribute
 - FirstChild, LastChild: `nil`
 - PrevSibling, NextSibling: prev or next attribute node(*html.Node) of current one
-- Data: attribute value(string).
+- Data: attribute key(string).
 - DataAtom: atomized Data(atom.Atom)
 - Namespace: ""(empty string)
 - Attr: Attr field contains only one html.Attribute item. Is has key, value pair for the attribute.

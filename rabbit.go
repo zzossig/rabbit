@@ -52,7 +52,12 @@ func (x *XPath) Eval(input string) *XPath {
 		return x
 	}
 
-	x.input = input
+	if x.input != "" && input != "" && input[0] != '/' {
+		x.input += "/" + input
+	} else {
+		x.input += input
+	}
+
 	l := lexer.New(input)
 	p := parser.New(l)
 	px := p.ParseXPath()
@@ -72,8 +77,101 @@ func (x *XPath) Eval(input string) *XPath {
 	return x
 }
 
-// Data convert evaled field to []interface{}
-func (x *XPath) Data() []interface{} {
+// Evals evaluates a xpath expression and returns slice of *XPath.
+func (x *XPath) Evals(input string) []*XPath {
+	if len(x.errors) > 0 {
+		return []*XPath{x}
+	}
+
+	if x.input != "" && input != "" && input[0] != '/' {
+		x.input += "/" + input
+	} else {
+		x.input += input
+	}
+
+	l := lexer.New(input)
+	p := parser.New(l)
+	px := p.ParseXPath()
+
+	if len(p.Errors()) != 0 {
+		x.errors = append(x.errors, p.Errors()...)
+		return []*XPath{x}
+	}
+
+	e := eval.Eval(px, x.context)
+	if bif.IsError(e) {
+		x.errors = append(x.errors, fmt.Errorf(e.Inspect()))
+		return []*XPath{x}
+	}
+
+	result := []*XPath{}
+	seq := e.(*object.Sequence)
+
+	for _, item := range seq.Items {
+		switch item := item.(type) {
+		case *object.Integer:
+			newX := &XPath{input: x.input, evaled: item, context: copyContext(x.context)}
+			result = append(result, newX)
+		case *object.Decimal:
+			newX := &XPath{input: x.input, evaled: item, context: copyContext(x.context)}
+			result = append(result, newX)
+		case *object.Double:
+			newX := &XPath{input: x.input, evaled: item, context: copyContext(x.context)}
+			result = append(result, newX)
+		case *object.Boolean:
+			newX := &XPath{input: x.input, evaled: item, context: copyContext(x.context)}
+			result = append(result, newX)
+		case *object.String:
+			newX := &XPath{input: x.input, evaled: item, context: copyContext(x.context)}
+			result = append(result, newX)
+		case *object.Map:
+			newX := &XPath{input: x.input, evaled: item, context: copyContext(x.context)}
+			result = append(result, newX)
+		case *object.Array:
+			newX := &XPath{input: x.input, evaled: item, context: copyContext(x.context)}
+			result = append(result, newX)
+		case *object.BaseNode:
+			newX := &XPath{input: x.input, evaled: item, context: copyContextN(x.context, item)}
+			result = append(result, newX)
+		case *object.AttrNode:
+			newX := &XPath{input: x.input, evaled: item, context: copyContextN(x.context, item)}
+			result = append(result, newX)
+		}
+	}
+
+	return result
+}
+
+func (x *XPath) Get() string {
+	items := x.GetAll()
+	if items == nil {
+		return ""
+	}
+	return items[0]
+}
+
+func (x *XPath) GetAll() []string {
+	initContext(x.context)
+
+	if x.evaled == nil {
+		x.errors = append(x.errors, fmt.Errorf("cannot convert item since evaled field is nil"))
+		return nil
+	}
+
+	return convertString(x.evaled)
+}
+
+// Data selects first item of returned value from DataAll
+func (x *XPath) Data() interface{} {
+	items := x.DataAll()
+	if len(items) > 0 {
+		return items[0]
+	}
+	return nil
+}
+
+// DataAll convert evaled field to []interface{}
+func (x *XPath) DataAll() []interface{} {
 	initContext(x.context)
 
 	if x.evaled == nil {
@@ -87,12 +185,20 @@ func (x *XPath) Data() []interface{} {
 		return nil
 	}
 
-	// evaled field always a sequence type so converted value always be a []interface{} type
 	return e.([]interface{})
 }
 
-// Nodes convert evaled field to []*html.Node
-func (x *XPath) Nodes() []*html.Node {
+// Node selects first item of returned value from NodeAll
+func (x *XPath) Node() *html.Node {
+	nodes := x.NodeAll()
+	if len(nodes) > 0 {
+		return nodes[0]
+	}
+	return nil
+}
+
+// NodeAll convert evaled field to []*html.Node
+func (x *XPath) NodeAll() []*html.Node {
 	initContext(x.context)
 
 	if x.evaled == nil {
@@ -111,7 +217,6 @@ func (x *XPath) Nodes() []*html.Node {
 
 // Raw returns evaled field
 func (x *XPath) Raw() object.Item {
-	initContext(x.context)
 	return x.evaled
 }
 
@@ -257,10 +362,46 @@ func convertNode(item object.Item) ([]*html.Node, error) {
 	}
 }
 
+func convertString(item object.Item) []string {
+	var s []string
+	switch item := item.(type) {
+	case *object.Sequence:
+		for _, i := range item.Items {
+			ss := convertString(i)
+			s = append(s, ss...)
+		}
+	case *object.Array:
+		for _, i := range item.Items {
+			ss := convertString(i)
+			s = append(s, ss...)
+		}
+	case *object.BaseNode:
+		s = append(s, item.Text())
+	case *object.AttrNode:
+		s = append(s, item.Attr().Val)
+	default:
+		s = append(s, item.Inspect())
+	}
+	return s
+}
+
 func initContext(ctx *object.Context) {
 	ctx.CSize = 0
 	ctx.CPos = 0
 	ctx.CAxis = ""
 	ctx.CItem = nil
 	ctx.CNode = []object.Node{}
+}
+
+func copyContext(ctx *object.Context) *object.Context {
+	c := object.NewContext()
+	c.Doc = ctx.Doc
+	return c
+}
+
+func copyContextN(ctx *object.Context, n object.Node) *object.Context {
+	c := object.NewContext()
+	c.Doc = ctx.Doc
+	c.CNode = append(c.CNode, n)
+	return c
 }

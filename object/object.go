@@ -461,12 +461,12 @@ func (an *AttrNode) Tree() *html.Node { return an.parent }
 
 // Self returns customized *html.Node which represents Attribute node
 func (an *AttrNode) Self() *html.Node {
-	var n *html.Node
+	var n html.Node
 
 	n.Type = html.NodeType(7)
-	n.Data = an.Inspect()
-	n.DataAtom = atom.Lookup([]byte(an.Inspect()))
-	n.Attr = append(n.Attr, an.Attr())
+	n.Data = an.Key()
+	n.DataAtom = atom.Lookup([]byte(an.Key()))
+	n.Attr = append(n.Attr, an.attr)
 	n.Parent = an.Tree()
 	if an.PrevSibling() != nil {
 		n.PrevSibling = an.PrevSibling().Self()
@@ -475,7 +475,7 @@ func (an *AttrNode) Self() *html.Node {
 		n.NextSibling = an.NextSibling().Self()
 	}
 
-	return n
+	return &n
 }
 
 // FirstChild is not exist in AttrNode
