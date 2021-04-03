@@ -14,7 +14,7 @@ import (
 )
 
 // XPath is a base object to evaluate xpath expressions.
-// input is xpath expression that is saved when you are using Eval method.
+// xpath is xpath expression that is saved when you are using Eval method.
 // context is a context that contains a document.
 // SetDoc function saves a document to the context.
 // evaled field is set when you call Eval method.
@@ -22,7 +22,7 @@ import (
 // You can convert evaled type to a golang data type using Data or Nodes method.
 // errors field is a collected errors while parsing and evaluating
 type XPath struct {
-	input   string
+	xpath   string
 	context *object.Context
 	evaled  object.Item
 	errors  []error
@@ -52,10 +52,10 @@ func (x *XPath) Eval(input string) *XPath {
 		return x
 	}
 
-	if x.input != "" && input != "" && input[0] != '/' {
-		x.input += "/" + input
+	if x.xpath != "" && input != "" && input[0] != '/' {
+		x.xpath += "/" + input
 	} else {
-		x.input += input
+		x.xpath += input
 	}
 
 	l := lexer.New(input)
@@ -83,10 +83,10 @@ func (x *XPath) Evals(input string) []*XPath {
 		return []*XPath{x}
 	}
 
-	if x.input != "" && input != "" && input[0] != '/' {
-		x.input += "/" + input
+	if x.xpath != "" && input != "" && input[0] != '/' {
+		x.xpath += "/" + input
 	} else {
-		x.input += input
+		x.xpath += input
 	}
 
 	l := lexer.New(input)
@@ -110,31 +110,31 @@ func (x *XPath) Evals(input string) []*XPath {
 	for _, item := range seq.Items {
 		switch item := item.(type) {
 		case *object.Integer:
-			newX := &XPath{input: x.input, evaled: item, context: copyContext(x.context)}
+			newX := &XPath{xpath: x.xpath, evaled: item, context: copyContext(x.context)}
 			result = append(result, newX)
 		case *object.Decimal:
-			newX := &XPath{input: x.input, evaled: item, context: copyContext(x.context)}
+			newX := &XPath{xpath: x.xpath, evaled: item, context: copyContext(x.context)}
 			result = append(result, newX)
 		case *object.Double:
-			newX := &XPath{input: x.input, evaled: item, context: copyContext(x.context)}
+			newX := &XPath{xpath: x.xpath, evaled: item, context: copyContext(x.context)}
 			result = append(result, newX)
 		case *object.Boolean:
-			newX := &XPath{input: x.input, evaled: item, context: copyContext(x.context)}
+			newX := &XPath{xpath: x.xpath, evaled: item, context: copyContext(x.context)}
 			result = append(result, newX)
 		case *object.String:
-			newX := &XPath{input: x.input, evaled: item, context: copyContext(x.context)}
+			newX := &XPath{xpath: x.xpath, evaled: item, context: copyContext(x.context)}
 			result = append(result, newX)
 		case *object.Map:
-			newX := &XPath{input: x.input, evaled: item, context: copyContext(x.context)}
+			newX := &XPath{xpath: x.xpath, evaled: item, context: copyContext(x.context)}
 			result = append(result, newX)
 		case *object.Array:
-			newX := &XPath{input: x.input, evaled: item, context: copyContext(x.context)}
+			newX := &XPath{xpath: x.xpath, evaled: item, context: copyContext(x.context)}
 			result = append(result, newX)
 		case *object.BaseNode:
-			newX := &XPath{input: x.input, evaled: item, context: copyContextN(x.context, item)}
+			newX := &XPath{xpath: x.xpath, evaled: item, context: copyContextN(x.context, item)}
 			result = append(result, newX)
 		case *object.AttrNode:
-			newX := &XPath{input: x.input, evaled: item, context: copyContextN(x.context, item)}
+			newX := &XPath{xpath: x.xpath, evaled: item, context: copyContextN(x.context, item)}
 			result = append(result, newX)
 		}
 	}
@@ -227,7 +227,7 @@ func (x *XPath) Errors() []error {
 
 // String returns input field
 func (x *XPath) String() string {
-	return x.input
+	return x.xpath
 }
 
 // CLI is a command line interface
