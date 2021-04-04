@@ -1,7 +1,9 @@
 package rabbit
 
 import (
+	"bufio"
 	"fmt"
+	"net/http"
 	"os"
 
 	"github.com/zzossig/rabbit/bif"
@@ -34,7 +36,7 @@ func New() *XPath {
 }
 
 // SetDoc set document to a context.
-// if document is not set in a context, node related xpath expressions not going to work.
+// if document is not set in a context, node related xpath expressions are not going to work.
 // input param can be url or local filepath.
 func (x *XPath) SetDoc(input string) *XPath {
 	f := bif.F["fn:doc"]
@@ -43,6 +45,25 @@ func (x *XPath) SetDoc(input string) *XPath {
 	if err != nil {
 		x.errors = append(x.errors, fmt.Errorf(err.Inspect()))
 	}
+	return x
+}
+
+// SetDocR is another version of SetDoc.
+func (x *XPath) SetDocR(resp *http.Response) *XPath {
+	defer resp.Body.Close()
+
+	buf := bufio.NewReader(resp.Body)
+	parsedHTML, err := html.Parse(buf)
+	if err != nil {
+		x.errors = append(x.errors, err)
+	}
+	parsedHTML.Type = html.DocumentNode
+
+	docNode := &object.BaseNode{}
+	docNode.SetTree(parsedHTML)
+	x.context.Doc = docNode
+	x.context.CNode = []object.Node{x.context.Doc}
+
 	return x
 }
 

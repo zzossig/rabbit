@@ -1,6 +1,7 @@
 package rabbit
 
 import (
+	"net/http"
 	"testing"
 )
 
@@ -31,6 +32,15 @@ func TestXPath(t *testing.T) {
 	nodes := New().SetDoc("./eval/testdata/company_2.xml").Eval("//employee").Eval("./age").NodeAll()
 	if len(nodes) != 5 {
 		t.Errorf("result length should be 5. got=%d", len(nodes))
+	}
+
+	resp, err := http.Get("https://golang.org/")
+	if err != nil {
+		t.Errorf(err.Error())
+	}
+	node := New().SetDocR(resp).Eval("//title/text()").Node()
+	if node.Data != "The Go Programming Language" {
+		t.Errorf("unexpected node data. got=%s, expected='The Go Programming Language'", node.Data)
 	}
 
 	x := New()
