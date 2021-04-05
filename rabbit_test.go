@@ -34,6 +34,11 @@ func TestXPath(t *testing.T) {
 		t.Errorf("result length should be 5. got=%d", len(nodes))
 	}
 
+	node2 := New().SetDocS("<h2>Hello, World!</h2>").Eval("//h2/text()").Node()
+	if node2.Data != "Hello, World!" {
+		t.Errorf("expected='Hello, World!', got=%s", node2.Data)
+	}
+
 	resp, err := http.Get("https://golang.org/")
 	if err != nil {
 		t.Errorf(err.Error())
