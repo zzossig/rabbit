@@ -105,28 +105,28 @@ rabbit.New().SetDoc("uri/or/filepath.txt").CLI()
 Rabbit language doesn't care about prefixed tag names or xmlns attributes in tags. So, xmlns attribute is not treated as a namespace node, and a prefixed tag does not complain if no namespace for the prefix is specified in a document.
 
 2. Limited Types<br/>
-There are bunch of data type in XPath data model. You can check all the types in [https://www.w3.org/TR/xpath-datamodel-31/](https://www.w3.org/TR/xpath-datamodel-31/). Many of the types are not supported in Rabbit language and most of the data types in Rabbit language are simplified as string. It makes no sense to implement all the data type because there is no such a things like XML Schema Definition(xsd) in HTML.
+There is a bunch of data types in XPath data model. You can check all the types in [https://www.w3.org/TR/xpath-datamodel-31/](https://www.w3.org/TR/xpath-datamodel-31/). Many of the types are not supported in Rabbit language and most of the data types in Rabbit language are simplified as string. It makes no sense to implement all the data types because there are no such things as XML Schema Definition(xsd) in HTML.
 
 3. Limited KindTest<br/>
 In the XPath 3.1 document, there are 10 kinds of KindTest. But namespace-node test, processing-instruction test, schema-attribute test, schema-element test is not supported in Rabbit language because our parsing engine(/x/net/html) does not recognize them.
 
 4. Sequence Type Check<br/>
-In XPath 3.1, you can specify data types in linline function. It is looks like this.
+In XPath 3.1, you can specify data types in lnline function. It looks like this.
 `function($a as xs:string) as xs:string {$a}`.
-This syntax is not a part of the Rabbit language. Inline function should like this.
+This syntax is not a part of the Rabbit language. The inline function should like this.
 `function($a) {$a}`.
 
 5. Node Test with Argument<br/>
 Node test with argument is not supported. For example, `element(person)`, `element(person, surgeon)`, `element(*, surgeon)`, `attribute(price)`, `attribute(*, xs:decimal)` are not allowed. But you can do `element()`, `attribute()`.
 
-6. Whildcard Expressions<br/>
+6. Wildcard Expressions<br/>
 Only `*` wildcard is allowed in the Rabbit language. `NCName:*`, `*:NCName`, `BracedURILiteral*` are not supported since namespace is not a big deal in the Rabbit language.
 
 ## Notice
 
 ### Attribute node is custom *html.Node type
 
-Rabbit language support attribute node. But /x/net/html package has no such a type(it only have 6 kinds of node) and treat attribute as a field of element node. So, in order to make attribute as a node, I had to make a custom *html.Node type. It have following fields.
+Rabbit language support attribute node. But /x/net/html package has no such a type(it only has 6 kinds of nodes) and treats attribute as a field of an element node. So, in order to make an attribute as a node, I had to make a custom *html.Node type. It has the following fields.
 
 - Type: html.NodeType(7).
 - Parent: node(*html.Node) that is contain the attribute
@@ -137,10 +137,10 @@ Rabbit language support attribute node. But /x/net/html package has no such a ty
 - Namespace: ""(empty string)
 - Attr: Attr field contains only one html.Attribute item. Is has key, value pair for the attribute.
 
-### Not well formed document will be transfromed
+### Not well-formed document will be transformed
 
 Rabbit language uses the /x/net/html package for parsing HTML. So, the type of the selected node will be *html.Node.
-One thing that should know is that /x/net/html package is wrap a document with html, head, body tags if it is not well-formed.
+One thing that should know is that /x/net/html package wraps a document with html, head, body tags if it is not well-formed.
 
 For example, if your document looks like this
 

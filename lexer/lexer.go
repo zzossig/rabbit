@@ -36,7 +36,7 @@ func (l *Lexer) Remaining() string {
 	return l.input[l.pos:]
 }
 
-// NextToken returns next token by reading the input characters
+// NextToken returns next token by reading input characters
 func (l *Lexer) NextToken() token.Token {
 	var tok token.Token
 
