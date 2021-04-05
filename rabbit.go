@@ -39,8 +39,9 @@ func New() *XPath {
 // if document is not set in a context, node related xpath expressions are not going to work.
 // input param can be url or local filepath.
 func (x *XPath) SetDoc(input string) *XPath {
-	f := bif.F["fn:doc"]
+	initContext(x.context)
 
+	f := bif.F["fn:doc"]
 	err := f(x.context, bif.NewString(input))
 	if err != nil {
 		x.errors = append(x.errors, fmt.Errorf(err.Inspect()))
@@ -49,10 +50,11 @@ func (x *XPath) SetDoc(input string) *XPath {
 }
 
 // SetDocR is another version of SetDoc.
-func (x *XPath) SetDocR(resp *http.Response) *XPath {
-	defer resp.Body.Close()
+func (x *XPath) SetDocR(r *http.Response) *XPath {
+	initContext(x.context)
+	defer r.Body.Close()
 
-	buf := bufio.NewReader(resp.Body)
+	buf := bufio.NewReader(r.Body)
 	parsedHTML, err := html.Parse(buf)
 	if err != nil {
 		x.errors = append(x.errors, err)
@@ -61,6 +63,18 @@ func (x *XPath) SetDocR(resp *http.Response) *XPath {
 
 	docNode := &object.BaseNode{}
 	docNode.SetTree(parsedHTML)
+	x.context.Doc = docNode
+	x.context.CNode = []object.Node{x.context.Doc}
+
+	return x
+}
+
+// SetDocN is another version of SetDoc.
+func (x *XPath) SetDocN(n *html.Node) *XPath {
+	initContext(x.context)
+
+	docNode := &object.BaseNode{}
+	docNode.SetTree(n)
 	x.context.Doc = docNode
 	x.context.CNode = []object.Node{x.context.Doc}
 
