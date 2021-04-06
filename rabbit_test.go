@@ -48,10 +48,20 @@ func TestXPath(t *testing.T) {
 		t.Errorf("unexpected node data. got=%s, expected='The Go Programming Language'", node.Data)
 	}
 
+	all := New().SetDoc("./eval/testdata/go1.html").Eval("//*").NodeAll()
+	if len(all) != 1563 {
+		t.Errorf("result length should be 1563. got=%d", len(all))
+	}
+
 	x := New()
 	data2 := x.Eval("1+1").DataAll()
 	if data2[0] != 2 {
 		t.Errorf("result value should be 2. got=%d", data2[0])
+	}
+
+	wrong := x.Eval("(%!")
+	if len(wrong.Errors()) != 1 {
+		t.Errorf("aaa")
 	}
 }
 

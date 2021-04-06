@@ -41,6 +41,7 @@ func New() *XPath {
 // input param can be url or local filepath.
 func (x *XPath) SetDoc(input string) *XPath {
 	initContext(x.context)
+	x.xpath = ""
 
 	f := bif.F["fn:doc"]
 	err := f(x.context, bif.NewString(input))
@@ -53,6 +54,7 @@ func (x *XPath) SetDoc(input string) *XPath {
 // SetDocR is another version of SetDoc.
 func (x *XPath) SetDocR(r *http.Response) *XPath {
 	initContext(x.context)
+	x.xpath = ""
 	defer r.Body.Close()
 
 	nr := bufio.NewReader(r.Body)
@@ -73,6 +75,7 @@ func (x *XPath) SetDocR(r *http.Response) *XPath {
 // SetDocN is another version of SetDoc.
 func (x *XPath) SetDocN(n *html.Node) *XPath {
 	initContext(x.context)
+	x.xpath = ""
 
 	docNode := &object.BaseNode{}
 	docNode.SetTree(n)
@@ -85,6 +88,7 @@ func (x *XPath) SetDocN(n *html.Node) *XPath {
 // SetDocS is another version of SetDoc.
 func (x *XPath) SetDocS(s string) *XPath {
 	initContext(x.context)
+	x.xpath = ""
 
 	nr := strings.NewReader(s)
 	parsedHTML, err := html.Parse(nr)
@@ -207,6 +211,7 @@ func (x *XPath) Get() string {
 
 func (x *XPath) GetAll() []string {
 	initContext(x.context)
+	x.xpath = ""
 
 	if x.evaled == nil {
 		x.errors = append(x.errors, fmt.Errorf("cannot convert item since evaled field is nil"))
@@ -228,6 +233,7 @@ func (x *XPath) Data() interface{} {
 // DataAll convert evaled field to []interface{}
 func (x *XPath) DataAll() []interface{} {
 	initContext(x.context)
+	x.xpath = ""
 
 	if x.evaled == nil {
 		x.errors = append(x.errors, fmt.Errorf("cannot convert item since evaled field is nil"))
@@ -255,6 +261,7 @@ func (x *XPath) Node() *html.Node {
 // NodeAll convert evaled field to []*html.Node
 func (x *XPath) NodeAll() []*html.Node {
 	initContext(x.context)
+	x.xpath = ""
 
 	if x.evaled == nil {
 		x.errors = append(x.errors, fmt.Errorf("cannot convert item since evaled field is nil"))
