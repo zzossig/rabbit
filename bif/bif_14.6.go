@@ -24,7 +24,6 @@ func fnDoc(ctx *object.Context, args ...object.Item) object.Item {
 	}
 
 	docNode := &object.BaseNode{}
-	var err error
 
 	if file, err := os.Open(uri.Value()); err == nil {
 		defer file.Close()
@@ -61,10 +60,6 @@ func fnDoc(ctx *object.Context, args ...object.Item) object.Item {
 		ctx.Doc = docNode
 		ctx.CNode = []object.Node{ctx.Doc}
 		ctx.BaseURI = uri.Value()
-	}
-
-	if err != nil {
-		return NewError("cannot retrieve resource %s", uri)
 	}
 	return nil
 }
