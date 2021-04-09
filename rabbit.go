@@ -17,13 +17,13 @@ import (
 )
 
 // XPath is a base object to evaluate xpath expressions.
-// xpath is xpath expression that is saved when you are using Eval method.
-// context is a context that contains a document.
-// SetDoc function saves a document to the context.
-// evaled field is set when you call Eval method.
-// evaled type is an object.Item which is a custom data type used in rabbit language.
-// You can convert evaled type to a golang data type using Data or Nodes method.
-// errors field is a collected errors while parsing and evaluating
+// xpath field is xpath expression that is saved when using Eval method.
+// context is a context that contains a document and context node.
+// SetDoc function saves a document to the context field.
+// evaled field is set when calling Eval method.
+// object.Item is a custom data type used in rabbit language.
+// You can convert object.Item to a golang data type using Data or Nodes method.
+// errors field is collected errors while parsing and evaluating
 type XPath struct {
 	xpath   string
 	context *object.Context
